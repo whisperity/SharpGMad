@@ -10,16 +10,17 @@ namespace Addon
     {
         public Reader()
         {
-            //Clear();
+            Clear();
         }
 
         //
         // Load an addon (call Parse after this succeeds)
         //
-        /*public bool ReadFromFile(string strName)
+        public bool ReadFromFile(string strName)
         {
-            
-        }*/
+            m_buffer.Clear();
+
+        }
 
         protected AutoBuffer m_buffer;
         protected char m_fmtversion;
