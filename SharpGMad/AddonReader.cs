@@ -118,8 +118,8 @@ namespace Addon
             {
                 Addon.Format.FileEntry entry = new Addon.Format.FileEntry();
                 entry.strName = ReadStringNULDelimiter(br);
-                entry.iSize = br.ReadInt64(); // long
-                entry.iCRC = br.ReadUInt64(); // unsigned long
+                entry.iSize = br.ReadInt64(); // long long
+                entry.iCRC = br.ReadUInt32(); // unsigned long
                 entry.iOffset = iOffset;
                 entry.iFileNumber = (uint)iFileNumber;
 
