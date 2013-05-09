@@ -3,10 +3,10 @@ using System.Linq;
 
 namespace Addon
 {
-    class Format
+    static class Format
     {
         public const string Ident = "GMAD";
-        public const char Version = '3';
+        public const char Version = (char)3;
         public const uint AppID = 4000;
         public const uint CompressionSignature = 0xBEEFCACE;
 
@@ -24,13 +24,13 @@ namespace Addon
 
         public struct FileEntry
         {
-            string strName;
-            long iSize;
-            ulong iCRC;
-            uint iFileNumber;
-            long iOffset;
+            public string strName;
+            public long iSize;
+            public ulong iCRC;
+            public uint iFileNumber;
+            public long iOffset;
 
-            List<FileEntry> List;
+            public List<FileEntry> List;
         }
 
         //
