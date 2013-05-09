@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.IO;
 
 namespace SharpGMad
 {
@@ -123,9 +124,97 @@ namespace SharpGMad
             return 0;
         }
 
-        static int ExtractAddonFile(string strFile, string strOutPath)
+        static int ExtractAddonFile(string strFile, string strOutPath = "")
         {
+            Console.WriteLine("Opening " + strFile);
+
+            //
+            // If an out path hasn't been provided, make our own
+            //
+            if (strOutPath == String.Empty)
+            {
+                strOutPath = Path.GetFileNameWithoutExtension(strFile);
+            }
+
+            //
+            // Remove slash, add slash (enforces a slash)
+            //
+            strOutPath.TrimEnd('/');
+            strOutPath = strOutPath + '/';
+            Addon.Reader addon = new Addon.Reader();
+
+            if (!addon.ReadFromFile(strFile))
+            {
+                Console.WriteLine("There was a problem opening the file");
+                return 1;
+            }
+
+            if (!addon.Parse())
+            {
+                Console.WriteLine("There was a problem parsing the file");
+                return 1;
+            }
+
+            Console.WriteLine("Extracting Files:");
+            foreach ( Addon.Format.FileEntry entry in addon.GetList())
+            {
+                Console.WriteLine("\t" + entry.strName + " [" + Memory((int)entry.iSize) + "]");
+                // Make sure folder exists
+                try
+                {
+                    Directory.CreateDirectory(strOutPath + Path.GetDirectoryName(entry.strName));
+                }
+                catch (Exception)
+                {
+                    // Noop
+                }
+                // Load the file into the buffer
+                using (MemoryStream filecontents = new MemoryStream())
+                {
+                    if ( addon.ReadFile(entry.iFileNumber, filecontents) )
+                    {
+                        using(FileStream file = new FileStream(strOutPath + entry.strName, FileMode.Create, FileAccess.Write))
+                        {
+                            filecontents.Seek(0, SeekOrigin.Begin);
+                            filecontents.CopyTo(file);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("\t\tCouldn't extract!");
+                    }
+                }
+            }
+            Console.WriteLine("Done!");
             return 0;
         }
+
+        private static string Memory(int iBytes)
+        {
+            float gb = iBytes / (float)1024 / (float)1024 / (float)1024;
+
+            if (gb >= 1.0)
+            {
+                return String.Format("{0:0.##} {1}", gb, "GiB");
+            }
+
+            float mb = iBytes / (float)1024 / (float)1024;
+
+            if (mb >= 1.0)
+            {
+                return String.Format("{0:0.##} {1}", mb, "MiB");
+            }
+
+            float kb = iBytes / (float)1024;
+
+            if (kb >= 1.0)
+            {
+                return String.Format("{0:0.##} {1}", kb, "KiB");
+            }
+
+            // return as bytes
+            return iBytes + " B";
+        }
+
     }
 } 

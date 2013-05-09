@@ -136,11 +136,20 @@ namespace Addon
             using (MemoryStream desc_stream = new MemoryStream(Encoding.UTF8.GetBytes(m_desc)))
             {
                 DataContractJsonSerializer jsonFormatter = new DataContractJsonSerializer(typeof(DescriptionJSON));
-                DescriptionJSON description = (DescriptionJSON)jsonFormatter.ReadObject(desc_stream);
+                try
+                {
+                    DescriptionJSON description = (DescriptionJSON)jsonFormatter.ReadObject(desc_stream);
 
-                m_desc = description.Description;
-                m_type = description.Type;
-                m_tags = description.Tags;
+                    m_desc = description.Description;
+                    m_type = description.Type;
+                    m_tags = description.Tags;
+                }
+                catch (SerializationException)
+                {
+                    // Noop. The description will stay because it was plaintext, not JSON.
+                    m_type = String.Empty;
+                    m_tags = new List<string>();
+                }
             }
 
             return true;
