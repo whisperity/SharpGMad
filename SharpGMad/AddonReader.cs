@@ -159,6 +159,40 @@ namespace Addon
             public List<string> Tags;
         }
 
+        //
+        // Return the FileEntry for a FileID
+        //
+        public bool GetFile(uint iFileID, out Addon.Format.FileEntry outfile)
+        {
+            outfile = new Addon.Format.FileEntry();
+
+            foreach (Addon.Format.FileEntry file in m_index)
+            {
+                if (file.iFileNumber == iFileID)
+                {
+                    outfile = file;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        //
+        // Read a fileid from the addon into the buffer
+        //
+        public bool ReadFile(uint iFileID, MemoryStream buffer)
+        {
+            Addon.Format.FileEntry file;
+            if (!GetFile(iFileID, out file)) return false;
+
+            byte[] read_buffer = new byte[file.iSize];
+            m_buffer.Seek((long)m_fileblock + (long)file.iOffset, SeekOrigin.Begin);
+            m_buffer.Read(read_buffer, 0, (int)file.iSize);
+
+            buffer.Write(read_buffer, 0, read_buffer.Length);
+            return true;
+        }
+
         public void Clear()
         {
             // m_buffer.Clear()
@@ -176,5 +210,15 @@ namespace Addon
             if ( m_tags != null )
                 m_tags.Clear();
         }
+
+        // Getters... please remove later.
+        public List<Addon.Format.FileEntry> GetList() { return m_index; }
+        public uint GetFormatVersion() { return m_fmtversion; }
+        public MemoryStream GetBuffer() { return m_buffer; }
+        public string Title() { return m_name; }
+        public string Description() { return m_desc; }
+        public string Author() { return m_author; }
+        public string Type() { return m_type; }
+        public List<string> Tags() { return m_tags; }
     }
 }
