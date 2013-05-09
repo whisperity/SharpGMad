@@ -139,7 +139,7 @@ namespace SharpGMad
             //
             // Remove slash, add slash (enforces a slash)
             //
-            strOutPath.TrimEnd('/');
+            strOutPath = strOutPath.TrimEnd('/');
             strOutPath = strOutPath + '/';
             Addon.Reader addon = new Addon.Reader();
 
@@ -195,7 +195,7 @@ namespace SharpGMad
             return 0;
         }
 
-        private static string Memory(int iBytes)
+        public static string Memory(int iBytes)
         {
             float gb = iBytes / (float)1024 / (float)1024 / (float)1024;
 

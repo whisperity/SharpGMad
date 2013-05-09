@@ -49,6 +49,8 @@
     <Compile Include="AddonFormat.cs" />
     <Compile Include="AddonReader.cs" />
     <Compile Include="AddonWhitelist.cs" />
+    <Compile Include="CRC32.cs" />
+    <Compile Include="CreateAddon.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
