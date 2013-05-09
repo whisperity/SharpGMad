@@ -145,13 +145,17 @@ namespace SharpGMad
 
             if (!addon.ReadFromFile(strFile))
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("There was a problem opening the file");
+                Console.ResetColor();
                 return 1;
             }
 
             if (!addon.Parse())
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("There was a problem parsing the file");
+                Console.ResetColor();
                 return 1;
             }
 
@@ -181,7 +185,9 @@ namespace SharpGMad
                     }
                     else
                     {
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("\t\tCouldn't extract!");
+                        Console.ResetColor();
                     }
                 }
             }

@@ -48,13 +48,20 @@ namespace Addon
             // m_buffer.Clear()
             m_buffer.Seek(0, SeekOrigin.Begin);
             m_buffer.SetLength(0);
-            
-            using (FileStream gmafs = new FileStream(strName, FileMode.Open, FileAccess.Read))
+
+            try
             {
-                while (gmafs.Position < gmafs.Length)
+                using (FileStream gmafs = new FileStream(strName, FileMode.Open, FileAccess.Read))
                 {
-                    m_buffer.WriteByte((byte)gmafs.ReadByte());
+                    while (gmafs.Position < gmafs.Length)
+                    {
+                        m_buffer.WriteByte((byte)gmafs.ReadByte());
+                    }
                 }
+            }
+            catch (Exception)
+            {
+                return false;
             }
 
             return true;
