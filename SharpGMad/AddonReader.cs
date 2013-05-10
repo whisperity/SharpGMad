@@ -10,13 +10,13 @@ namespace Addon
 {
     class Reader
     {
-        protected MemoryStream m_buffer;
+        protected MemoryStream m_buffer = new MemoryStream();
         protected char m_fmtversion;
         protected string m_name;
         protected string m_author;
         protected string m_desc;
         protected string m_type;
-        protected List<Addon.Format.FileEntry> m_index;
+        protected List<Addon.Format.FileEntry> m_index = new List<Addon.Format.FileEntry>();
         protected ulong m_fileblock;
 
         List<string> m_tags;
@@ -34,9 +34,6 @@ namespace Addon
 
         public Reader()
         {
-            m_buffer = new MemoryStream();
-            m_index = new List<Addon.Format.FileEntry>();
-
             Clear();
         }
 

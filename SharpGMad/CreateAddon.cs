@@ -8,7 +8,7 @@ namespace SharpGMad
 {
     class CreateAddon
     {
-        static public bool VerifyFiles(List<string> files, bool warnInvalid)
+        static public bool VerifyFiles(ref List<string> files, bool warnInvalid)
         {
             bool bOk = true;
 
@@ -62,7 +62,7 @@ namespace SharpGMad
         //
         // Create an uncompressed GMAD file from a list of files
         //
-        static public bool Create(MemoryStream buffer, string strFolder, List<string> files, string strTitle, string strDescription)
+        static public bool Create(ref MemoryStream buffer, string strFolder, ref List<string> files, string strTitle, string strDescription)
         {
             // Remove / (if exists) and then purposely add it back
             // Ensure that there is a tailing /

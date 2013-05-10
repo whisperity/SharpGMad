@@ -174,7 +174,7 @@ namespace Addon
             }
         }
 
-        public void RemoveIgnoredFiles(List<string> files)
+        public void RemoveIgnoredFiles(ref List<string> files)
         {
             List<string> old_files = new List<string>(files);
             files.Clear();

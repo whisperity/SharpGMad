@@ -180,7 +180,7 @@ namespace SharpGMad
             //
             // Let the addon json remove the ignored files
             //
-            addonInfo.RemoveIgnoredFiles(files);
+            addonInfo.RemoveIgnoredFiles(ref files);
             //
             // Sort the list into alphabetical order, no real reason - we're just ODC
             //
@@ -189,7 +189,7 @@ namespace SharpGMad
             //
             // Verify
             //
-            if (!CreateAddon.VerifyFiles(files, warnInvalid))
+            if (!CreateAddon.VerifyFiles(ref files, warnInvalid))
             {
                 Output.Warning("File list verification failed");
                 return 1;
@@ -200,7 +200,7 @@ namespace SharpGMad
             //
             MemoryStream buffer = new MemoryStream();
 
-            if (!CreateAddon.Create(buffer, strFolder, files, addonInfo.GetTitle(), addonInfo.BuildDescription()))
+            if (!CreateAddon.Create(ref buffer, strFolder, ref files, addonInfo.GetTitle(), addonInfo.BuildDescription()))
             {
                 Output.Warning("Failed to create the addon");
                 return 1;
