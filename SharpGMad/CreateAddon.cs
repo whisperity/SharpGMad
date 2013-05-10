@@ -38,9 +38,7 @@ namespace SharpGMad
                     files.Add(file);
                 else
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\t\t[Not allowed by whitelist]");
-                    Console.ResetColor();
+                    Output.Warning("\t\t[Not allowed by whitelist]");
                     if (!warnInvalid)
                         bOk = false;
                 }
@@ -49,9 +47,7 @@ namespace SharpGMad
                 // Warn that we're gonna lowercase the filename
                 if (file.ToLowerInvariant() != file)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\t\t[Filename contains capital letters]");
-                    Console.ResetColor();
+                    Output.Warning("\t\t[Filename contains capital letters]");
                 }
             }
             return bOk;
@@ -59,7 +55,7 @@ namespace SharpGMad
 
         static private void WriteStringNULDelimiter(BinaryWriter wr, string str)
         {
-            wr.Write(Encoding.UTF8.GetBytes(str));
+            wr.Write(Encoding.ASCII.GetBytes(str));
             wr.Write((byte)0x00);
         }
 
@@ -137,9 +133,7 @@ namespace SharpGMad
                     }
                     catch (Exception)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("File " + strFolder + file + " seems to be empty (or we couldn't read it)");
-                        Console.ResetColor();
+                        Output.Warning("File " + strFolder + file + " seems to be empty (or we couldn't read it)");
 
                         return false;
                     }

@@ -7,6 +7,16 @@ using System.IO;
 
 namespace SharpGMad
 {
+    static class Output
+    {
+        public static void Warning(string str)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(str);
+            Console.ResetColor();
+        }
+    }
+
     class Program
     {
         static int Main(string[] args)
@@ -36,31 +46,41 @@ namespace SharpGMad
                 string strFolder;
                 try
                 {
-                    strFolder = args[Array.FindIndex(args, a => a == "-folder") + 1];
+                    int folderIndex = Array.FindIndex(args, a => a == "-folder");
+                    
+                    if ( folderIndex == -1 )
+                        throw new Exception(); // This means that the switch does not exist
+                    else
+                        strFolder = args[Array.FindIndex(args, a => a == "-folder") + 1];
                 }
-                catch (IndexOutOfRangeException)
+                catch (Exception)
                 {
                     strFolder = "";
                 }
                 if (strFolder == "")
                 {
                     Console.WriteLine("Missing -folder (the folder to turn into an addon)");
-                    Environment.Exit(1);
+                    return 1;
                 }
 
                 string strTarget;
                 try
                 {
-                    strTarget = args[Array.FindIndex(args, a => a == "-out") + 1];
+                    int targetIndex = Array.FindIndex(args, a => a == "-out");
+
+                    if (targetIndex == -1)
+                        throw new Exception(); // This means that the switch does not exist
+                    else
+                        strTarget = args[Array.FindIndex(args, a => a == "-out") + 1];
                 }
-                catch (IndexOutOfRangeException)
+                catch (Exception)
                 {
                     strTarget = "";
                 }
                 if (strTarget == "")
                 {
                     Console.WriteLine("Missing -out (the filename of the target gma)");
-                    Environment.Exit(1);
+                    return 1;
                 }
 
                 bool WarnOnInvalidFiles = args.Contains("-warninvalid");
@@ -76,31 +96,41 @@ namespace SharpGMad
                 string strFile;
                 try
                 {
-                    strFile = args[Array.FindIndex(args, a => a == "-file") + 1];
+                    int fileIndex = Array.FindIndex(args, a => a == "-file");
+
+                    if (fileIndex == -1)
+                        throw new Exception(); // This means that the switch does not exist
+                    else
+                        strFile = args[Array.FindIndex(args, a => a == "-file") + 1];
                 }
-                catch (IndexOutOfRangeException)
+                catch (Exception)
                 {
                     strFile = "";
                 }
                 if (strFile == "")
                 {
                     Console.WriteLine("Missing -file (the addon you want to extract)");
-                    Environment.Exit(1);
+                    return 1;
                 }
 
                 string strTarget;
                 try
                 {
-                    strTarget = args[Array.FindIndex(args, a => a == "-out") + 1];
+                    int targetIndex = Array.FindIndex(args, a => a == "-out");
+
+                    if (targetIndex == -1)
+                        throw new Exception(); // This means that the switch does not exist
+                    else
+                        strTarget = args[Array.FindIndex(args, a => a == "-out") + 1];
                 }
-                catch (IndexOutOfRangeException)
+                catch (Exception)
                 {
                     strTarget = "";
                 }
                 if (strTarget == "")
                 {
                     Console.WriteLine("Missing -out (the filename of the target gma)");
-                    Environment.Exit(1);
+                    return 1;
                 }
 
                 return ExtractAddonFile(strFile, strTarget);
@@ -145,17 +175,13 @@ namespace SharpGMad
 
             if (!addon.ReadFromFile(strFile))
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("There was a problem opening the file");
-                Console.ResetColor();
+                Output.Warning("There was a problem opening the file");
                 return 1;
             }
 
             if (!addon.Parse())
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("There was a problem parsing the file");
-                Console.ResetColor();
+                Output.Warning("There was a problem parsing the file");
                 return 1;
             }
 
@@ -185,9 +211,7 @@ namespace SharpGMad
                     }
                     else
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("\t\tCouldn't extract!");
-                        Console.ResetColor();
+                        Output.Warning("\t\tCouldn't extract!");
                     }
                 }
             }

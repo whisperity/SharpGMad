@@ -29,7 +29,7 @@ namespace Addon
             while ((read = br.ReadByte()) != 0x00)
                 bytes.Add(read);
 
-            return (bytes.Count > 0 ? Encoding.UTF8.GetString(bytes.ToArray()) : "");
+            return (bytes.Count > 0 ? Encoding.ASCII.GetString(bytes.ToArray()) : "");
         }
 
         public Reader()
@@ -140,7 +140,7 @@ namespace Addon
             //
             // Try to parse the description
             //
-            using (MemoryStream desc_stream = new MemoryStream(Encoding.UTF8.GetBytes(m_desc)))
+            using (MemoryStream desc_stream = new MemoryStream(Encoding.ASCII.GetBytes(m_desc)))
             {
                 DataContractJsonSerializer jsonFormatter = new DataContractJsonSerializer(typeof(DescriptionJSON));
                 try
