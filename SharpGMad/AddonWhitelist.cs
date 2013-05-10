@@ -53,7 +53,7 @@ namespace Addon
             return bValid;
         }
 
-        private static bool TestWildcard(string wildcard, string strName)
+        public static bool TestWildcard(string wildcard, string strName)
         {
             string pattern = "^" + Regex.Escape(wildcard).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
             Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);

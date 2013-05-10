@@ -29,8 +29,6 @@ namespace Addon
             public ulong iCRC;
             public uint iFileNumber;
             public long iOffset;
-
-            public List<FileEntry> List;
         }
 
         //

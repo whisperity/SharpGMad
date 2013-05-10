@@ -37,7 +37,7 @@ namespace SharpGMad
             {
                 strCommand = "";
             }
-
+            
             //
             // Create
             //
@@ -127,11 +127,6 @@ namespace SharpGMad
                 {
                     strTarget = "";
                 }
-                if (strTarget == "")
-                {
-                    Console.WriteLine("Missing -out (the filename of the target gma)");
-                    return 1;
-                }
 
                 return ExtractAddonFile(strFile, strTarget);
             }
@@ -142,15 +137,96 @@ namespace SharpGMad
             Console.WriteLine("Usage:");
             Console.WriteLine();
 
-            Console.WriteLine(Addon.Whitelist.Check("a.exe"));
-            Console.WriteLine(Addon.Format.TimestampOffset);
-
-            Console.ReadLine();
             return 0;
         }
 
         static int CreateAddonFile(string strFolder, string strOutfile, bool warnInvalid)
         {
+            bool bErrors = false;
+            //
+            // Make sure there's a slash on the end
+            //
+            strFolder = strFolder.TrimEnd('/');
+            strFolder = strFolder + "/";
+            //
+            // Make sure OutFile ends in .gma
+            //
+            strOutfile = Path.GetFileNameWithoutExtension(strOutfile);
+            strOutfile += ".gma";
+            Console.WriteLine("Looking in folder \"" + strFolder + "\"");
+            //
+            // Load the Addon Info file
+            //
+            Addon.Json addonInfo = new Addon.Json(strFolder + "addon.json");
+
+            if (addonInfo.GetError() != String.Empty && addonInfo.GetError() != null)
+            {
+                Output.Warning(strFolder + "addon.json" + " error: " + addonInfo.GetError());
+                return 1;
+            }
+
+            //
+            // Get a list of files in the specified folder
+            //
+            List<string> files = new List<string>();
+            foreach (string f in Directory.GetFiles(strFolder, "*", SearchOption.AllDirectories))
+            {
+                string file = f;
+                file = file.Replace(strFolder, String.Empty);
+                file = file.Replace('\\', '/');
+                
+                files.Add(file);
+            }
+            //
+            // Let the addon json remove the ignored files
+            //
+            addonInfo.RemoveIgnoredFiles(files);
+            //
+            // Sort the list into alphabetical order, no real reason - we're just ODC
+            //
+            files.Sort();
+
+            //
+            // Verify
+            //
+            if (!CreateAddon.VerifyFiles(files, warnInvalid))
+            {
+                Output.Warning("File list verification failed");
+                return 1;
+            }
+
+            //
+            // Create an addon file in a buffer
+            //
+            MemoryStream buffer = new MemoryStream();
+
+            if (!CreateAddon.Create(buffer, strFolder, files, addonInfo.GetTitle(), addonInfo.BuildDescription()))
+            {
+                Output.Warning("Failed to create the addon");
+                return 1;
+            }
+
+            //
+            // Save the buffer to the provided name
+            //
+            buffer.Seek(0, SeekOrigin.Begin);
+            byte[] bytes = new byte[buffer.Length];
+            buffer.Read(bytes, 0, (int)buffer.Length);
+
+            try
+            {
+                File.WriteAllBytes(strOutfile, bytes);
+            }
+            catch (Exception)
+            {
+                Output.Warning("Couldn't save to file \"" + strOutfile + "\"");
+                return 1;
+            }
+
+            //
+            // Success!
+            //
+            Console.WriteLine("Successfully saved to \"" + strOutfile + "\" [" + Memory((int)buffer.Length) + "]");
             return 0;
         }
 

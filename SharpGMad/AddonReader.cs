@@ -162,19 +162,6 @@ namespace Addon
             return true;
         }
 
-        [DataContract]
-        internal class DescriptionJSON
-        {
-            [DataMember(Name="description")]
-            public string Description;
-
-            [DataMember(Name = "type")]
-            public string Type;
-
-            [DataMember(Name = "tags")]
-            public List<string> Tags;
-        }
-
         //
         // Return the FileEntry for a FileID
         //
