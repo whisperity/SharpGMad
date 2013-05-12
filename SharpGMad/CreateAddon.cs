@@ -59,10 +59,102 @@ namespace SharpGMad
             wr.Write((byte)0x00);
         }
 
+        static public bool Create(out MemoryStream outStream, Dictionary<string, byte[]> files, string strTitle, string descriptionJson)
+        {
+            outStream = new MemoryStream();
+
+            using(MemoryStream buffer = new MemoryStream())
+            using (BinaryWriter writer = new BinaryWriter(buffer))
+            {
+                // Header (5)
+                writer.Write(Addon.Format.Ident.ToCharArray()); // Ident (4)
+                writer.Write((char)Addon.Format.Version); // Version (1)
+                // SteamID (8) [unused]
+                writer.Write((ulong)0);
+                // TimeStamp (8)
+                writer.Write((ulong)(((TimeSpan)(DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0).ToLocalTime())).TotalSeconds));
+                // Required content (a list of strings)
+                writer.Write((char)0); // signifies nothing
+                // Addon Name (n)
+                writer.WriteString(strTitle);
+                // Addon Description (n)
+                writer.WriteString(descriptionJson);
+                // Addon Author (n) [unused]
+                writer.WriteString("Author Name");
+                // Addon Version (4) [unused]
+                writer.Write((int)1);
+                // File list
+                uint iFileNum = 0;
+
+                Crc32 crc32 = new Crc32();
+
+                foreach (KeyValuePair<string, byte[]> f in files)
+                {
+                    // Remove prefix / from filename
+                    string file = f.Key.TrimStart('/');
+
+                    uint iCRC = crc32.ComputeChecksum(f.Value); // unsigned long
+                    long iSize = f.Value.Length; // long long
+                    iFileNum++;
+                    writer.Write((uint)iFileNum); // File number (4)
+                    WriteStringNULDelimiter(writer, file.ToLowerInvariant()); // File name (all lower case!) (n)
+                    writer.Write((long)iSize); // File size (8)
+                    writer.Write((uint)iCRC); // File CRC (4)
+                    Console.WriteLine("File index: " + file + " [CRC:" + iCRC + "]" +
+                        " [Size:" + Program.Memory((int)iSize) + "]");
+                }
+                // Zero to signify end of files
+                iFileNum = 0;
+                writer.Write((uint)iFileNum);
+                // The files
+                foreach (KeyValuePair<string, byte[]> f in files)
+                {
+                    // Remove prefix / from filename
+                    string file = f.Key.TrimStart('/');
+
+                    Console.WriteLine("Adding " + file);
+
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        try
+                        {
+                            ms.Write(f.Value, 0, (int)f.Value.Length);
+
+                            if (ms.Length == 0)
+                                throw new Exception();
+                        }
+                        catch (Exception)
+                        {
+                            Output.Warning("File " + file + " seems to be empty (or we couldn't read it)");
+
+                            return false;
+                        }
+
+                        ms.Seek(0, SeekOrigin.Begin);
+                        byte[] ms_buffer = new byte[ms.Length];
+                        ms.Read(ms_buffer, 0, (int)ms.Length);
+
+                        writer.Write(ms_buffer, 0, ms_buffer.Length);
+                    }
+                }
+                // CRC what we've written (to verify that the download isn't shitted) (4)
+                writer.Seek(0, SeekOrigin.Begin);
+                byte[] buffer_whole = new byte[writer.BaseStream.Length];
+                writer.BaseStream.Read(buffer_whole, 0, (int)writer.BaseStream.Length);
+                ulong AddonCRC = crc32.ComputeChecksum(buffer_whole);
+                writer.Write(AddonCRC);
+
+                buffer.Seek(0, SeekOrigin.Begin);
+                buffer.CopyTo(outStream);
+            }
+
+            return true;
+        }
+
         //
         // Create an uncompressed GMAD file from a list of files
         //
-        static public bool Create(ref MemoryStream buffer, string strFolder, ref List<string> files, string strTitle, string strDescription)
+        static public bool Create(ref MemoryStream buffer, string strFolder, ref List<string> files, string strTitle, string descriptionJson)
         {
             // Remove / (if exists) and then purposely add it back
             // Ensure that there is a tailing /
@@ -83,7 +175,7 @@ namespace SharpGMad
             // Addon Name (n)
             WriteStringNULDelimiter(writer, strTitle);
             // Addon Description (n)
-            WriteStringNULDelimiter(writer, strDescription);
+            WriteStringNULDelimiter(writer, descriptionJson);
             // Addon Author (n) [unused]
             WriteStringNULDelimiter(writer, "Author Name");
             // Addon Version (4) [unused]

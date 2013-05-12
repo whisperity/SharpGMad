@@ -56,6 +56,15 @@ namespace Addon
         public string GetDescription() { return m_Description; }
         public new string GetType() { return m_AddonType; }
 
+        public Json(string title, string description, string type, List<string> tags, List<string> ignores)
+        {
+            m_Title = title;
+            m_Description = description;
+            m_AddonType = type;
+            m_Tags = tags;
+            m_Ignores = ignores;
+        }
+
         public Json(string strInfoFile)
         {
             string strFileContents;

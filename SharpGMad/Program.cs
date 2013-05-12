@@ -140,9 +140,9 @@ namespace SharpGMad
             return 0;
         }
 
-        static int CreateAddonFile(string strFolder, string strOutfile, bool warnInvalid)
+        public static int CreateAddonFile(string strFolder, string strOutfile, bool warnInvalid)
         {
-            bool bErrors = false;
+            //bool bErrors = false;
             //
             // Make sure there's a slash on the end
             //
