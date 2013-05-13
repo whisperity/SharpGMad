@@ -14,7 +14,7 @@ namespace System.IO
 
     static class BinaryReaderExtensions
     {
-        public static string ReadStringNULDelimiter(this BinaryReader br)
+        public static string ReadString(this BinaryReader br)
         {
             List<byte> bytes = new List<byte>();
             byte read;
