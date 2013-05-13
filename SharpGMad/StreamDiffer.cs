@@ -5,134 +5,175 @@ using System.Linq;
 
 namespace SharpGMad
 {
-    class StreamDiffer
+    /// <summary>
+    /// Provides an object to differentiate and update two System.IO.Stream objects.
+    /// </summary>
+    public class StreamDiffer
     {
-        private struct DiffRange
-        {
-            public ulong iPosition;
-            public uint iLength;
-            public List<ByteDiff> bContent;
-            public bool EndOfStream;
-        }
-
+        /// <summary>
+        /// Contains information about a difference of a byte in a stream.
+        /// </summary>
         private struct ByteDiff
         {
+            /// <summary>
+            /// Gets the value of the new byte.
+            /// </summary>
             public byte Value { get; private set; }
+            /// <summary>
+            /// Gets whether the difference indicates that the stream was over.
+            /// </summary>
             public bool EndOfStream { get; private set; }
 
-            public ByteDiff(byte value) : this()
+            /// <summary>
+            /// Creates a new ByteDiff specifying the new byte.
+            /// </summary>
+            /// <param name="value">The new byte itself.</param>
+            public ByteDiff(byte value)
+                : this()
             {
                 Value = value;
                 EndOfStream = false;
             }
 
-            public ByteDiff(bool endOfStream) : this()
+            /// <summary>
+            /// Create a new ByteDiff marking the end of stream.
+            /// </summary>
+            /// <param name="endOfStream">Whether the stream has ended. This is the boolean true in this case.</param>
+            public ByteDiff(bool endOfStream)
+                : this()
             {
                 Value = 0;
                 EndOfStream = true;
             }
         }
 
-        public Stream Storage; // This is the backend stream (e.g: a file)
-        public Stream Volatile; // This is the "buffer" stream, the one that gets written to
-
-        public StreamDiffer(Stream storage)
+        /// <summary>
+        /// A chunk of byte difference.
+        /// </summary>
+        private struct DiffRange
         {
-            Storage = storage;
-
-            Volatile = new MemoryStream();
-
-            Storage.Seek(0, SeekOrigin.Begin);
-            Storage.CopyTo(Volatile);
+            /// <summary>
+            /// Gets or sets the starting point of difference in the stream.
+            /// </summary>
+            public ulong InitialPosition { get; set; }
+            /// <summary>
+            /// Gets or sets the length of the differencing bytes.
+            /// </summary>
+            public uint Length { get; set; }
+            /// <summary>
+            /// Contains the list of differencing bytes as ByteDiff objects.
+            /// </summary>
+            public List<ByteDiff> Bytes { get; set; }
+            /// <summary>
+            /// Gets or sets whether the chunk is marking after the end of stream.
+            /// </summary>
+            public bool EndOfStream { get; set; }
         }
 
-        public void Write(byte[] buffer, int bufferOffset, int count, int streamOffset)
+        /// <summary>
+        /// The stream which is differentially updated by the StreamDiffer.
+        /// </summary>
+        private Stream Backend;
+        /// <summary>
+        /// The stream which is accessed by external code.
+        /// </summary>
+        private Stream Frontend;
+
+        /// <summary>
+        /// Initializes a new instance of StreamDiffer using the specified storage stream.
+        /// </summary>
+        /// <param name="backend">The external stream to update.</param>
+        public StreamDiffer(Stream backend)
         {
-            Volatile.Seek(streamOffset, SeekOrigin.Begin);
-            Volatile.Write(buffer, bufferOffset, count);
+            Backend = backend;
+
+            Frontend = new MemoryStream();
+
+            Backend.Seek(0, SeekOrigin.Begin);
+            Backend.CopyTo(Frontend);
         }
 
+        /// <summary>
+        /// Replaces the contents of the internal stream by copying all bytes from the specified Stream into it.
+        /// </summary>
+        /// <param name="stream">The stream which will have its content copied.</param>
         public void Write(Stream stream)
         {
-            Volatile.Seek(0, SeekOrigin.Begin);
-            Volatile.SetLength(0);
+            Frontend.Seek(0, SeekOrigin.Begin);
+            Frontend.SetLength(0);
 
             stream.Seek(0, SeekOrigin.Begin);
-            
-            stream.CopyTo(Volatile);
+
+            stream.CopyTo(Frontend);
         }
 
-        public void Push()
+        /// <summary>
+        /// Updates the external stream, using byte difference chunks from the internal buffer
+        /// and returns the number of bytes which was updated.
+        /// </summary>
+        public int Push()
         {
-            /*Console.WriteLine("Storage " + Storage.Length + " bytes against volatile " +
-                                Volatile.Length + " bytes.");*/
+            Backend.Seek(0, SeekOrigin.Begin);
+            Frontend.Seek(0, SeekOrigin.Begin);
 
-            Storage.Seek(0, SeekOrigin.Begin);
-            Volatile.Seek(0, SeekOrigin.Begin);
+            int iBackend = 0;
+            int iFrontend = 0;
+            byte bBackend = 0;
+            byte bFrontend = 0;
 
-            byte Porig = 0;
-            byte Ptmp = 0;
+            bool eosBackend = false;
+            bool eosFrontend = false;
 
             Dictionary<long, ByteDiff> differences = new Dictionary<long, ByteDiff>(
-                (int)(Storage.Length > Volatile.Length ? Storage.Length : Volatile.Length));
+                (int)(Backend.Length > Frontend.Length ? Backend.Length : Frontend.Length));
 
-            bool eOrig = false;
-            bool eTmp = false;
-
-            int iOrig = 0;
-            int iTmp = 0;
-
-            for (long i = 0; i <= (Storage.Length > Volatile.Length ? Storage.Length : Volatile.Length); i++)
+            // Analyze the streams.
+            for (long i = 0; i <= (Backend.Length > Frontend.Length ? Backend.Length : Frontend.Length); i++)
             {
-                iOrig = Storage.ReadByte();
-                if (iOrig == -1 || Storage.Position > Storage.Length)
-                    eOrig = true;
+                // Read a byte from backend stream and check whether it's end of stream.
+                iBackend = Backend.ReadByte();
+                if (iBackend == -1 || Backend.Position > Backend.Length)
+                    eosBackend = true;
                 else
-                    Porig = (byte)iOrig;
+                    bBackend = (byte)iBackend;
 
-                iTmp = Volatile.ReadByte();
-                if (iTmp == -1 || Volatile.Position > Volatile.Length)
-                    eTmp = true;
+                // Do the same for the frontend stream.
+                iFrontend = Frontend.ReadByte();
+                if (iFrontend == -1 || Frontend.Position > Frontend.Length)
+                    eosFrontend = true;
                 else
-                    Ptmp = (byte)iTmp;
+                    bFrontend = (byte)iFrontend;
 
-                // original stream is already over
-                // there's still data in buffer stream
-                if (eOrig && !eTmp)
+                // Backend stream is already over, but
+                // there's still data in frontent stream
+                if (eosBackend && !eosFrontend)
                 {
-                    //Console.WriteLine("At " + i + " NULL -> " + Convert.ToChar(Ptmp));
-                    differences.Add(i, new ByteDiff(Ptmp));
+                    differences.Add(i, new ByteDiff(bFrontend)); // Mark a difference
                     continue;
                 }
 
-                // Original still has data, but buffer is over
-                if (!eOrig && eTmp)
+                // Backend still has data, but frontend is over
+                if (!eosBackend && eosFrontend)
                 {
-                    //Console.WriteLine("At " + i + " " + Convert.ToChar(Porig) + " -> NULL");
-                    differences.Add(i, new ByteDiff(true));
+                    differences.Add(i, new ByteDiff(true)); // Mark that the stream has ended
                     continue;
                 }
 
-                // Original and buffer has the same value: no difference
-                if (Porig == Ptmp)
-                {
+                // No difference
+                if (bBackend == bFrontend)
                     continue;
-                }
 
-                // There is a difference
-                if (Porig != Ptmp)
+                // Both stream are still not at end, but there is a diffing byte.
+                if (bBackend != bFrontend)
                 {
-                    //Console.WriteLine("At " + i + " " + Convert.ToChar(Porig) + " -> " + Convert.ToChar(Ptmp));
-                    differences.Add(i, new ByteDiff(Ptmp));
+                    differences.Add(i, new ByteDiff(bFrontend)); // Mark a difference.
                     continue;
                 }
             }
 
-            Console.WriteLine(differences.Count + " bytes differ.");
             if (differences.Count != 0)
             {
-                Console.WriteLine("Analyzing diff, creating chunks.");
-
+                // Create a list of chunks: subsequent differencing bytes in the stream.
                 List<DiffRange> chunks = new List<DiffRange>(differences.Count);
 
                 DiffRange one_diff = new DiffRange();
@@ -155,21 +196,18 @@ namespace SharpGMad
                     {
                         // If we are at the end of a chunk
                         if (lastPos != 0) // If we are not making the first chunk
-                        {
-                            /*Console.WriteLine("Created chunk " + one_diff.iPosition + " -> " +
-                                (one_diff.iPosition + one_diff.iLength - 1));*/
                             chunks.Add(one_diff); // Add previous chunk to list
-                        }
 
                         one_diff = new DiffRange(); // Create new chunk
 
                         // Set first diff of new chunk up
-                        one_diff.iPosition = (ulong)diff.Key;
-                        one_diff.iLength = 1;
-                        one_diff.bContent = new List<ByteDiff>();
+                        one_diff.InitialPosition = (ulong)diff.Key;
+                        one_diff.Length = 1;
+                        one_diff.Bytes = new List<ByteDiff>();
+                        one_diff.Bytes.Add(diff.Value);
+
                         if (diff.Value.EndOfStream)
                             one_diff.EndOfStream = true;
-                        one_diff.bContent.Add(diff.Value);
 
                         lastPos = (ulong)diff.Key;
                         continue;
@@ -178,76 +216,59 @@ namespace SharpGMad
                     {
                         // The current diff byte is sequent to the undergoing chunk
                         // just add the value to the chunk and advance
-                        one_diff.iLength++;
+                        one_diff.Length++;
+                        one_diff.Bytes.Add(diff.Value);
+
+
                         if (diff.Value.EndOfStream)
                             one_diff.EndOfStream = true;
-                        one_diff.bContent.Add(diff.Value);
 
                         lastPos = (ulong)diff.Key;
-
                         continue;
                     }
                 }
 
-                // Add the last chunk we created in the foreach to the list too
-                if (one_diff.iLength != 0)
+                // Add the last chunk we created in the foreach to the List too
+                if (one_diff.Length != 0)
                     chunks.Add(one_diff);
 
+                // Update the backend stream by the chunks
                 for (int i = 0; i <= (chunks.Count - 1); i++)
                 {
-                    DiffRange one_chunk = chunks[i];
-                    /*Console.WriteLine("Updating chunk " + one_chunk.iPosition + " -> " +
-                        (one_chunk.iPosition + one_chunk.iLength - 1));*/
-
-                    /*byte[] value = one_chunk.bContent.Select(s => s.Value).ToArray();
-
-                    Console.WriteLine("Chunk from " + one_chunk.iPosition + " to " +
-                        (one_chunk.iPosition + one_chunk.iLength) + ": " +
-                        Encoding.ASCII.GetString(value));*/
-                    Storage.Seek((long)one_chunk.iPosition, SeekOrigin.Begin);
-                    Storage.Write(one_chunk.bContent.Select(s => s.Value).ToArray(), 0, (int)one_chunk.iLength);
+                    Backend.Seek((long)chunks[i].InitialPosition, SeekOrigin.Begin);
+                    Backend.Write(chunks[i].Bytes.Select(s => s.Value).ToArray(), 0, (int)chunks[i].Length);
                 }
+
                 // If the last chunk contains information about stream truncation at the end
-                // we must shorten the length of the original stream so these bytes
-                // are properly cut off.
+                // we must shorten the length of the original stream so these bytes are properly cut off.
                 if (chunks.Count > 0)
                 {
                     DiffRange lastChunk = chunks[chunks.Count - 1];
-                    if (lastChunk.iPosition == (ulong)Storage.Length - (ulong)lastChunk.iLength)
+                    if (lastChunk.InitialPosition == (ulong)Backend.Length - (ulong)lastChunk.Length && lastChunk.EndOfStream)
                     {
-                        //Console.WriteLine("Is ending chunk.");
-
                         // We set the original ending location to the very end of the chunk
-                        uint endLocation = (uint)lastChunk.iPosition + lastChunk.iLength;
+                        uint endLocation = (uint)lastChunk.InitialPosition + lastChunk.Length;
 
                         // Going from end to beginning, iterate the chunk's content
-                        for (int i = (lastChunk.bContent.Count - 1); i >= 0; i--)
-                        {
-                            // Set the end location of the stream itself
-                            // (the count is the List<byte>'s count!)
-                            if (lastChunk.bContent[i].EndOfStream == true)
-                            {
+                        // and search for location of the first "EndOfStream" byte itself.
+                        for (int i = (lastChunk.Bytes.Count - 1); i >= 0; i--)
+                            if (lastChunk.Bytes[i].EndOfStream == true)
                                 endLocation = (uint)i;
-                            }
-                        }
 
-                        /*if (lastChunk.EndOfStream == true)
-                        {
-                            Console.WriteLine("Stream was over too.");
-                            Console.WriteLine("Will truncate " + (lastChunk.iLength - endLocation) + " bytes.");
-                        }*/
+                        // Get the real (not EOS) bytes from the stream and update backend.
+                        byte[] real_content = lastChunk.Bytes.Take((int)endLocation).Select(s => s.Value).ToArray();
 
-                        byte[] real_content = lastChunk.bContent.Take((int)endLocation).Select(s => s.Value).ToArray();
-
-                        Storage.Seek((long)lastChunk.iPosition, SeekOrigin.Begin);
-                        Storage.Write(real_content, 0, real_content.Length);
-                        Storage.SetLength(Storage.Position);
+                        Backend.Seek((long)lastChunk.InitialPosition, SeekOrigin.Begin);
+                        Backend.Write(real_content, 0, real_content.Length);
+                        Backend.SetLength(Backend.Position); // Then truncate the length.
                     }
                 }
-                Storage.Flush();
 
-                //Console.WriteLine("Original was synced, " + differences.Count + " bytes rewritten.");
+                // Flush the backend stream to ensure everything is written.
+                Backend.Flush();
             }
+
+            return differences.Count;
         }
     }
 }
