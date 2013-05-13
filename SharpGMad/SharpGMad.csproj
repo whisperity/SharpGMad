@@ -50,6 +50,7 @@
     <Compile Include="AddonReader.cs" />
     <Compile Include="AddonWhitelist.cs" />
     <Compile Include="Addon_Json.cs" />
+    <Compile Include="RealtimeCommandline.cs" />
     <Compile Include="CRC32.cs" />
     <Compile Include="CreateAddon.cs" />
     <Compile Include="Extensions.cs" />

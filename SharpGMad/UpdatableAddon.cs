@@ -9,7 +9,7 @@ namespace SharpGMad
 {
     class UpdatableAddon
     {
-        struct ContentFile
+        public struct ContentFile
         {
             public string Path;
             public uint CRC;
@@ -21,7 +21,7 @@ namespace SharpGMad
         public string Author;
         public string Description;
         public string Type;
-        List<ContentFile> Files;
+        public List<ContentFile> Files;
         //char FormatVersion;
         public List<string> Tags;
 

@@ -17,7 +17,7 @@ namespace SharpGMad
         }
     }
 
-    class Program
+    partial class Program
     {
         static int Main(string[] args)
         {
@@ -38,6 +38,9 @@ namespace SharpGMad
                 strCommand = "";
             }
             
+            // Development override
+            strCommand = "realtime";
+
             //
             // Create
             //
@@ -129,6 +132,11 @@ namespace SharpGMad
                 }
 
                 return ExtractAddonFile(strFile, strTarget);
+            }
+
+            if (strCommand == "realtime")
+            {
+                return RealtimeCommandline();
             }
 
             //
@@ -321,6 +329,5 @@ namespace SharpGMad
             // return as bytes
             return iBytes + " B";
         }
-
     }
 } 

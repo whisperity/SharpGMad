@@ -69,6 +69,9 @@ namespace Addon
         //
         public bool Parse()
         {
+            if (m_buffer.Length == 0)
+                return false;
+
             m_buffer.Seek(0, SeekOrigin.Begin);
             BinaryReader br = new BinaryReader(m_buffer);
 
