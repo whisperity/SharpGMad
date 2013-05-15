@@ -76,11 +76,11 @@ namespace SharpGMad
                 // Required content (a list of strings)
                 writer.Write((char)0); // signifies nothing
                 // Addon Name (n)
-                writer.WriteString(strTitle);
+                writer.WriteNullTerminatedString(strTitle);
                 // Addon Description (n)
-                writer.WriteString(descriptionJson);
+                writer.WriteNullTerminatedString(descriptionJson);
                 // Addon Author (n) [unused]
-                writer.WriteString("Author Name");
+                writer.WriteNullTerminatedString("Author Name");
                 // Addon Version (4) [unused]
                 writer.Write((int)1);
                 // File list

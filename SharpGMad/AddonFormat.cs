@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Addon
 {
-    static class Format
+    public static class Format
     {
         public const string Ident = "GMAD";
         public const char Version = (char)3;

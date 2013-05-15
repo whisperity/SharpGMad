@@ -5,223 +5,178 @@ using System.Text;
 using System.IO;
 using System.Runtime.Serialization.Json;
 using System.Runtime.Serialization;
+using Addon;
 
-namespace Addon
+namespace SharpGMad
 {
     class Reader
     {
-        protected MemoryStream m_buffer = new MemoryStream();
-        protected char m_fmtversion;
-        protected string m_name;
-        protected string m_author;
-        protected string m_desc;
-        protected string m_type;
-        protected List<Addon.Format.FileEntry> m_index = new List<Addon.Format.FileEntry>();
-        protected ulong m_fileblock;
-
-        List<string> m_tags;
-
-        private string ReadStringNULDelimiter(BinaryReader br)
+        private MemoryStream Buffer;
+        private char FormatVersion;
+        public string Name { get; private set; }
+        public string Author { get; private set; }
+        public string Description { get; private set; }
+        public string Type { get; private set; }
+        private List<Addon.Format.FileEntry> _Index;
+        public List<Addon.Format.FileEntry> Index
         {
-            List<byte> bytes = new List<byte>();
-            byte read;
-
-            while ((read = br.ReadByte()) != 0x00)
-                bytes.Add(read);
-
-            return (bytes.Count > 0 ? Encoding.ASCII.GetString(bytes.ToArray()) : "");
+            get
+            {
+                return new List<Addon.Format.FileEntry>(_Index);
+            }
+        }
+        private ulong Fileblock;
+        private List<string> _Tags;
+        public List<string> Tags
+        {
+            get
+            {
+                return new List<string>(_Tags);
+            }
         }
 
-        public Reader()
+        private Reader()
         {
-            Clear();
+            Buffer = new MemoryStream();
+            _Index = new List<Addon.Format.FileEntry>();
+            _Tags = new List<string>();
         }
 
-        //
-        // Load an addon (call Parse after this succeeds)
-        //
-        public bool ReadFromFile(string strName)
+        public Reader(string path) : this()
         {
-            // m_buffer.Clear()
-            m_buffer.Seek(0, SeekOrigin.Begin);
-            m_buffer.SetLength(0);
-
             try
             {
-                using (FileStream gmafs = new FileStream(strName, FileMode.Open, FileAccess.Read))
+                using (FileStream gmaFileStream = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
-                    while (gmafs.Position < gmafs.Length)
-                    {
-                        m_buffer.WriteByte((byte)gmafs.ReadByte());
-                    }
+                    gmaFileStream.CopyTo(Buffer);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return false;
+                Console.WriteLine("Unable to load file. An exception happened.");
+                Console.WriteLine(ex.Message);
+                throw new Exception(String.Empty, ex);
             }
 
-            return true;
+            Parse();
         }
 
-        //
-        // Parse the addon into this class
-        //
-        public bool Parse()
+        public Reader(FileStream stream) : this()
         {
-            if (m_buffer.Length == 0)
-                return false;
+            try
+            {
+                stream.Seek(0, SeekOrigin.Begin);
+                stream.CopyTo(Buffer);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Unable to load file from stream. An exception happened.");
+                Console.WriteLine(ex.Message);
+                throw new Exception(String.Empty, ex);
+            }
 
-            m_buffer.Seek(0, SeekOrigin.Begin);
-            BinaryReader br = new BinaryReader(m_buffer);
+            Parse();
+        }
+
+        private void Parse()
+        {
+            if (Buffer.Length == 0)
+                throw new Exception("Attempted to read from empty buffer.");
+
+            Buffer.Seek(0, SeekOrigin.Begin);
+            BinaryReader reader = new BinaryReader(Buffer);
 
             // Ident
-            if (br.ReadChar() != 'G' ||
-                br.ReadChar() != 'M' ||
-                br.ReadChar() != 'A' ||
-                br.ReadChar() != 'D')
-            {
-                
-                return false;
-            }
+            if ( String.Join(String.Empty, reader.ReadChars(Addon.Format.Ident.Length)) != Addon.Format.Ident)
+                throw new Exception("Header mismatch.");
 
-            m_fmtversion = br.ReadChar();
+            FormatVersion = reader.ReadChar();
+            if (FormatVersion > Addon.Format.Version)
+                throw new Exception("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
 
-            if (m_fmtversion > Addon.Format.Version)
-                return false;
+            reader.ReadInt64(); // SteamID (long)
+            reader.ReadInt64(); // Timestamp (long)
 
-            br.ReadInt64(); // steamid (long)
-            br.ReadInt64(); // timestamp (long)
-
-            //
             // Required content (not used at the moment, just read out)
-            //
-            if (m_fmtversion > 1)
+            if (FormatVersion > 1)
             {
-                string strContent = ReadStringNULDelimiter(br);
+                string content = reader.ReadNullTerminatedString();
 
-                while (strContent != String.Empty)
-                {
-                    strContent = ReadStringNULDelimiter(br);
-                }
+                while (content != String.Empty)
+                    content = reader.ReadNullTerminatedString();
             }
 
-            m_name = ReadStringNULDelimiter(br);
-            m_desc = ReadStringNULDelimiter(br);
-            m_author = ReadStringNULDelimiter(br);
+            Name = reader.ReadNullTerminatedString();
+            Description = reader.ReadNullTerminatedString();
+            Author = reader.ReadNullTerminatedString();
+            reader.ReadInt32(); // Addon version (unused)
 
-            //
-            // Addon version - unused
-            //
-            br.ReadInt32();
-
-            //
             // File index
-            //
-            int iFileNumber = 1;
-            int iOffset = 0;
+            int FileNumber = 1;
+            int Offset = 0;
 
-            while (br.ReadUInt32() != 0)
+            while (reader.ReadInt32() != 0)
             {
                 Addon.Format.FileEntry entry = new Addon.Format.FileEntry();
-                entry.strName = ReadStringNULDelimiter(br);
-                entry.iSize = br.ReadInt64(); // long long
-                entry.iCRC = br.ReadUInt32(); // unsigned long
-                entry.iOffset = iOffset;
-                entry.iFileNumber = (uint)iFileNumber;
+                entry.strName = reader.ReadNullTerminatedString();
+                entry.iSize = reader.ReadInt64(); // long long
+                entry.iCRC = reader.ReadUInt32(); // unsigned long
+                entry.iOffset = Offset;
 
-                m_index.Add(entry);
+                _Index.Add(entry);
 
-                iOffset += (int)entry.iSize;
-                iFileNumber++;
+                Offset += (int)entry.iSize;
+                FileNumber++;
             }
 
-            m_fileblock = (ulong)br.BaseStream.Position;
-            //
+            Fileblock = (ulong)reader.BaseStream.Position;
+
             // Try to parse the description
-            //
-            using (MemoryStream desc_stream = new MemoryStream(Encoding.ASCII.GetBytes(m_desc)))
+            using (MemoryStream descStream = new MemoryStream(Encoding.ASCII.GetBytes(Description)))
             {
-                DataContractJsonSerializer jsonFormatter = new DataContractJsonSerializer(typeof(DescriptionJSON));
+                DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(Addon.DescriptionJSON));
                 try
                 {
-                    DescriptionJSON description = (DescriptionJSON)jsonFormatter.ReadObject(desc_stream);
+                    Addon.DescriptionJSON dJSON = (Addon.DescriptionJSON)jsonSerializer.ReadObject(descStream);
 
-                    m_desc = description.Description;
-                    m_type = description.Type;
-                    m_tags = description.Tags;
+                    Description = dJSON.Description;
+                    Type = dJSON.Type;
+                    _Tags = dJSON.Tags;
                 }
                 catch (SerializationException)
                 {
-                    // Noop. The description will stay because it was plaintext, not JSON.
-                    m_type = String.Empty;
-                    m_tags = new List<string>();
+                    // The description is a plaintext in the file.
+                    Type = String.Empty;
+                    _Tags = new List<string>();
                 }
             }
-
-            return true;
         }
 
-        //
-        // Return the FileEntry for a FileID
-        //
-        public bool GetFile(uint iFileID, out Addon.Format.FileEntry outfile)
+        public bool GetEntry(uint fileID, out Addon.Format.FileEntry entry)
         {
-            outfile = new Addon.Format.FileEntry();
-
-            foreach (Addon.Format.FileEntry file in m_index)
+            if (Index.Where(file => file.iFileNumber == fileID).Count() == 0)
             {
-                if (file.iFileNumber == iFileID)
-                {
-                    outfile = file;
-                    return true;
-                }
+                entry = new Addon.Format.FileEntry();
+                return false;
             }
-            return false;
+            else
+            {
+                entry = Index.Where(file => file.iFileNumber == fileID).First();
+                return true;
+            }
         }
 
-        //
-        // Read a fileid from the addon into the buffer
-        //
-        public bool ReadFile(uint iFileID, MemoryStream buffer)
+        public bool GetFile(uint fileID, MemoryStream buffer)
         {
-            Addon.Format.FileEntry file;
-            if (!GetFile(iFileID, out file)) return false;
+            Addon.Format.FileEntry entry;
+            if (!GetEntry(fileID, out entry)) return false;
 
-            byte[] read_buffer = new byte[file.iSize];
-            m_buffer.Seek((long)m_fileblock + (long)file.iOffset, SeekOrigin.Begin);
-            m_buffer.Read(read_buffer, 0, (int)file.iSize);
+            byte[] read_buffer = new byte[entry.iSize];
+            Buffer.Seek((long)Fileblock + (long)entry.iOffset, SeekOrigin.Begin);
+            Buffer.Read(read_buffer, 0, (int)entry.iSize);
 
             buffer.Write(read_buffer, 0, read_buffer.Length);
             return true;
         }
-
-        public void Clear()
-        {
-            // m_buffer.Clear()
-            m_buffer.Seek(0, SeekOrigin.Begin);
-            m_buffer.SetLength(0);
-
-            m_fmtversion = (char)0;
-            m_name = String.Empty;
-            m_author = String.Empty;
-            m_desc = String.Empty;
-            m_index.Clear();
-            m_type = String.Empty;
-            m_fileblock = 0;
-
-            if ( m_tags != null )
-                m_tags.Clear();
-        }
-
-        // Getters... please remove later.
-        public List<Addon.Format.FileEntry> GetList() { return m_index; }
-        public uint GetFormatVersion() { return m_fmtversion; }
-        public MemoryStream GetBuffer() { return m_buffer; }
-        public string Title() { return m_name; }
-        public string Description() { return m_desc; }
-        public string Author() { return m_author; }
-        public string Type() { return m_type; }
-        public List<string> Tags() { return m_tags; }
     }
 }

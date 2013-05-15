@@ -58,14 +58,16 @@ namespace SharpGMad
                 }
             }
         }
-
+        
         static void LoadAddon(string filename)
         {
             Console.WriteLine("Loading file...");
 
             addon = new UpdatableAddon();
 
-            Addon.Reader r = new Addon.Reader();
+            Reader r = new Reader(filename);
+
+            /*Addon.Reader r = new Addon.Reader();
             if (!r.ReadFromFile(filename))
             {
                 Console.WriteLine("There was a problem opening the file.");
@@ -76,21 +78,21 @@ namespace SharpGMad
             {
                 Console.WriteLine("There was a problem parsin the file.");
                 return;
-            }
-
-            addon.Author = r.Author();
-            addon.Title = r.Title();
-            addon.Description = r.Description();
-            addon.Type = r.Type();
-            addon.Tags = r.Tags();
+            }*/
+            
+            addon.Author = r.Author;
+            addon.Title = r.Name;
+            addon.Description = r.Description;
+            addon.Type = r.Type;
+            addon.Tags = r.Tags;
 
             Console.WriteLine("Loaded addon " + addon.Title);
             Console.WriteLine("Loading files from GMA...");
 
-            foreach (Addon.Format.FileEntry file in r.GetList())
+            foreach (Addon.Format.FileEntry file in r.Index)
             {
                 MemoryStream buffer = new MemoryStream();
-                r.ReadFile(file.iFileNumber, buffer);
+                r.GetFile(file.iFileNumber, buffer);
 
                 buffer.Seek(0, SeekOrigin.Begin);
 

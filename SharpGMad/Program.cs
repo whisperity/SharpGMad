@@ -24,7 +24,7 @@ namespace SharpGMad
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Garry's Addon Creator 1.0");
             Console.ResetColor();
-
+            
             //
             // Get the command from the command line - (it should be argument 0)
             //
@@ -255,22 +255,19 @@ namespace SharpGMad
             //
             strOutPath = strOutPath.TrimEnd('/');
             strOutPath = strOutPath + '/';
-            Addon.Reader addon = new Addon.Reader();
-
-            if (!addon.ReadFromFile(strFile))
+            Reader addon;
+            try
             {
-                Output.Warning("There was a problem opening the file");
-                return 1;
+                addon = new Reader(strFile);
             }
-
-            if (!addon.Parse())
+            catch (Exception ex)
             {
-                Output.Warning("There was a problem parsing the file");
+                Output.Warning("There was a problem opening or parsing the file");
                 return 1;
             }
 
             Console.WriteLine("Extracting Files:");
-            foreach ( Addon.Format.FileEntry entry in addon.GetList())
+            foreach ( Addon.Format.FileEntry entry in addon.Index)
             {
                 Console.WriteLine("\t" + entry.strName + " [" + Memory((int)entry.iSize) + "]");
                 // Make sure folder exists
@@ -285,7 +282,7 @@ namespace SharpGMad
                 // Load the file into the buffer
                 using (MemoryStream filecontents = new MemoryStream())
                 {
-                    if ( addon.ReadFile(entry.iFileNumber, filecontents) )
+                    if ( addon.GetFile(entry.iFileNumber, filecontents) )
                     {
                         using(FileStream file = new FileStream(strOutPath + entry.strName, FileMode.Create, FileAccess.Write))
                         {
