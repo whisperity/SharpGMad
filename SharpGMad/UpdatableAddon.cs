@@ -90,7 +90,12 @@ namespace SharpGMad
             // Create an addon file in a buffer
             //
             Dictionary<string, byte[]> fileContents = Files.ToDictionary(k => k.Path, e => e.Content);
-            if (!CreateAddon.Create(out Buffer, fileContents, Title, addonInfo.BuildDescription()))
+            Writer writer;
+            try
+            {
+                writer = new Writer(Title, addonInfo.BuildDescription(), fileContents);
+            }
+            catch (Exception)
             {
                 Output.Warning("Failed to create the addon");
                 return;

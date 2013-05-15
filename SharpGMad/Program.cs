@@ -206,9 +206,14 @@ namespace SharpGMad
             //
             // Create an addon file in a buffer
             //
-            MemoryStream buffer = new MemoryStream();
-
-            if (!CreateAddon.Create(ref buffer, strFolder, ref files, addonInfo.GetTitle(), addonInfo.BuildDescription()))
+            MemoryStream buffer;
+            Writer writer;
+            try
+            {
+                writer = new Writer(addonInfo.GetTitle(), addonInfo.BuildDescription(), strFolder, files);
+                buffer = writer.Get();
+            }
+            catch (Exception)
             {
                 Output.Warning("Failed to create the addon");
                 return 1;

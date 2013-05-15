@@ -49,6 +49,7 @@
     <Compile Include="AddonFormat.cs" />
     <Compile Include="AddonReader.cs" />
     <Compile Include="AddonWhitelist.cs" />
+    <Compile Include="AddonWriter.cs" />
     <Compile Include="Addon_Json.cs" />
     <Compile Include="RealtimeCommandline.cs" />
     <Compile Include="CRC32.cs" />
