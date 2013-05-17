@@ -15,14 +15,14 @@ namespace SharpGMad
             Buffer = new MemoryStream();
         }
 
-        public Writer(string title, string descriptionJson, string folder, List<string> filePaths)
+        public Writer(string title, string descriptionJson, string folder, List<string> filePaths) : this()
         {
             Header(title, descriptionJson);
             Files(folder, filePaths);
             Footer();
         }
 
-        public Writer(string title, string descriptionJson, Dictionary<string, byte[]> fileContents)
+        public Writer(string title, string descriptionJson, Dictionary<string, byte[]> fileContents) : this()
         {
             Header(title, descriptionJson);
             Files(fileContents);
@@ -104,8 +104,18 @@ namespace SharpGMad
             {
                 // Remove prefix / from filename
                 string file = f.TrimStart('/');
+                uint crc;
 
-                uint crc = crc32.ComputeChecksum(File.ReadAllBytes(folder + file)); // unsigned long
+                try
+                {
+                    crc = crc32.ComputeChecksum(File.ReadAllBytes(folder + file)); // unsigned long
+                }
+                catch (Exception ex)
+                {
+                    Output.Warning("Was unable to read file. " + folder + file);
+                    throw new Exception("Unable to read file " + folder + file, ex);
+                }
+
                 FileInfo fi = new FileInfo(folder + file);
                 long size = fi.Length; // long long
                 fileNum++;

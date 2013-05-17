@@ -121,6 +121,7 @@ namespace SharpGMad
                 entry.iSize = reader.ReadInt64(); // long long
                 entry.iCRC = reader.ReadUInt32(); // unsigned long
                 entry.iOffset = Offset;
+                entry.iFileNumber = (uint)FileNumber;
 
                 _Index.Add(entry);
 
