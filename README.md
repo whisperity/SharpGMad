@@ -33,6 +33,31 @@ To extract an existing .gma file into another folder
 `SharpGMad.exe extract -file "C:\steam\etc\garrysmod\addons\my_addon_12345.gma"
 -out "C:\this\folder"`
 
+The realtime console
+--------------------
+
+The realtime console lets you "mount" an addon into the application and
+use it like it was a simple archive.
+
+To use it, simply start the program as
+
+`SharpGMad.exe realtime`
+
+Optionally, you can specify a .gma file to be loaded initially
+
+`SharpGMad.exe realtime -file "C:\steam\etc\garrysmod\addons\my_addon_12345.gma"`
+
+Once running, the following commands will be available to you
+
+    load <filename>          Loads <filename> addon into the memory
+    list                     Lists the files in the memory
+    remove <filename>        Removes <filename> from the archive
+    push                     Writes the addon to the disk
+    close                    Writes the addon and closes it
+    abort                    Unloads the addon from memory, dropping all changes
+    help                     Show the list of available commands
+    exit                     Exits
+
 Compiling and requirements
 --------------------------
 

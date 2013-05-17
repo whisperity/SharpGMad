@@ -38,9 +38,6 @@ namespace SharpGMad
                 strCommand = "";
             }
             
-            // Development override
-            strCommand = "realtime";
-
             //
             // Create
             //
@@ -134,9 +131,21 @@ namespace SharpGMad
                 return ExtractAddonFile(strFile, strTarget);
             }
 
+            // Load the realtime command-line with second parameter of file specified
             if (strCommand == "realtime")
             {
-                return RealtimeCommandline();
+                string strFile;
+                try
+                {
+                    int fileIndex = Array.FindIndex(args, a => a == "-file");
+                    strFile = args[Array.FindIndex(args, a => a == "-file") + 1];
+                }
+                catch (Exception)
+                {
+                    strFile = "";
+                }
+                
+                return RealtimeCommandline(strFile);
             }
 
             //

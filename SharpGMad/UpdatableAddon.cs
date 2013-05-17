@@ -53,8 +53,23 @@ namespace SharpGMad
 
         public void RemoveFile(string strName)
         {
-            ContentFile toRemove = Files.Where(e => e.Path == strName).First();
-            Files.Remove(toRemove);
+            IEnumerable<ContentFile> toRemove = Files.Where(e => e.Path == strName);
+
+            if (toRemove.Count() == 0)
+            {
+                Output.Warning("The file is not in the archive.");
+            }
+            else if (toRemove.Count() == 1)
+            {
+                Files.Remove(toRemove.First());
+                Console.WriteLine("File removed.");
+            }
+            else
+            {
+                Output.Warning("Ambigous argument. More than one file matches.");
+                foreach (ContentFile f in toRemove)
+                    Console.WriteLine(f.Path);
+            }
         }
 
         public void UpdateInternalStream()
@@ -94,8 +109,9 @@ namespace SharpGMad
             try
             {
                 writer = new Writer(Title, addonInfo.BuildDescription(), fileContents);
+                Buffer = writer.Get();
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 Output.Warning("Failed to create the addon");
                 return;
