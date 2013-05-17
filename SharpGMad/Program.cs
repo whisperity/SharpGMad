@@ -138,7 +138,11 @@ namespace SharpGMad
                 try
                 {
                     int fileIndex = Array.FindIndex(args, a => a == "-file");
-                    strFile = args[Array.FindIndex(args, a => a == "-file") + 1];
+
+                    if (fileIndex == -1)
+                        throw new Exception(); // This means that the switch does not exist
+                    else
+                        strFile = args[Array.FindIndex(args, a => a == "-file") + 1];
                 }
                 catch (Exception)
                 {
