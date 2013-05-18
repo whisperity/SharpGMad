@@ -178,53 +178,66 @@ namespace SharpGMad
             //
             // Load the Addon Info file
             //
-            Json addonInfo = new Json(strFolder + "addon.json");
-
-            if (addonInfo.GetError() != String.Empty && addonInfo.GetError() != null)
+            Json addonInfo;
+            try
             {
-                Output.Warning(strFolder + "addon.json" + " error: " + addonInfo.GetError());
+                addonInfo = new Json(strFolder + "addon.json");
+            }
+            catch (Exception ex)
+            {
+                Output.Warning(strFolder + "addon.json" + " error: " + ex.Message);
                 return 1;
             }
+
+            Addon addon = new Addon(addonInfo);
 
             //
             // Get a list of files in the specified folder
             //
-            List<string> files = new List<string>();
             foreach (string f in Directory.GetFiles(strFolder, "*", SearchOption.AllDirectories))
             {
                 string file = f;
                 file = file.Replace(strFolder, String.Empty);
                 file = file.Replace('\\', '/');
-                
-                files.Add(file);
+
+                Console.WriteLine("\t" + file);
+
+                try
+                {
+                    addon.AddFile(file, File.ReadAllBytes(f));
+                }
+                catch (System.IO.IOException)
+                {
+                    Output.Warning("Unable to read file " + file);
+                    continue;
+                }
+                catch (IgnoredException iex)
+                {
+                    Output.Warning("\t\t[Ignored]");
+                    continue;
+                }
+                catch (WhitelistException wex)
+                {
+                    Output.Warning("\t\t[Not allowed by whitelist]");
+                    return 1;
+                }
             }
             //
             // Let the addon json remove the ignored files
             //
-            addonInfo.RemoveIgnoredFiles(ref files);
+            //addonInfo.RemoveIgnoredFiles(ref files);
             //
             // Sort the list into alphabetical order, no real reason - we're just ODC
             //
-            files.Sort();
-
-            //
-            // Verify
-            //
-            if (!CreateAddon.VerifyFiles(ref files, warnInvalid))
-            {
-                Output.Warning("File list verification failed");
-                return 1;
-            }
+            addon.Sort();
 
             //
             // Create an addon file in a buffer
             //
             MemoryStream buffer;
-            Writer writer;
             try
             {
-                writer = new Writer(addonInfo.GetTitle(), addonInfo.BuildDescription(), strFolder, files);
-                buffer = writer.Get();
+                Writer.Create(addon, out buffer);
             }
             catch (Exception)
             {
