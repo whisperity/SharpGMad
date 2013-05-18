@@ -1,10 +1,10 @@
 ﻿using System;
 
-public class Crc32
+public static class Crc32
 {
-    uint[] table;
+    static uint[] table;
 
-    public uint ComputeChecksum(byte[] bytes)
+    public static uint ComputeChecksum(byte[] bytes)
     {
         uint crc = 0xffffffff;
         for (int i = 0; i < bytes.Length; ++i)
@@ -15,12 +15,12 @@ public class Crc32
         return ~crc;
     }
 
-    public byte[] ComputeChecksumBytes(byte[] bytes)
+    public static byte[] ComputeChecksumBytes(byte[] bytes)
     {
         return BitConverter.GetBytes(ComputeChecksum(bytes));
     }
 
-    public Crc32()
+    static Crc32()
     {
         uint poly = 0xedb88320;
         table = new uint[256];

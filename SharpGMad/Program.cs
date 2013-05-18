@@ -285,7 +285,7 @@ namespace SharpGMad
             }
 
             Console.WriteLine("Extracting Files:");
-            foreach ( FileEntry entry in addon.Index)
+            foreach ( Reader.FileEntry entry in addon.Index)
             {
                 Console.WriteLine("\t" + entry.Path + " [" + Memory((int)entry.Size) + "]");
                 // Make sure folder exists

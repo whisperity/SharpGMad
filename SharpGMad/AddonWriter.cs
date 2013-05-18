@@ -59,14 +59,13 @@ namespace SharpGMad
 
             // File list
             uint fileNum = 0;
-            Crc32 crc32 = new Crc32();
 
             foreach (KeyValuePair<string, byte[]> f in fileContents)
             {
                 // Remove prefix / from filename
                 string file = f.Key.TrimStart('/');
 
-                uint crc = crc32.ComputeChecksum(f.Value); // unsigned long
+                uint crc = Crc32.ComputeChecksum(f.Value); // unsigned long
                 long size = (long)f.Value.Length; // long long
                 fileNum++;
 
@@ -98,7 +97,6 @@ namespace SharpGMad
 
             // File list
             uint fileNum = 0;
-            Crc32 crc32 = new Crc32();
 
             foreach (string f in files)
             {
@@ -108,7 +106,7 @@ namespace SharpGMad
 
                 try
                 {
-                    crc = crc32.ComputeChecksum(File.ReadAllBytes(folder + file)); // unsigned long
+                    crc = Crc32.ComputeChecksum(File.ReadAllBytes(folder + file)); // unsigned long
                 }
                 catch (Exception ex)
                 {
@@ -169,13 +167,12 @@ namespace SharpGMad
         private void Footer()
         {
             BinaryWriter writer = new BinaryWriter(Buffer);
-            Crc32 crc32 = new Crc32();
 
             // CRC what we've written (to verify that the download isn't shitted) (4)
             writer.Seek(0, SeekOrigin.Begin);
             byte[] buffer_whole = new byte[writer.BaseStream.Length];
             writer.BaseStream.Read(buffer_whole, 0, (int)writer.BaseStream.Length);
-            ulong addonCRC = crc32.ComputeChecksum(buffer_whole);
+            ulong addonCRC = Crc32.ComputeChecksum(buffer_whole);
             writer.Write(addonCRC);
 
             writer.BaseStream.Seek(0, SeekOrigin.Begin);

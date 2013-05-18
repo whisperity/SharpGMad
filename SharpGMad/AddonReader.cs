@@ -10,6 +10,15 @@ namespace SharpGMad
 {
     class Reader
     {
+        public struct FileEntry
+        {
+            public string Path;
+            public long Size;
+            public ulong CRC;
+            public uint FileNumber;
+            public long Offset;
+        }
+
         private MemoryStream Buffer;
         private char FormatVersion;
         public string Name { get; private set; }
@@ -17,22 +26,10 @@ namespace SharpGMad
         public string Description { get; private set; }
         public string Type { get; private set; }
         private List<FileEntry> _Index;
-        public List<FileEntry> Index
-        {
-            get
-            {
-                return new List<FileEntry>(_Index);
-            }
-        }
+        public List<FileEntry> Index { get { return new List<FileEntry>(_Index); } }
         private ulong Fileblock;
         private List<string> _Tags;
-        public List<string> Tags
-        {
-            get
-            {
-                return new List<string>(_Tags);
-            }
-        }
+        public List<string> Tags { get { return new List<string>(_Tags); } }
 
         private Reader()
         {

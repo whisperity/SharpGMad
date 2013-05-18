@@ -38,18 +38,17 @@ namespace SharpGMad
         public string Author;
         public string Description;
         public string Type;
-        public List<FileEntry> Files;
+        public List<ContentFile> Files;
         public List<string> Tags;
     }
 
-    struct FileEntry
+    struct ContentFile
     {
         public string Path;
-        public long Size;
-        public ulong CRC;
-        public uint FileNumber;
-        public long Offset;
         public byte[] Content;
+
+        public long Size { get { return Content.LongLength; } }
+        public ulong CRC { get { return Crc32.ComputeChecksum(Content); } }
     }
 
     static class Tags

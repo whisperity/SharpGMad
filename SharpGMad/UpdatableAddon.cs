@@ -8,14 +8,6 @@ namespace SharpGMad
 {
     class UpdatableAddon
     {
-        public struct ContentFile
-        {
-            public string Path;
-            public uint CRC;
-            public byte[] Content;
-            public long Size { get { return Content.Length; } }
-        }
-
         public string Title;
         public string Author;
         public string Description;
@@ -40,12 +32,9 @@ namespace SharpGMad
 
         public void AddFile(string strName, byte[] bContent)
         {
-            Crc32 crc32 = new Crc32();
-
             ContentFile content = new ContentFile();
             content.Content = bContent;
             content.Path = strName;
-            content.CRC = crc32.ComputeChecksum(bContent);
 
             Files.Add(content);
         }

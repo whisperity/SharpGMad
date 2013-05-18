@@ -138,7 +138,7 @@ namespace SharpGMad
             Console.WriteLine("Loaded addon " + addon.Title);
             Console.WriteLine("Loading files from GMA...");
 
-            foreach (FileEntry file in r.Index)
+            foreach (Reader.FileEntry file in r.Index)
             {
                 MemoryStream buffer = new MemoryStream();
                 r.GetFile(file.FileNumber, buffer);
@@ -161,7 +161,7 @@ namespace SharpGMad
         static void ListFiles()
         {
             Console.WriteLine(addon.Files.Count + " files in archive:");
-            foreach (UpdatableAddon.ContentFile file in addon.Files)
+            foreach (ContentFile file in addon.Files)
             {
                 Console.WriteLine(file.Path + " (" + Program.Memory((int)file.Size) + ")");
             }
