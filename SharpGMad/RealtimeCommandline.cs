@@ -8,7 +8,7 @@ namespace SharpGMad
 {
     partial class Program
     {
-        static UpdatableAddon addon;
+        static Addon addon;
         static string filePath;
         static string CommandlinePrefix = "SharpGMad>";
 
@@ -31,7 +31,7 @@ namespace SharpGMad
                 switch (args[0])
                 {
                     case "load":
-                        if (addon is UpdatableAddon)
+                        if (addon is Addon)
                         {
                             Output.Warning("An addon is already open. Please close it first.");
                             break;
@@ -90,7 +90,7 @@ namespace SharpGMad
                         Console.WriteLine("Available commands:");
                         Console.WriteLine("load <filename>                    Loads <filename> addon into the memory");
 
-                        if (addon is UpdatableAddon)
+                        if (addon is Addon)
                         {
                             Console.WriteLine("list                               Lists the files in the memory");
                             Console.WriteLine("remove <filename>                  Removes <filename> from the archive");
@@ -104,7 +104,7 @@ namespace SharpGMad
 
                         break;
                     case "exit":
-                        if (addon is UpdatableAddon)
+                        if (addon is Addon)
                         {
                             Output.Warning("Cannot exit. An addon is open!");
                             break;
@@ -123,39 +123,9 @@ namespace SharpGMad
         {
             Console.WriteLine("Loading file...");
 
-            addon = new UpdatableAddon();
+            addon = new Addon(new Reader(filename));
             filePath = filename;
             CommandlinePrefix = filename + ">";
-
-            Reader r = new Reader(filename);
-                        
-            addon.Author = r.Author;
-            addon.Title = r.Name;
-            addon.Description = r.Description;
-            addon.Type = r.Type;
-            addon.Tags = r.Tags;
-
-            Console.WriteLine("Loaded addon " + addon.Title);
-            Console.WriteLine("Loading files from GMA...");
-
-            foreach (Reader.FileEntry file in r.Index)
-            {
-                MemoryStream buffer = new MemoryStream();
-                r.GetFile(file.FileNumber, buffer);
-
-                buffer.Seek(0, SeekOrigin.Begin);
-
-                byte[] bytes = new byte[buffer.Length];
-                buffer.Read(bytes, 0, (int)buffer.Length);
-
-                addon.AddFile(file.Path, bytes);
-
-                Console.WriteLine(file.Path + " loaded.");
-            }
-
-            addon.UpdateInternalStream();
-
-            Console.WriteLine("Addon opened successfully.");
         }
 
         static void ListFiles()
@@ -170,7 +140,6 @@ namespace SharpGMad
         static void RemoveFile(string filename)
         {
             addon.RemoveFile(filename);
-            addon.UpdateInternalStream();
         }
 
         static void Push()
@@ -193,8 +162,10 @@ namespace SharpGMad
                 return;
             }
 
+            MemoryStream ms;
             StreamDiffer sd = new StreamDiffer(fileStream);
-            sd.Write(addon.Buffer);
+            Writer.Create(addon, out ms);
+            sd.Write(ms);
             sd.Push();
 
             fileStream.Close();
