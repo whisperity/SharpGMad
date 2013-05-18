@@ -140,9 +140,6 @@ namespace SharpGMad
             Type = reader.Type;
             Tags = reader.Tags;
 
-            Console.WriteLine("Loaded addon " + Title);
-            Console.WriteLine("Loading files from GMA...");
-
             foreach (Reader.IndexEntry file in reader.Index)
             {
                 MemoryStream buffer = new MemoryStream();
@@ -154,11 +151,7 @@ namespace SharpGMad
                 buffer.Read(bytes, 0, (int)buffer.Length);
 
                 AddFile(file.Path, bytes);
-
-                Console.WriteLine(file.Path + " loaded.");
             }
-
-            Console.WriteLine("Addon opened successfully.");
         }
 
         /// <summary>
@@ -204,6 +197,8 @@ namespace SharpGMad
         /// </summary>
         /// <param name="path">The path of the file.</param>
         /// <param name="content">Array of bytes containing the file content.</param>
+        /// <exception cref="WhitelistException">The file is prohibited from storing by the global whitelist.</exception>
+        /// <exception cref="IgnoredException">The file is prohibited from storing by the addon's ignore list.</exception>
         public void AddFile(string path, byte[] content)
         {
             if (path.ToLowerInvariant() != path)
@@ -238,25 +233,15 @@ namespace SharpGMad
         /// Removes the specified file and its contents from the internal storage.
         /// </summary>
         /// <param name="path">The path of the file.</param>
+        /// <exception cref="FileNotFoundException">The specified file is not in the collection.</exception>
         public void RemoveFile(string path)
         {
             IEnumerable<ContentFile> toRemove = _Files.Where(e => e.Path == path);
 
             if (toRemove.Count() == 0)
-            {
-                Output.Warning("The file is not in the archive.");
-            }
+                throw new FileNotFoundException("The file is not in the archive.");
             else if (toRemove.Count() == 1)
-            {
                 _Files.Remove(toRemove.First());
-                Console.WriteLine("File removed.");
-            }
-            else
-            {
-                Output.Warning("Ambigous argument. More than one file matches.");
-                foreach (ContentFile f in toRemove)
-                    Console.WriteLine(f.Path);
-            }
         }
     }
 

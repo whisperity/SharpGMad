@@ -9,6 +9,20 @@ using System.Text;
 namespace SharpGMad
 {
     /// <summary>
+    /// Represents an error regarding reading addon files.
+    /// </summary>
+    [Serializable]
+    public class ReaderException : Exception
+    {
+        public ReaderException() { }
+        public ReaderException(string message) : base(message) { }
+        public ReaderException(string message, Exception inner) : base(message, inner) { }
+        protected ReaderException(
+          SerializationInfo info,
+          StreamingContext context)
+            : base(info, context) { }
+    }
+    /// <summary>
     /// Provides methods for reading a compiled GMA file.
     /// </summary>
     class Reader
@@ -99,6 +113,7 @@ namespace SharpGMad
         /// Reads and parses the specified addon file.
         /// </summary>
         /// <param name="path">The path of the file.</param>
+        /// <exception cref="System.IO.IOException">Any sort of error regarding access to the specified file.</exception>
         public Reader(string path)
             : this()
         {
@@ -109,11 +124,9 @@ namespace SharpGMad
                     gmaFileStream.CopyTo(Buffer);
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
-                Console.WriteLine("Unable to load file. An exception happened.");
-                Console.WriteLine(ex.Message);
-                throw new Exception(String.Empty, ex);
+                throw ex;
             }
 
             Parse();
@@ -123,6 +136,7 @@ namespace SharpGMad
         /// Reads and parses the specified addon file.
         /// </summary>
         /// <param name="stream">The file stream representing the addon file.</param>
+        /// <exception cref="System.IO.IOException">Any sort of error regarding reading from the provided stream.</exception>
         public Reader(FileStream stream)
             : this()
         {
@@ -131,11 +145,9 @@ namespace SharpGMad
                 stream.Seek(0, SeekOrigin.Begin);
                 stream.CopyTo(Buffer);
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
-                Console.WriteLine("Unable to load file from stream. An exception happened.");
-                Console.WriteLine(ex.Message);
-                throw new Exception(String.Empty, ex);
+                throw ex;
             }
 
             Parse();
@@ -144,21 +156,22 @@ namespace SharpGMad
         /// <summary>
         /// Parses the read addon stream into the instance properties.
         /// </summary>
+        /// <exception cref="ReaderException">Parsing errors.</exception>
         private void Parse()
         {
             if (Buffer.Length == 0)
-                throw new Exception("Attempted to read from empty buffer.");
+                throw new ReaderException("Attempted to read from empty buffer.");
 
             Buffer.Seek(0, SeekOrigin.Begin);
             BinaryReader reader = new BinaryReader(Buffer);
 
             // Ident
             if (String.Join(String.Empty, reader.ReadChars(Addon.Ident.Length)) != Addon.Ident)
-                throw new Exception("Header mismatch.");
+                throw new ReaderException("Header mismatch.");
 
             FormatVersion = reader.ReadChar();
             if (FormatVersion > Addon.Version)
-                throw new Exception("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
+                throw new ReaderException("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
 
             reader.ReadInt64(); // SteamID (long)
             reader.ReadInt64(); // Timestamp (long)

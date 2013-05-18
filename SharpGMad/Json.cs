@@ -106,6 +106,7 @@ namespace SharpGMad
         /// Initializes a JSON reader instance, reading the specified file.
         /// </summary>
         /// <param name="infoFile">The addon.json file to read.</param>
+        /// <exception cref="AddonJSONException">Errors regarding reading/parsing the JSON.</exception>
         public Json(string infoFile)
         {
             _Ignores = new List<string>();
@@ -117,7 +118,7 @@ namespace SharpGMad
             {
                 fileContents = File.ReadAllText(infoFile);
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 throw new AddonJSONException("Couldn't find file", ex);
             }
@@ -178,12 +179,13 @@ namespace SharpGMad
             if (tree.Ignore != null)
                 _Ignores.AddRange(tree.Ignore);
         }
-
+        
         /// <summary>
         /// Creates a JSON string using the properties of the provided Addon.
         /// </summary>
         /// <param name="addon">The addon which metadata is to be used.</param>
         /// <returns>The compiled JSON string.</returns>
+        /// <exception cref="AddonJSONException">Errors regarding creating the JSON.</exception>
         public static string BuildDescription(Addon addon)
         {
             DescriptionJSON tree = new DescriptionJSON();
@@ -191,19 +193,19 @@ namespace SharpGMad
 
             // Load the addon type
             if (addon.Type.ToLowerInvariant() == String.Empty || addon.Type.ToLowerInvariant() == null)
-                throw new Exception("type is empty!");
+                throw new AddonJSONException("type is empty!");
             else
             {
                 if (!SharpGMad.Tags.TypeExists(addon.Type.ToLowerInvariant()))
                     throw new AddonJSONException("type isn't a supported type!");
                 else
-                    tree.Type = tree.Type.ToLowerInvariant();
+                    tree.Type = addon.Type.ToLowerInvariant();
             }
 
             // Parse the tags
             tree.Tags = new List<string>();
             if (addon.Tags.Count > 2)
-                throw new Exception("too many tags - specify 2 only!");
+                throw new AddonJSONException("too many tags - specify 2 only!");
             else
             {
                 foreach (string tag in addon.Tags)
@@ -229,7 +231,7 @@ namespace SharpGMad
                 }
                 catch (SerializationException ex)
                 {
-                    throw new AddonJSONException("Couldn't parse json", ex);
+                    throw new AddonJSONException("Couldn't create json", ex);
                 }
 
                 stream.Seek(0, SeekOrigin.Begin);
