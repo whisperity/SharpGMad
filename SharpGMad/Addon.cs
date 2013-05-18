@@ -72,6 +72,7 @@ namespace SharpGMad
         {
             _Files = new List<ContentFile>();
             Tags = new List<string>();
+            Ignores = new List<string>();
         }
 
         public Addon(Reader reader)

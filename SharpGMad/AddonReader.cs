@@ -138,7 +138,7 @@ namespace SharpGMad
 
                     Description = dJSON.Description;
                     Type = dJSON.Type;
-                    _Tags = dJSON.Tags;
+                    _Tags = new List<string>(dJSON.Tags);
                 }
                 catch (SerializationException)
                 {

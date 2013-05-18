@@ -286,10 +286,10 @@ namespace SharpGMad
             //
             strOutPath = strOutPath.TrimEnd('/');
             strOutPath = strOutPath + '/';
-            Reader addon;
+            Addon addon;
             try
             {
-                addon = new Reader(strFile);
+                addon = new Addon(new Reader(strFile));
             }
             catch (Exception ex)
             {
@@ -298,7 +298,7 @@ namespace SharpGMad
             }
 
             Console.WriteLine("Extracting Files:");
-            foreach ( Reader.FileEntry entry in addon.Index)
+            foreach (ContentFile entry in addon.Files)
             {
                 Console.WriteLine("\t" + entry.Path + " [" + Memory((int)entry.Size) + "]");
                 // Make sure folder exists
@@ -310,18 +310,14 @@ namespace SharpGMad
                 {
                     // Noop
                 }
-                // Load the file into the buffer
-                using (MemoryStream filecontents = new MemoryStream())
+                // Write the file to the disk
+                using (FileStream file = new FileStream(strOutPath + entry.Path, FileMode.Create, FileAccess.Write))
                 {
-                    if ( addon.GetFile(entry.FileNumber, filecontents) )
+                    try
                     {
-                        using(FileStream file = new FileStream(strOutPath + entry.Path, FileMode.Create, FileAccess.Write))
-                        {
-                            filecontents.Seek(0, SeekOrigin.Begin);
-                            filecontents.CopyTo(file);
-                        }
+                        file.Write(entry.Content, 0, (int)entry.Size);
                     }
-                    else
+                    catch (Exception ex)
                     {
                         Output.Warning("\t\tCouldn't extract!");
                     }
