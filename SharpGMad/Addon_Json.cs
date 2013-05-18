@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 
-namespace Addon
+namespace SharpGMad
 {
     [DataContract]
     public class DescriptionJSON
@@ -130,7 +130,7 @@ namespace Addon
                 //
                 // Verify that the addon type is valid by checking it against the list of valids
                 //
-                if (!Addon.Format.Tags.TypeExists(m_AddonType))
+                if (!Tags.TypeExists(m_AddonType))
                 {
                     m_strError = "type isn't a supported type!";
                     return;
@@ -160,7 +160,7 @@ namespace Addon
 
                     m_Tags.Add(child.ToLowerInvariant());
 
-                    if (!Addon.Format.Tags.TagExists(child.ToLowerInvariant()))
+                    if (!Tags.TagExists(child.ToLowerInvariant()))
                     {
                         m_strError = "tag isn't a supported word!";
                         return;
@@ -202,7 +202,7 @@ namespace Addon
                 //
                 foreach (string ignore in m_Ignores)
                 {
-                    if (Addon.Whitelist.TestWildcard(ignore, f))
+                    if (Whitelist.TestWildcard(ignore, f))
                     {
                         bSkipFile = true;
                         break;

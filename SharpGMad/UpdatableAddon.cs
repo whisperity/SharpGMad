@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using Addon;
 
 namespace SharpGMad
 {
@@ -77,7 +76,7 @@ namespace SharpGMad
             //
             // Load the Addon Info file
             //
-            Addon.Json addonInfo = new Addon.Json(Title, Description, Type, Tags, new List<string>());
+            Json addonInfo = new Json(Title, Description, Type, Tags, new List<string>());
 
             //
             // Get a list of files in the specified folder

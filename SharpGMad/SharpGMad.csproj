@@ -46,7 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddonFormat.cs" />
+    <Compile Include="Addon.cs" />
     <Compile Include="AddonReader.cs" />
     <Compile Include="AddonWhitelist.cs" />
     <Compile Include="AddonWriter.cs" />

@@ -34,7 +34,7 @@ namespace SharpGMad
                 // Check the file against the whitelist
                 // Lowercase the name (addon filesystem is case insentive)
                 //
-                if (Addon.Whitelist.Check(file.ToLowerInvariant()))
+                if (Whitelist.Check(file.ToLowerInvariant()))
                     files.Add(file);
                 else
                 {

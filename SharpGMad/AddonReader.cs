@@ -16,12 +16,12 @@ namespace SharpGMad
         public string Author { get; private set; }
         public string Description { get; private set; }
         public string Type { get; private set; }
-        private List<Addon.Format.FileEntry> _Index;
-        public List<Addon.Format.FileEntry> Index
+        private List<FileEntry> _Index;
+        public List<FileEntry> Index
         {
             get
             {
-                return new List<Addon.Format.FileEntry>(_Index);
+                return new List<FileEntry>(_Index);
             }
         }
         private ulong Fileblock;
@@ -37,7 +37,7 @@ namespace SharpGMad
         private Reader()
         {
             Buffer = new MemoryStream();
-            _Index = new List<Addon.Format.FileEntry>();
+            _Index = new List<FileEntry>();
             _Tags = new List<string>();
         }
 
@@ -86,11 +86,11 @@ namespace SharpGMad
             BinaryReader reader = new BinaryReader(Buffer);
 
             // Ident
-            if ( String.Join(String.Empty, reader.ReadChars(Addon.Format.Ident.Length)) != Addon.Format.Ident)
+            if ( String.Join(String.Empty, reader.ReadChars(Addon.Ident.Length)) != Addon.Ident)
                 throw new Exception("Header mismatch.");
 
             FormatVersion = reader.ReadChar();
-            if (FormatVersion > Addon.Format.Version)
+            if (FormatVersion > Addon.Version)
                 throw new Exception("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
 
             reader.ReadInt64(); // SteamID (long)
@@ -116,16 +116,16 @@ namespace SharpGMad
 
             while (reader.ReadInt32() != 0)
             {
-                Addon.Format.FileEntry entry = new Addon.Format.FileEntry();
-                entry.strName = reader.ReadNullTerminatedString();
-                entry.iSize = reader.ReadInt64(); // long long
-                entry.iCRC = reader.ReadUInt32(); // unsigned long
-                entry.iOffset = Offset;
-                entry.iFileNumber = (uint)FileNumber;
+                FileEntry entry = new FileEntry();
+                entry.Path = reader.ReadNullTerminatedString();
+                entry.Size = reader.ReadInt64(); // long long
+                entry.CRC = reader.ReadUInt32(); // unsigned long
+                entry.Offset = Offset;
+                entry.FileNumber = (uint)FileNumber;
 
                 _Index.Add(entry);
 
-                Offset += (int)entry.iSize;
+                Offset += (int)entry.Size;
                 FileNumber++;
             }
 
@@ -134,10 +134,10 @@ namespace SharpGMad
             // Try to parse the description
             using (MemoryStream descStream = new MemoryStream(Encoding.ASCII.GetBytes(Description)))
             {
-                DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(Addon.DescriptionJSON));
+                DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(DescriptionJSON));
                 try
                 {
-                    Addon.DescriptionJSON dJSON = (Addon.DescriptionJSON)jsonSerializer.ReadObject(descStream);
+                    DescriptionJSON dJSON = (DescriptionJSON)jsonSerializer.ReadObject(descStream);
 
                     Description = dJSON.Description;
                     Type = dJSON.Type;
@@ -152,28 +152,28 @@ namespace SharpGMad
             }
         }
 
-        public bool GetEntry(uint fileID, out Addon.Format.FileEntry entry)
+        public bool GetEntry(uint fileID, out FileEntry entry)
         {
-            if (Index.Where(file => file.iFileNumber == fileID).Count() == 0)
+            if (Index.Where(file => file.FileNumber == fileID).Count() == 0)
             {
-                entry = new Addon.Format.FileEntry();
+                entry = new FileEntry();
                 return false;
             }
             else
             {
-                entry = Index.Where(file => file.iFileNumber == fileID).First();
+                entry = Index.Where(file => file.FileNumber == fileID).First();
                 return true;
             }
         }
 
         public bool GetFile(uint fileID, MemoryStream buffer)
         {
-            Addon.Format.FileEntry entry;
+            FileEntry entry;
             if (!GetEntry(fileID, out entry)) return false;
 
-            byte[] read_buffer = new byte[entry.iSize];
-            Buffer.Seek((long)Fileblock + (long)entry.iOffset, SeekOrigin.Begin);
-            Buffer.Read(read_buffer, 0, (int)entry.iSize);
+            byte[] read_buffer = new byte[entry.Size];
+            Buffer.Seek((long)Fileblock + (long)entry.Offset, SeekOrigin.Begin);
+            Buffer.Read(read_buffer, 0, (int)entry.Size);
 
             buffer.Write(read_buffer, 0, read_buffer.Length);
             return true;

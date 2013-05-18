@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Addon
+namespace SharpGMad
 {
     class Whitelist
     {

@@ -178,7 +178,7 @@ namespace SharpGMad
             //
             // Load the Addon Info file
             //
-            Addon.Json addonInfo = new Addon.Json(strFolder + "addon.json");
+            Json addonInfo = new Json(strFolder + "addon.json");
 
             if (addonInfo.GetError() != String.Empty && addonInfo.GetError() != null)
             {
@@ -285,13 +285,13 @@ namespace SharpGMad
             }
 
             Console.WriteLine("Extracting Files:");
-            foreach ( Addon.Format.FileEntry entry in addon.Index)
+            foreach ( FileEntry entry in addon.Index)
             {
-                Console.WriteLine("\t" + entry.strName + " [" + Memory((int)entry.iSize) + "]");
+                Console.WriteLine("\t" + entry.Path + " [" + Memory((int)entry.Size) + "]");
                 // Make sure folder exists
                 try
                 {
-                    Directory.CreateDirectory(strOutPath + Path.GetDirectoryName(entry.strName));
+                    Directory.CreateDirectory(strOutPath + Path.GetDirectoryName(entry.Path));
                 }
                 catch (Exception)
                 {
@@ -300,9 +300,9 @@ namespace SharpGMad
                 // Load the file into the buffer
                 using (MemoryStream filecontents = new MemoryStream())
                 {
-                    if ( addon.GetFile(entry.iFileNumber, filecontents) )
+                    if ( addon.GetFile(entry.FileNumber, filecontents) )
                     {
-                        using(FileStream file = new FileStream(strOutPath + entry.strName, FileMode.Create, FileAccess.Write))
+                        using(FileStream file = new FileStream(strOutPath + entry.Path, FileMode.Create, FileAccess.Write))
                         {
                             filecontents.Seek(0, SeekOrigin.Begin);
                             filecontents.CopyTo(file);

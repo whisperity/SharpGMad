@@ -34,8 +34,8 @@ namespace SharpGMad
             BinaryWriter writer = new BinaryWriter(Buffer);
 
             // Header (5)
-            writer.Write(Addon.Format.Ident.ToCharArray()); // Ident (4)
-            writer.Write((char)Addon.Format.Version); // Version (1)
+            writer.Write(Addon.Ident.ToCharArray()); // Ident (4)
+            writer.Write((char)Addon.Version); // Version (1)
             // SteamID (8) [unused]
             writer.Write((ulong)0);
             // TimeStamp (8)
