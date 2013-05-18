@@ -30,47 +30,41 @@ namespace SharpGMad
 
                 switch (args[0])
                 {
-                    case "load":
-                        if (addon is Addon)
+                    case "new":
+                        try
                         {
-                            Output.Warning("An addon is already open. Please close it first.");
+                            NewAddon(args[1]);
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            Output.Warning("The filename was not specified.");
                             break;
                         }
 
+                        break;
+                    case "load":
                         try
                         {
                             LoadAddon(args[1]);
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            Console.WriteLine("The filename was not specified.");
+                            Output.Warning("The filename was not specified.");
                             break;
                         }
 
                         break;
                     case "list":
-                        if ( addon == null )
-                        {
-                            Output.Warning("No addon is open.");
-                            break;
-                        }
-
                         ListFiles();
                         break;
                     case "remove":
-                        if ( addon == null)
-                        {
-                            Output.Warning("No addon is open.");
-                            break;
-                        }
-
                         try
                         {
                             RemoveFile(args[1]);
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            Console.WriteLine("The filename was not specified.");
+                            Output.Warning("The filename was not specified.");
                             break;
                         }
 
@@ -85,22 +79,37 @@ namespace SharpGMad
                         Push();
                         CloseAddon();
                         break;
+                    case "path":
+                        FullPath();
+                        break;
                     case "?":
                     case "help":
+                        Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("Available commands:");
-                        Console.WriteLine("load <filename>                    Loads <filename> addon into the memory");
+                        Console.ResetColor();
+
+                        if (addon == null)
+                        {
+                            Console.WriteLine("load <filename>                Loads <filename> addon into the memory");
+                            Console.WriteLine("new <filename>                 Create a new, empty addon named <filename>");
+                        }
 
                         if (addon is Addon)
                         {
-                            Console.WriteLine("list                               Lists the files in the memory");
-                            Console.WriteLine("remove <filename>                  Removes <filename> from the archive");
-                            Console.WriteLine("push                               Writes the addon to the disk");
-                            Console.WriteLine("close                              Writes addon and closes it");
-                            Console.WriteLine("abort                              Unloads the addon from memory, dropping all changes");
+                            Console.WriteLine("list                           Lists the files in the memory");
+                            Console.WriteLine("remove <filename>              Removes <filename> from the archive");
+                            Console.WriteLine("push                           Writes the addon to the disk");
+                            Console.WriteLine("close                          Writes addon and closes it");
+                            Console.WriteLine("abort                          Unloads the addon from memory, dropping all changes");
+                            Console.WriteLine("path                           Prints the full path of the current addon.");
                         }
 
                         Console.WriteLine("help                               Show the list of available commands");
-                        Console.WriteLine("exit                               Exits");
+
+                        if (addon == null)
+                        {
+                            Console.WriteLine("exit                               Exits");
+                        }
 
                         break;
                     case "exit":
@@ -118,18 +127,173 @@ namespace SharpGMad
                 }
             }
         }
-        
+
+        static void NewAddon(string filename)
+        {
+            if (addon is Addon)
+            {
+                Output.Warning("An addon is already open. Please close it first.");
+                return;
+            }
+
+            if (File.Exists(filename))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("This file already exists. You might want to load it instead.");
+                Console.ResetColor();
+                return;
+            }
+
+            //
+            // Make sure OutFile ends in .gma
+            //
+            filename = Path.GetFileNameWithoutExtension(filename);
+            filename += ".gma";
+
+            Console.WriteLine("Creating new file...");
+
+            CommandlinePrefix = filename + " (setup)>";
+            addon = new Addon();
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write("Title? ");
+            Console.ResetColor();
+            string title = Console.ReadLine();
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.Write("Short description? ");
+            Console.ResetColor();
+            string desc = Console.ReadLine();
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Author? ");
+            Console.ResetColor();
+            Console.WriteLine("This currently has no effect as the addon is always written with \"Author Name\".");
+            //string author = Console.ReadLine();
+            string author = "Author Name";
+
+            string type = String.Empty;
+            while (!Tags.TypeExists(type))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Type? ");
+                Console.ResetColor();
+                Console.Write("Please choose ONE from the following: ");
+                Console.WriteLine(String.Join(" ", Tags.Type));
+                type = Console.ReadLine();
+
+                if (!Tags.TypeExists(type))
+                {
+                    Output.Warning("The specified type is not valid.");
+                }
+            }
+
+            List<string> tags = new List<string>(2);
+            bool allTagsValid = false;
+            while (!allTagsValid)
+            {
+                tags.Clear();
+
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Tags? ");
+                Console.ResetColor();
+                Console.Write("Please choose ZERO, ONE or TWO from the following: ");
+                Console.WriteLine(String.Join(" ", Tags.Misc));
+
+                string[] tagsInput = Console.ReadLine().Split(' ');
+
+                allTagsValid = true;
+
+                // More than zero (one or two) elements: add the first one.
+                if (tagsInput.Count() > 0)
+                {
+                    if (!Tags.TagExists(tagsInput[0]))
+                    {
+                        Output.Warning("The specified tag \"" + tagsInput[0] + "\" is not valid.");
+                        allTagsValid = false;
+                        continue;
+                    }
+                    else
+                        tags.Add(tagsInput[0]);
+                }
+                
+                // More than one (two) elements: add the second one too.
+                if (tagsInput.Count() > 1)
+                {
+                    if (!Tags.TagExists(tagsInput[1]))
+                    {
+                        Output.Warning("The specified tag \"" + tagsInput[1] + "\" is not valid.");
+                        allTagsValid = false;
+                        continue;
+                    }
+                    else
+                        tags.Add(tagsInput[1]);
+                }
+            }
+
+            addon.Title = title;
+            addon.Description = desc;
+            addon.Author = author;
+            addon.Type = type;
+            addon.Tags = tags;
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Successfully set up initial addon.");
+            Console.ResetColor();
+
+            // Write initial content
+            filePath = filename;
+            FileStream fileStream;
+            try
+            {
+                fileStream = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+            }
+            catch (Exception e)
+            {
+                Output.Warning("There was a problem opening the file.");
+                Console.WriteLine(e.Message);
+                CloseAddon();
+                return;
+            }
+
+            MemoryStream ms;
+            StreamDiffer sd = new StreamDiffer(fileStream);
+            Writer.Create(addon, out ms);
+            sd.Write(ms);
+            sd.Push();
+
+            fileStream.Close();
+
+            CommandlinePrefix = filename + ">";
+        }
+
         static void LoadAddon(string filename)
         {
+            if (addon is Addon)
+            {
+                Output.Warning("An addon is already open. Please close it first.");
+                return;
+            }
+
             Console.WriteLine("Loading file...");
 
             addon = new Addon(new Reader(filename));
+
+            foreach (ContentFile f in addon.Files)
+                Console.WriteLine("\t" + f.Path + " [" + Memory((int)f.Size) + "]");
+
             filePath = filename;
             CommandlinePrefix = filename + ">";
         }
 
         static void ListFiles()
         {
+            if (addon == null)
+            {
+                Output.Warning("No addon is open.");
+                return;
+            }
+
             Console.WriteLine(addon.Files.Count + " files in archive:");
             foreach (ContentFile file in addon.Files)
             {
@@ -139,6 +303,12 @@ namespace SharpGMad
 
         static void RemoveFile(string filename)
         {
+            if (addon == null)
+            {
+                Output.Warning("No addon is open.");
+                return;
+            }
+
             addon.RemoveFile(filename);
         }
 
@@ -181,6 +351,17 @@ namespace SharpGMad
 
             addon = null;
             CommandlinePrefix = "SharpGMad>";
+        }
+
+        static void FullPath()
+        {
+            if (addon == null)
+            {
+                Output.Warning("No addon is open.");
+                return;
+            }
+
+            Console.WriteLine(Path.GetFullPath(filePath));
         }
     }
 }

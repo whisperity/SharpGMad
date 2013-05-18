@@ -11,7 +11,7 @@ namespace SharpGMad
         /// Contains a list of addon types.
         /// Addons may have ONE of these values.
         /// </summary>
-        private static string[] Type = new string[]{
+        public static string[] Type = new string[]{
             "gamemode",
             "map",
             "weapon",
@@ -33,7 +33,7 @@ namespace SharpGMad
         /// Contains a list of addon tags.
         /// Addons may have up to TWO of these values.
         /// </summary>
-        private static string[] Misc = new string[]{
+        public static string[] Misc = new string[]{
             "fun",
             "roleplay",
             "scenic",

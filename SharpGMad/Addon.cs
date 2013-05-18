@@ -118,9 +118,9 @@ namespace SharpGMad
         public List<string> Ignores;
 
         /// <summary>
-        /// Sets up object references internally in the class.
+        /// Initializes an new, empty Addon instance.
         /// </summary>
-        private Addon()
+        public Addon()
         {
             _Files = new List<ContentFile>();
             Tags = new List<string>();
@@ -158,7 +158,8 @@ namespace SharpGMad
         /// Sets up a new instance of Addon using the metadata provided from the specified JSON.
         /// </summary>
         /// <param name="addonJson">The JSON instance containing the metadata to use.</param>
-        public Addon(Json addonJson) : this()
+        public Addon(Json addonJson)
+            : this()
         {
             Title = addonJson.Title;
             Description = addonJson.Description;
