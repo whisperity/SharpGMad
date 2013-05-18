@@ -22,7 +22,7 @@ namespace SharpGMad
         static int Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Garry's Addon Creator 1.0");
+            Console.WriteLine("Sharp Garry's Addon Creator 1.0");
             Console.ResetColor();
             
             //

@@ -160,18 +160,27 @@ namespace SharpGMad
         private void Parse()
         {
             if (Buffer.Length == 0)
+            {
+                Output.Warning("Attempted to read from empty buffer.");
                 throw new ReaderException("Attempted to read from empty buffer.");
+            }
 
             Buffer.Seek(0, SeekOrigin.Begin);
             BinaryReader reader = new BinaryReader(Buffer);
 
             // Ident
             if (String.Join(String.Empty, reader.ReadChars(Addon.Ident.Length)) != Addon.Ident)
+            {
+                Output.Warning("Header mismatch.");
                 throw new ReaderException("Header mismatch.");
+            }
 
             FormatVersion = reader.ReadChar();
             if (FormatVersion > Addon.Version)
+            {
+                Output.Warning("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
                 throw new ReaderException("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
+            }
 
             reader.ReadInt64(); // SteamID (long)
             reader.ReadInt64(); // Timestamp (long)

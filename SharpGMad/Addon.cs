@@ -174,8 +174,6 @@ namespace SharpGMad
         /// <returns>True if the addon is ignored, false if not.</returns>
         private bool IsIgnored(string path)
         {
-            if (path == "addon.json") return true;
-
             foreach (string pattern in Ignores)
                 if (Whitelist.TestWildcard(pattern, path)) return true;
 
@@ -212,6 +210,8 @@ namespace SharpGMad
             file.Path = path;
 
             // Check if file is ignored
+            if (path == "addon.json")
+                return;
             if (IsIgnored(path))
                 throw new IgnoredException(path + ": ignored");
             if (!IsWhitelisted(path))
