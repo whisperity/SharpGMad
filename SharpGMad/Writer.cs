@@ -1,18 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
 
 namespace SharpGMad
 {
+    /// <summary>
+    /// Provides ways for compiling addons.
+    /// </summary>
     static class Writer
     {
+        /// <summary>
+        /// Compiles the specified addon into the specified stream.
+        /// </summary>
+        /// <param name="addon">The addon to compile.</param>
+        /// <param name="outBuffer">The stream which the result should be written to.</param>
         public static void Create(Addon addon, out MemoryStream outBuffer)
         {
             outBuffer = new MemoryStream();
 
-            using ( MemoryStream buffer = new MemoryStream() )
+            using (MemoryStream buffer = new MemoryStream())
             using (BinaryWriter writer = new BinaryWriter(buffer))
             {
                 // Header (5)
@@ -37,13 +42,13 @@ namespace SharpGMad
                 // File list
                 uint fileNum = 0;
 
-                foreach (KeyValuePair<string, byte[]> f in addon.Files.ToDictionary(k => k.Path, e => e.Content))
+                foreach (ContentFile f in addon.Files)
                 {
                     // Remove prefix / from filename
-                    string file = f.Key.TrimStart('/');
+                    string file = f.Path.TrimStart('/');
 
-                    uint crc = Crc32.ComputeChecksum(f.Value); // unsigned long
-                    long size = (long)f.Value.Length; // long long
+                    uint crc = Crc32.ComputeChecksum(f.Content); // unsigned long
+                    long size = f.Size; // long long
                     fileNum++;
 
                     writer.Write(fileNum); // File number (4)
@@ -58,13 +63,13 @@ namespace SharpGMad
                 writer.Write(fileNum);
 
                 // The files
-                foreach (KeyValuePair<string, byte[]> f in addon.Files.ToDictionary(k => k.Path, e => e.Content))
+                foreach (ContentFile f in addon.Files)
                 {
                     // Remove prefix / from filename
-                    string file = f.Key.TrimStart('/');
+                    string file = f.Path.TrimStart('/');
 
                     Console.WriteLine("Adding " + file);
-                    writer.Write(f.Value);
+                    writer.Write(f.Content);
                 }
 
                 // CRC what we've written (to verify that the download isn't shitted) (4)

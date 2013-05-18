@@ -1,23 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
+using System.Linq;
 
 namespace SharpGMad
 {
-    [Serializable]
-    class WhitelistException : Exception
-    {
-        public WhitelistException() { }
-        public WhitelistException(string message) : base(message) { }
-        public WhitelistException(string message, Exception inner) : base(message, inner) { }
-        protected WhitelistException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context)
-            : base(info, context) { }
-    }
-
+    /// <summary>
+    /// Represents an error with files checking against ignore list.
+    /// </summary>
     [Serializable]
     class IgnoredException : Exception
     {
@@ -30,44 +20,106 @@ namespace SharpGMad
             : base(info, context) { }
     }
 
+    /// <summary>
+    /// Represents an addon file in the program's memory and provides methods to manipulate an addon.
+    /// </summary>
     class Addon
     {
-        // Static members: format setup.
+        /// <summary>
+        /// The identation (first few characters) of GMA files.
+        /// </summary>
         public const string Ident = "GMAD";
+        /// <summary>
+        /// The version byte for GMA files.
+        /// </summary>
         public const char Version = (char)3;
-        public const uint AppID = 4000;
-        public const uint CompressionSignature = 0xBEEFCACE;
-
+        /* (Currently not used)
+        /// <summary>
+        /// The AppID of Garry's Mod on Steam.
+        /// </summary>
+        public const uint AppID = 4000;*/
+        /* (Currently not used.)
+        /// <summary>
+        /// Some sort of checksum/signature entry.
+        /// </summary>
+        public const uint CompressionSignature = 0xBEEFCACE;*/
+        
+        /* (Currently not used.)
+        /// <summary>
+        /// Represents the header of a GMA file.
+        /// </summary>
         private struct Header
         {
+            /// <summary>
+            /// The identation (first few characters).
+            /// </summary>
             public string Ident;
+            /// <summary>
+            /// The version byte.
+            /// </summary>
             public char Version;
 
+            /// <summary>
+            /// Creates a new header using the identation and version specified.
+            /// </summary>
+            /// <param name="ident">The identation (first few characters)</param>
+            /// <param name="version">The version byte.</param>
             public Header(string ident, char version)
             {
                 this.Ident = ident;
                 this.Version = version;
             }
-        }
+        }*/
 
-        //
-        // This is the position in the file containing a 64 bit unsigned int that represents the file's age
-        // It's basically the time it was uploaded to Steam - and is set on download/extraction from steam.
-        //
+        /* (Current not used.)
+        /// <summary>
+        /// This is the position in the file containing a 64 bit unsigned int that represents the file's age
+        /// It's basically the time it was uploaded to Steam - and is set on download/extraction from steam.
+        /// </summary>
         public static uint TimestampOffset = (uint)System.Runtime.InteropServices.Marshal.SizeOf(new Header(Ident, Version))
-            + (uint)sizeof(ulong);
-
-        // Instance members
+            + (uint)sizeof(ulong);*/
+        
+        /// <summary>
+        /// Gets or sets the title of the addon.
+        /// </summary>
         public string Title;
-        public string Author;
+        /// <summary>
+        /// Gets or sets the author of the addon.
+        /// Currently it has no use, as the author is always written as "Author Name".
+        /// </summary>
+        public string Author; // Not used. Current writer only writes "Author Name"
+        /// <summary>
+        /// Gets or sets the description of the addon.
+        /// </summary>
         public string Description;
+        /// <summary>
+        /// Gets a compiled JSON string of the addon's metadata.
+        /// </summary>
         public string DescriptionJSON { get { return Json.BuildDescription(this); } }
+        /// <summary>
+        /// Gets or sets the type of the addon.
+        /// </summary>
         public string Type;
+        /// <summary>
+        /// Contains a list of file contents of the addon.
+        /// </summary>
         private List<ContentFile> _Files;
+        /// <summary>
+        /// Gets a list of files and contents currently added to the addon.
+        /// </summary>
         public List<ContentFile> Files { get { return new List<ContentFile>(_Files); } }
+        /// <summary>
+        /// Gets or sets a list of addon tags.
+        /// </summary>
         public List<string> Tags;
+        /// <summary>
+        /// Gets or sets a list of addon ignore patterns.
+        /// </summary>
         public List<string> Ignores;
 
+        /// <summary>
+        /// Sets up object references internally in the class.
+        /// </summary>
         private Addon()
         {
             _Files = new List<ContentFile>();
@@ -75,6 +127,10 @@ namespace SharpGMad
             Ignores = new List<string>();
         }
 
+        /// <summary>
+        /// Sets up a new instance of Addon using the data provided by the specified addon reader.
+        /// </summary>
+        /// <param name="reader">The addon reader which handled reading the addon file.</param>
         public Addon(Reader reader)
             : this()
         {
@@ -87,7 +143,7 @@ namespace SharpGMad
             Console.WriteLine("Loaded addon " + Title);
             Console.WriteLine("Loading files from GMA...");
 
-            foreach (Reader.FileEntry file in reader.Index)
+            foreach (Reader.IndexEntry file in reader.Index)
             {
                 MemoryStream buffer = new MemoryStream();
                 reader.GetFile(file.FileNumber, buffer);
@@ -105,6 +161,10 @@ namespace SharpGMad
             Console.WriteLine("Addon opened successfully.");
         }
 
+        /// <summary>
+        /// Sets up a new instance of Addon using the metadata provided from the specified JSON.
+        /// </summary>
+        /// <param name="addonJson">The JSON instance containing the metadata to use.</param>
         public Addon(Json addonJson) : this()
         {
             Title = addonJson.Title;
@@ -113,9 +173,12 @@ namespace SharpGMad
             Tags = new List<string>(addonJson.Tags);
             Ignores = new List<string>(addonJson.Ignores);
         }
-
         
-
+        /// <summary>
+        /// Gets whether the specified file is ignored by the addon's ignore list.
+        /// </summary>
+        /// <param name="path">The file to check.</param>
+        /// <returns>True if the addon is ignored, false if not.</returns>
         private bool IsIgnored(string path)
         {
             if (path == "addon.json") return true;
@@ -126,11 +189,21 @@ namespace SharpGMad
             return false;
         }
 
+        /// <summary>
+        /// Gets whether the specified file is allowed to be in GMAs by the global whitelist.
+        /// </summary>
+        /// <param name="path">The file to check.</param>
+        /// <returns>True if the addon is allowed, false if not.</returns>
         private bool IsWhitelisted(string path)
         {
             return Whitelist.Check(path.ToLowerInvariant());
         }
 
+        /// <summary>
+        /// Adds the specified file into the Addon's internal container.
+        /// </summary>
+        /// <param name="path">The path of the file.</param>
+        /// <param name="content">Array of bytes containing the file content.</param>
         public void AddFile(string path, byte[] content)
         {
             if (path.ToLowerInvariant() != path)
@@ -153,11 +226,18 @@ namespace SharpGMad
                 _Files.Add(file);
         }
 
+        /// <summary>
+        /// Sorts the internal file list by filename.
+        /// </summary>
         public void Sort()
         {
             _Files.Sort((x, y) => String.Compare(x.Path, y.Path));
         }
 
+        /// <summary>
+        /// Removes the specified file and its contents from the internal storage.
+        /// </summary>
+        /// <param name="path">The path of the file.</param>
         public void RemoveFile(string path)
         {
             IEnumerable<ContentFile> toRemove = _Files.Where(e => e.Path == path);
@@ -180,44 +260,27 @@ namespace SharpGMad
         }
     }
 
+    /// <summary>
+    /// Represents a file entry to an Addon instance.
+    /// </summary>
     struct ContentFile
     {
+        /// <summary>
+        /// Gets or sets the path of the file.
+        /// </summary>
         public string Path;
+        /// <summary>
+        /// Gets or sets an array of bytes containg the file content.
+        /// </summary>
         public byte[] Content;
 
+        /// <summary>
+        /// Gets the size of the content.
+        /// </summary>
         public long Size { get { return Content.LongLength; } }
+        /// <summary>
+        /// Gets the CRC32 checksum of the content.
+        /// </summary>
         public ulong CRC { get { return Crc32.ComputeChecksum(Content); } }
-    }
-
-    static class Tags
-    {
-        // Only one of these
-        private static string[] Type = new string[]{
-            "gamemode",
-            "map",
-            "weapon",
-            "vehicle",
-            "npc",
-            "tool",
-            "effects",
-            "model"
-        };
-
-        public static bool TypeExists(string type) { return Type.Contains(type); }
-
-        // Up to two of these
-        private static string[] Misc = new string[]{
-            "fun",
-            "roleplay",
-            "scenic",
-            "movie",
-            "realism",
-            "cartoon",
-            "water",
-            "comic",
-            "build"
-        };
-
-        public static bool TagExists(string tag) { return Misc.Contains(tag); }
     }
 }

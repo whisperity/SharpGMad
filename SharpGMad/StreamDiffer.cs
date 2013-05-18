@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -77,7 +76,7 @@ namespace SharpGMad
         /// <summary>
         /// The stream which is accessed by external code.
         /// </summary>
-        private Stream Frontend;
+        private MemoryStream Frontend;
 
         /// <summary>
         /// Initializes a new instance of StreamDiffer using the specified storage stream.
@@ -92,7 +91,6 @@ namespace SharpGMad
             Backend.Seek(0, SeekOrigin.Begin);
             Backend.CopyTo(Frontend);
         }
-
         /// <summary>
         /// Replaces the contents of the internal stream by copying all bytes from the specified Stream into it.
         /// </summary>

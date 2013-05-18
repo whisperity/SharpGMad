@@ -48,7 +48,8 @@
   <ItemGroup>
     <Compile Include="Addon.cs" />
     <Compile Include="Reader.cs" />
-    <Compile Include="AddonWhitelist.cs" />
+    <Compile Include="Tags.cs" />
+    <Compile Include="Whitelist.cs" />
     <Compile Include="Writer.cs" />
     <Compile Include="Json.cs" />
     <Compile Include="RealtimeCommandline.cs" />

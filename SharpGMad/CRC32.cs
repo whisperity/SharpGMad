@@ -1,9 +1,20 @@
 ﻿using System;
 
+/// <summary>
+/// Provides methods to compute CRC32 checksums.
+/// </summary>
 public static class Crc32
 {
+    /// <summary>
+    /// The table containing calculation polynomials.
+    /// </summary>
     static uint[] table;
 
+    /// <summary>
+    /// Calculates the CRC32 checksum for the provided byte array.
+    /// </summary>
+    /// <param name="bytes">The bytes to calculate the checksum for.</param>
+    /// <returns>The checksum as an unsigned integer.</returns>
     public static uint ComputeChecksum(byte[] bytes)
     {
         uint crc = 0xffffffff;
@@ -15,11 +26,19 @@ public static class Crc32
         return ~crc;
     }
 
+    /// <summary>
+    /// Calculates the CRC32 checksum for the provided byte array.
+    /// </summary>
+    /// <param name="bytes">The bytes to calculate the checksum for.</param>
+    /// <returns>The checksum as an array of bytes.</returns>
     public static byte[] ComputeChecksumBytes(byte[] bytes)
     {
         return BitConverter.GetBytes(ComputeChecksum(bytes));
     }
 
+    /// <summary>
+    /// Sets up the CRC32 generator by calculating the polynomial values.
+    /// </summary>
     static Crc32()
     {
         uint poly = 0xedb88320;

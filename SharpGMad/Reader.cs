@@ -8,37 +8,99 @@ using System.Text;
 
 namespace SharpGMad
 {
+    /// <summary>
+    /// Provides methods for reading a compiled GMA file.
+    /// </summary>
     class Reader
     {
-        public struct FileEntry
+        /// <summary>
+        /// Represents a file's entry in the GMA index.
+        /// </summary>
+        public struct IndexEntry
         {
+            /// <summary>
+            /// The path of the file.
+            /// </summary>
             public string Path;
+            /// <summary>
+            /// The size (in bytes) of the file.
+            /// </summary>
             public long Size;
+            /// <summary>
+            /// The CRC checksum of file contents.
+            /// </summary>
             public ulong CRC;
+            /// <summary>
+            /// The index of the file.
+            /// </summary>
             public uint FileNumber;
+            /// <summary>
+            /// The offset (in bytes) where the file content is stored in the GMA.
+            /// </summary>
             public long Offset;
         }
 
+        /// <summary>
+        /// The internal buffer where the addon is loaded.
+        /// </summary>
         private MemoryStream Buffer;
+        /// <summary>
+        /// The byte representing the version character.
+        /// </summary>
         private char FormatVersion;
+        /// <summary>
+        /// Gets the name of the addon.
+        /// </summary>
         public string Name { get; private set; }
+        /// <summary>
+        /// Gets the author of the addon. (Currently unused, will always return "Author Name.")
+        /// </summary>
         public string Author { get; private set; }
+        /// <summary>
+        /// Gets the description of the addon.
+        /// </summary>
         public string Description { get; private set; }
+        /// <summary>
+        /// Gets the type of the addon.
+        /// </summary>
         public string Type { get; private set; }
-        private List<FileEntry> _Index;
-        public List<FileEntry> Index { get { return new List<FileEntry>(_Index); } }
+        /// <summary>
+        /// Represents the index area of the addon.
+        /// </summary>
+        private List<IndexEntry> _Index;
+        /// <summary>
+        /// Gets a list of files.
+        /// </summary>
+        public List<IndexEntry> Index { get { return new List<IndexEntry>(_Index); } }
+        /// <summary>
+        /// Represents the offset where the file content storage begins.
+        /// </summary>
         private ulong Fileblock;
+        /// <summary>
+        /// Contains a list of strings, the tags of the read addon.
+        /// </summary>
         private List<string> _Tags;
+        /// <summary>
+        /// Gets a list of addon tags.
+        /// </summary>
         public List<string> Tags { get { return new List<string>(_Tags); } }
 
+        /// <summary>
+        /// Private constructor to set up object references.
+        /// </summary>
         private Reader()
         {
             Buffer = new MemoryStream();
-            _Index = new List<FileEntry>();
+            _Index = new List<IndexEntry>();
             _Tags = new List<string>();
         }
 
-        public Reader(string path) : this()
+        /// <summary>
+        /// Reads and parses the specified addon file.
+        /// </summary>
+        /// <param name="path">The path of the file.</param>
+        public Reader(string path)
+            : this()
         {
             try
             {
@@ -57,7 +119,12 @@ namespace SharpGMad
             Parse();
         }
 
-        public Reader(FileStream stream) : this()
+        /// <summary>
+        /// Reads and parses the specified addon file.
+        /// </summary>
+        /// <param name="stream">The file stream representing the addon file.</param>
+        public Reader(FileStream stream)
+            : this()
         {
             try
             {
@@ -74,6 +141,9 @@ namespace SharpGMad
             Parse();
         }
 
+        /// <summary>
+        /// Parses the read addon stream into the instance properties.
+        /// </summary>
         private void Parse()
         {
             if (Buffer.Length == 0)
@@ -83,7 +153,7 @@ namespace SharpGMad
             BinaryReader reader = new BinaryReader(Buffer);
 
             // Ident
-            if ( String.Join(String.Empty, reader.ReadChars(Addon.Ident.Length)) != Addon.Ident)
+            if (String.Join(String.Empty, reader.ReadChars(Addon.Ident.Length)) != Addon.Ident)
                 throw new Exception("Header mismatch.");
 
             FormatVersion = reader.ReadChar();
@@ -113,7 +183,7 @@ namespace SharpGMad
 
             while (reader.ReadInt32() != 0)
             {
-                FileEntry entry = new FileEntry();
+                IndexEntry entry = new IndexEntry();
                 entry.Path = reader.ReadNullTerminatedString();
                 entry.Size = reader.ReadInt64(); // long long
                 entry.CRC = reader.ReadUInt32(); // unsigned long
@@ -149,11 +219,17 @@ namespace SharpGMad
             }
         }
 
-        public bool GetEntry(uint fileID, out FileEntry entry)
+        /// <summary>
+        /// Gets the index entry for the specified file.
+        /// </summary>
+        /// <param name="fileID">The index of the file.</param>
+        /// <param name="entry">The IndexEntry object to be filled with data.</param>
+        /// <returns>True if the entry was successfully found, false otherwise.</returns>
+        public bool GetEntry(uint fileID, out IndexEntry entry)
         {
             if (Index.Where(file => file.FileNumber == fileID).Count() == 0)
             {
-                entry = new FileEntry();
+                entry = new IndexEntry();
                 return false;
             }
             else
@@ -163,9 +239,15 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Gets the specified file contents from the addon.
+        /// </summary>
+        /// <param name="fileID">The index of the file.</param>
+        /// <param name="buffer">The stream the contents should be written to.</param>
+        /// <returns>True if the file was successfully read, false otherwise.</returns>
         public bool GetFile(uint fileID, MemoryStream buffer)
         {
-            FileEntry entry;
+            IndexEntry entry;
             if (!GetEntry(fileID, out entry)) return false;
 
             byte[] read_buffer = new byte[entry.Size];
