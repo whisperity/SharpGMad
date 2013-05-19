@@ -302,7 +302,7 @@ namespace SharpGMad
             addon = new Addon(new Reader(filename));
 
             foreach (ContentFile f in addon.Files)
-                Console.WriteLine("\t" + f.Path + " [" + Memory((int)f.Size) + "]");
+                Console.WriteLine("\t" + f.Path + " [" + ((int)f.Size).HumanReadableSize() + "]");
 
             filePath = filename;
             CommandlinePrefix = filename + ">";
@@ -321,7 +321,7 @@ namespace SharpGMad
             Console.WriteLine(addon.Files.Count + " files in archive:");
             foreach (ContentFile file in addon.Files)
             {
-                Console.WriteLine(file.Path + " (" + Program.Memory((int)file.Size) + ")");
+                Console.WriteLine(file.Path + " (" + ((int)file.Size).HumanReadableSize() + ")");
             }
         }
 

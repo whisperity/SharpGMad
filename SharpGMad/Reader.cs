@@ -12,7 +12,7 @@ namespace SharpGMad
     /// Represents an error regarding reading addon files.
     /// </summary>
     [Serializable]
-    public class ReaderException : Exception
+    class ReaderException : Exception
     {
         public ReaderException() { }
         public ReaderException(string message) : base(message) { }

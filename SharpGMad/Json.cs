@@ -57,7 +57,7 @@ namespace SharpGMad
     /// The exception thrown when the JSON file read/write encounters an error.
     /// </summary>
     [Serializable]
-    public class AddonJSONException : Exception
+    class AddonJSONException : Exception
     {
         public AddonJSONException() { }
         public AddonJSONException(string message) : base(message) { }

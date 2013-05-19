@@ -55,7 +55,7 @@ namespace SharpGMad
                     writer.WriteNullTerminatedString(file.ToLowerInvariant()); // File name (all lower case!) (n)
                     writer.Write(size); // File size (8)
                     writer.Write(crc); // File CRC (4)
-                    Console.WriteLine("File index: " + file + " [CRC: " + crc + "] [Size:" + Program.Memory((int)size) + "]");
+                    Console.WriteLine("File index: " + file + " [CRC: " + crc + "] [Size:" + ((int)size).HumanReadableSize() + "]");
                 }
 
                 // Zero to signify the end of files

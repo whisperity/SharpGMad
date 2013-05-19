@@ -267,7 +267,7 @@ namespace SharpGMad
             //
             // Success!
             //
-            Console.WriteLine("Successfully saved to \"" + strOutfile + "\" [" + Memory((int)buffer.Length) + "]");
+            Console.WriteLine("Successfully saved to \"" + strOutfile + "\" [" + ((int)buffer.Length).HumanReadableSize() + "]");
             return 0;
         }
 
@@ -304,7 +304,7 @@ namespace SharpGMad
             Console.WriteLine("Extracting Files:");
             foreach (ContentFile entry in addon.Files)
             {
-                Console.WriteLine("\t" + entry.Path + " [" + Memory((int)entry.Size) + "]");
+                Console.WriteLine("\t" + entry.Path + " [" + ((int)entry.Size).HumanReadableSize() + "]");
                 // Make sure folder exists
                 try
                 {
@@ -331,33 +331,6 @@ namespace SharpGMad
             }
             Console.WriteLine("Done!");
             return 0;
-        }
-
-        public static string Memory(int iBytes)
-        {
-            float gb = iBytes / (float)1024 / (float)1024 / (float)1024;
-
-            if (gb >= 1.0)
-            {
-                return String.Format("{0:0.##} {1}", gb, "GiB");
-            }
-
-            float mb = iBytes / (float)1024 / (float)1024;
-
-            if (mb >= 1.0)
-            {
-                return String.Format("{0:0.##} {1}", mb, "MiB");
-            }
-
-            float kb = iBytes / (float)1024;
-
-            if (kb >= 1.0)
-            {
-                return String.Format("{0:0.##} {1}", kb, "KiB");
-            }
-
-            // return as bytes
-            return iBytes + " B";
         }
     }
 } 

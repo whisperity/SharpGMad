@@ -1,6 +1,42 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
+namespace System
+{
+    /// <summary>
+    /// Constains extensions for Int32 (int).
+    /// </summary>
+    static class Int32Extensions
+    {
+        /// <summary>
+        /// The list of file size suffices to use when converting sizes to human-readable format.
+        /// </summary>
+        static string[] suffices = new string[] { "B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB" };
+
+        /// <summary>
+        /// Converts the specified file size (in bytes) to human-readable format.
+        /// </summary>
+        /// <param name="size">The file size in bytes.</param>
+        /// <returns>Human-readable byte string</returns>
+        public static string HumanReadableSize(this int size)
+        {
+            if (size == 0)
+                return string.Format("{0}{1:0.#} {2}", null, 0, suffices[0]);
+
+            double absSize = Math.Abs(size);
+            double power = Math.Log(absSize, 1024);
+            int unit = (int)power >= suffices.Length
+                ? suffices.Length - 1
+                : (int)power;
+            double normSize = absSize / Math.Pow(1024, unit);
+
+            return string.Format(
+                "{0}{1:0.#} {2}",
+                size < 0 ? "-" : null, normSize, suffices[unit]);
+        }
+    }
+}
+
 namespace System.IO
 {
     /// <summary>
