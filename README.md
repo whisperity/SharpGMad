@@ -51,12 +51,16 @@ Once running, the following commands will be available to you
 
     load <filename>          Loads <filename> addon into the memory
     new <filename>           Creates a new, empty addon named <filename>
+    add <filename>           Adds <filename> to the archive
+    addfolder <folder>       Adds all files from <folder> to the archive
     list                     Lists the files in the memory
     remove <filename>        Removes <filename> from the archive
     push                     Writes the addon to the disk
     close                    Writes the addon and closes it
     abort                    Unloads the addon from memory, dropping all changes
     path                     Prints the full path of the current addon
+    pwd                      Prints SharpGMad's current working directory
+    cd <folder>              Changes the current working directory to <folder>
     help                     Show the list of available commands
     exit                     Exits
 

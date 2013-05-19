@@ -92,6 +92,8 @@ namespace SharpGMad
             {
                 if (match != String.Empty)
                     break;
+                if (wildcard == null || wildcard == String.Empty)
+                    break;
 
                 match = GetMatchingString(wildcard, path);
             }

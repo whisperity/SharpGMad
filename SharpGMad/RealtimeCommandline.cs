@@ -58,6 +58,34 @@ namespace SharpGMad
                         }
 
                         break;
+                    case "add":
+                        try
+                        {
+                            AddFile(args[1]);
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The file path was not specified.");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        break;
+                    case "addfolder":
+                        try
+                        {
+                            AddFolder(args[1]);
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The folder was not specified.");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        break;
                     case "list":
                         ListFiles();
                         break;
@@ -88,6 +116,30 @@ namespace SharpGMad
                     case "path":
                         FullPath();
                         break;
+                    case "pwd":
+                        Console.WriteLine(Directory.GetCurrentDirectory());
+                        break;
+                    case "cd":
+                        try
+                        {
+                            Directory.SetCurrentDirectory(args[1]);
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The folder was not specified.");
+                            Console.ResetColor();
+                            break;
+                        }
+                        catch (IOException e)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("There was a problem switching to that folder.");
+                            Console.ResetColor();
+                            Console.WriteLine(e.Message);
+                            break;
+                        }
+                        break;
                     case "?":
                     case "help":
                         Console.ForegroundColor = ConsoleColor.Green;
@@ -96,25 +148,29 @@ namespace SharpGMad
 
                         if (addon == null)
                         {
-                            Console.WriteLine("load <filename>                Loads <filename> addon into the memory");
-                            Console.WriteLine("new <filename>                 Create a new, empty addon named <filename>");
+                            Console.WriteLine("load <filename>            Loads <filename> addon into the memory");
+                            Console.WriteLine("new <filename>             Create a new, empty addon named <filename>");
                         }
 
                         if (addon is Addon)
                         {
-                            Console.WriteLine("list                           Lists the files in the memory");
-                            Console.WriteLine("remove <filename>              Removes <filename> from the archive");
-                            Console.WriteLine("push                           Writes the addon to the disk");
-                            Console.WriteLine("close                          Writes addon and closes it");
-                            Console.WriteLine("abort                          Unloads the addon from memory, dropping all changes");
-                            Console.WriteLine("path                           Prints the full path of the current addon.");
+                            Console.WriteLine("add <filename>             Adds <filename> to the archive");
+                            Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
+                            Console.WriteLine("list                       Lists the files in the memory");
+                            Console.WriteLine("remove <filename>          Removes <filename> from the archive");
+                            Console.WriteLine("push                       Writes the addon to the disk");
+                            Console.WriteLine("close                      Writes addon and closes it");
+                            Console.WriteLine("abort                      Unloads the addon from memory, dropping all changes");
+                            Console.WriteLine("path                       Prints the full path of the current addon.");
                         }
 
-                        Console.WriteLine("help                               Show the list of available commands");
+                        Console.WriteLine("pwd                        Prints SharpGMad's current working directory");
+                        Console.WriteLine("cd <folder>                Changes the current working directory to <folder>");
+                        Console.WriteLine("help                       Show the list of available commands");
 
                         if (addon == null)
                         {
-                            Console.WriteLine("exit                               Exits");
+                            Console.WriteLine("exit                       Exits");
                         }
 
                         break;
@@ -260,7 +316,7 @@ namespace SharpGMad
             Console.ResetColor();
 
             // Write initial content
-            filePath = filename;
+            filePath = Path.GetFullPath(filename);
             FileStream fileStream;
             try
             {
@@ -284,7 +340,7 @@ namespace SharpGMad
 
             fileStream.Close();
 
-            CommandlinePrefix = filename + ">";
+            CommandlinePrefix = Path.GetFileName(filename) + ">";
         }
 
         static void LoadAddon(string filename)
@@ -304,8 +360,76 @@ namespace SharpGMad
             foreach (ContentFile f in addon.Files)
                 Console.WriteLine("\t" + f.Path + " [" + ((int)f.Size).HumanReadableSize() + "]");
 
-            filePath = filename;
-            CommandlinePrefix = filename + ">";
+            filePath = Path.GetFullPath(filename);
+            CommandlinePrefix = Path.GetFileName(filename) + ">";
+        }
+
+        static void AddFile(string filename)
+        {
+            if (addon == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+
+            byte[] bytes;
+            try
+            {
+                using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    bytes = new byte[fs.Length];
+                    fs.Read(bytes, 0, (int)fs.Length);
+                }
+            }
+            catch (IOException ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot add file. There was an error reading it.");
+                Console.ResetColor();
+                Console.WriteLine(ex.Message);
+                return;
+            }
+
+            Console.WriteLine(filename + " as");
+            Console.WriteLine("\t" + Whitelist.GetMatchingString(filename));
+            try
+            {
+                addon.AddFile(Whitelist.GetMatchingString(filename), bytes);
+            }
+            catch (IgnoredException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\t\t[Ignored]");
+                Console.ResetColor();
+                return;
+            }
+            catch (WhitelistException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\t\t[Not allowed by whitelist]");
+                Console.ResetColor();
+                return;
+            }
+            catch (ArgumentException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("\t\t[A file like this has already been added. Remove it first.]");
+                Console.ResetColor();
+                return;
+            }
+        }
+
+        static void AddFolder(string folder)
+        {
+            foreach (string f in Directory.GetFiles(folder, "*", SearchOption.AllDirectories))
+            {
+                string file = f;
+                file = file.Replace('\\', '/');
+
+                AddFile(file);
+            }
         }
 
         static void ListFiles()
@@ -335,7 +459,17 @@ namespace SharpGMad
                 return;
             }
 
-            addon.RemoveFile(filename);
+            try
+            {
+                addon.RemoveFile(filename);
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("The file was not found in the archive.");
+                Console.ResetColor();
+                return;
+            }
         }
 
         static void Push()
@@ -366,9 +500,11 @@ namespace SharpGMad
             StreamDiffer sd = new StreamDiffer(fileStream);
             Writer.Create(addon, out ms);
             sd.Write(ms);
-            sd.Push();
+            int count = sd.Push();
 
             fileStream.Close();
+
+            Console.WriteLine("Successfully saved. " + count.HumanReadableSize() + " was modified.");
         }
 
         static void CloseAddon()

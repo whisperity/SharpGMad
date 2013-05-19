@@ -208,12 +208,22 @@ namespace SharpGMad
                 path = path.ToLowerInvariant();
             }
 
+            if (Files.Any(entry => entry.Path == path))
+                throw new ArgumentException("A file with the same path is already added.");
+
             ContentFile file = new ContentFile();
             file.Content = content;
             file.Path = path;
 
-            // Check if file is ignored
+            // Check if file is allowed to be added
+            if (path == "" || path == null || path == String.Empty)
+                // When adding from realtime, path can become "" if it does not match against the whitelist 
+                throw new WhitelistException("Path was empty.");
+            if (path.Contains(".."))
+                // Realtime shell can have users who will try to traverse folders
+                throw new WhitelistException(path + ": contains upwards traversion");
             if (path == "addon.json")
+                // Never allow addon.json to be added
                 return;
             if (IsIgnored(path))
                 throw new IgnoredException(path + ": ignored");
