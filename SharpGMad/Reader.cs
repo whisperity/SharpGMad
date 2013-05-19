@@ -161,7 +161,9 @@ namespace SharpGMad
         {
             if (Buffer.Length == 0)
             {
-                Output.Warning("Attempted to read from empty buffer.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Attempted to read from empty buffer.");
+                Console.ResetColor();
                 throw new ReaderException("Attempted to read from empty buffer.");
             }
 
@@ -171,14 +173,18 @@ namespace SharpGMad
             // Ident
             if (String.Join(String.Empty, reader.ReadChars(Addon.Ident.Length)) != Addon.Ident)
             {
-                Output.Warning("Header mismatch.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Header mismatch.");
+                Console.ResetColor();
                 throw new ReaderException("Header mismatch.");
             }
 
             FormatVersion = reader.ReadChar();
             if (FormatVersion > Addon.Version)
             {
-                Output.Warning("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
+                Console.ResetColor();
                 throw new ReaderException("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
             }
 

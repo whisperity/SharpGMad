@@ -176,7 +176,7 @@ namespace SharpGMad
         private bool IsIgnored(string path)
         {
             foreach (string pattern in Ignores)
-                if (Whitelist.TestWildcard(pattern, path)) return true;
+                if (Whitelist.Check(pattern, path)) return true;
 
             return false;
         }
@@ -202,7 +202,9 @@ namespace SharpGMad
         {
             if (path.ToLowerInvariant() != path)
             {
-                Output.Warning("\t\t[Filename contains capital letters]");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\t\t[Filename contains capital letters]");
+                Console.ResetColor();
                 path = path.ToLowerInvariant();
             }
 

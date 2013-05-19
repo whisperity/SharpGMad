@@ -37,7 +37,9 @@ namespace SharpGMad
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            Output.Warning("The filename was not specified.");
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The filename was not specified.");
+                            Console.ResetColor();
                             break;
                         }
 
@@ -49,7 +51,9 @@ namespace SharpGMad
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            Output.Warning("The filename was not specified.");
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The filename was not specified.");
+                            Console.ResetColor();
                             break;
                         }
 
@@ -64,7 +68,9 @@ namespace SharpGMad
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            Output.Warning("The filename was not specified.");
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The filename was not specified.");
+                            Console.ResetColor();
                             break;
                         }
 
@@ -115,14 +121,18 @@ namespace SharpGMad
                     case "exit":
                         if (addon is Addon)
                         {
-                            Output.Warning("Cannot exit. An addon is open!");
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Cannot exit. An addon is open!");
+                            Console.ResetColor();
                             break;
                         }
 
                         return 0;
                         //break;
                     default:
-                        Output.Warning("Unknown operation.");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Unknown operation.");
+                        Console.ResetColor();
                         break;
                 }
             }
@@ -132,7 +142,9 @@ namespace SharpGMad
         {
             if (addon is Addon)
             {
-                Output.Warning("An addon is already open. Please close it first.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("An addon is already open. Please close it first.");
+                Console.ResetColor();
                 return;
             }
 
@@ -184,7 +196,9 @@ namespace SharpGMad
 
                 if (!Tags.TypeExists(type))
                 {
-                    Output.Warning("The specified type is not valid.");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("The specified type is not valid.");
+                    Console.ResetColor();
                 }
             }
 
@@ -209,7 +223,9 @@ namespace SharpGMad
                 {
                     if (!Tags.TagExists(tagsInput[0]))
                     {
-                        Output.Warning("The specified tag \"" + tagsInput[0] + "\" is not valid.");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("The specified tag \"" + tagsInput[0] + "\" is not valid.");
+                        Console.ResetColor();
                         allTagsValid = false;
                         continue;
                     }
@@ -222,7 +238,9 @@ namespace SharpGMad
                 {
                     if (!Tags.TagExists(tagsInput[1]))
                     {
-                        Output.Warning("The specified tag \"" + tagsInput[1] + "\" is not valid.");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("The specified tag \"" + tagsInput[1] + "\" is not valid.");
+                        Console.ResetColor();
                         allTagsValid = false;
                         continue;
                     }
@@ -250,7 +268,9 @@ namespace SharpGMad
             }
             catch (Exception e)
             {
-                Output.Warning("There was a problem opening the file.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("There was a problem opening the file.");
+                Console.ResetColor();
                 Console.WriteLine(e.Message);
                 CloseAddon();
                 return;
@@ -271,7 +291,9 @@ namespace SharpGMad
         {
             if (addon is Addon)
             {
-                Output.Warning("An addon is already open. Please close it first.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("An addon is already open. Please close it first.");
+                Console.ResetColor();
                 return;
             }
 
@@ -290,7 +312,9 @@ namespace SharpGMad
         {
             if (addon == null)
             {
-                Output.Warning("No addon is open.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
                 return;
             }
 
@@ -305,7 +329,9 @@ namespace SharpGMad
         {
             if (addon == null)
             {
-                Output.Warning("No addon is open.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
                 return;
             }
 
@@ -316,7 +342,9 @@ namespace SharpGMad
         {
             if (addon == null)
             {
-                Output.Warning("No addon is open.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
                 return;
             }
 
@@ -327,7 +355,9 @@ namespace SharpGMad
             }
             catch (Exception e)
             {
-                Output.Warning("There was a problem opening the file.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("There was a problem opening the file.");
+                Console.ResetColor();
                 Console.WriteLine(e.Message);
                 return;
             }
@@ -345,7 +375,9 @@ namespace SharpGMad
         {
             if (addon == null)
             {
-                Output.Warning("No addon is open.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
                 return;
             }
 
@@ -357,7 +389,9 @@ namespace SharpGMad
         {
             if (addon == null)
             {
-                Output.Warning("No addon is open.");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
                 return;
             }
 

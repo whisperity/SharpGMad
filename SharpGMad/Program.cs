@@ -7,16 +7,6 @@ using System.IO;
 
 namespace SharpGMad
 {
-    static class Output
-    {
-        public static void Warning(string str)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(str);
-            Console.ResetColor();
-        }
-    }
-
     partial class Program
     {
         static int Main(string[] args)
@@ -185,7 +175,9 @@ namespace SharpGMad
             }
             catch (Exception ex)
             {
-                Output.Warning(strFolder + "addon.json" + " error: " + ex.Message);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(strFolder + "addon.json error: " + ex.Message);
+                Console.ResetColor();
                 return 1;
             }
 
@@ -208,17 +200,23 @@ namespace SharpGMad
                 }
                 catch (System.IO.IOException)
                 {
-                    Output.Warning("Unable to read file " + file);
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Unable to read file " + file);
+                    Console.ResetColor();
                     continue;
                 }
                 catch (IgnoredException iex)
                 {
-                    Output.Warning("\t\t[Ignored]");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\t\t[Ignored]");
+                    Console.ResetColor();
                     continue;
                 }
                 catch (WhitelistException wex)
                 {
-                    Output.Warning("\t\t[Not allowed by whitelist]");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\t\t[Not allowed by whitelist]");
+                    Console.ResetColor();
                     return 1;
                 }
             }
@@ -241,7 +239,9 @@ namespace SharpGMad
             }
             catch (Exception)
             {
-                Output.Warning("Failed to create the addon");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Failed to create the addon");
+                Console.ResetColor();
                 return 1;
             }
 
@@ -258,7 +258,9 @@ namespace SharpGMad
             }
             catch (Exception)
             {
-                Output.Warning("Couldn't save to file \"" + strOutfile + "\"");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Couldn't save to file \"" + strOutfile + "\"");
+                Console.ResetColor();
                 return 1;
             }
 
@@ -293,7 +295,9 @@ namespace SharpGMad
             }
             catch (Exception ex)
             {
-                Output.Warning("There was a problem opening or parsing the file");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("There was a problem opening or parsing the file");
+                Console.ResetColor();
                 return 1;
             }
 
@@ -319,7 +323,9 @@ namespace SharpGMad
                     }
                     catch (Exception ex)
                     {
-                        Output.Warning("\t\tCouldn't extract!");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("\t\tCouldn't extract!");
+                        Console.ResetColor();
                     }
                 }
             }
