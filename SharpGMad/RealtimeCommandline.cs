@@ -6,17 +6,33 @@ using System.IO;
 
 namespace SharpGMad
 {
-    partial class Program
+    class Realtime
     {
         static Addon addon;
         static string filePath;
         static string CommandlinePrefix = "SharpGMad>";
 
-        static int RealtimeCommandline(string strFile)
+        public static int Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Realtime command-line activated.");
             Console.ResetColor();
+
+            // There might be a parameter specified.
+            string strFile;
+            try
+            {
+                int fileIndex = Array.FindIndex(args, a => a == "-file");
+
+                if (fileIndex == -1)
+                    throw new Exception(); // This means that the switch does not exist
+                else
+                    strFile = args[Array.FindIndex(args, a => a == "-file") + 1];
+            }
+            catch (Exception)
+            {
+                strFile = "";
+            }
 
             // Autoload addon from command line arguments
             if (strFile != String.Empty && strFile != null)
@@ -26,14 +42,14 @@ namespace SharpGMad
             {
                 Console.Write(CommandlinePrefix + " ");
                 string input = Console.ReadLine();
-                string[] args = input.Split(' ');
+                string[] command = input.Split(' ');
 
-                switch (args[0])
+                switch (command[0])
                 {
                     case "new":
                         try
                         {
-                            NewAddon(args[1]);
+                            NewAddon(command[1]);
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -47,7 +63,7 @@ namespace SharpGMad
                     case "load":
                         try
                         {
-                            LoadAddon(args[1]);
+                            LoadAddon(command[1]);
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -61,7 +77,7 @@ namespace SharpGMad
                     case "add":
                         try
                         {
-                            AddFile(args[1]);
+                            AddFile(command[1]);
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -75,7 +91,7 @@ namespace SharpGMad
                     case "addfolder":
                         try
                         {
-                            AddFolder(args[1]);
+                            AddFolder(command[1]);
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -92,7 +108,7 @@ namespace SharpGMad
                     case "remove":
                         try
                         {
-                            RemoveFile(args[1]);
+                            RemoveFile(command[1]);
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -122,7 +138,7 @@ namespace SharpGMad
                     case "cd":
                         try
                         {
-                            Directory.SetCurrentDirectory(args[1]);
+                            Directory.SetCurrentDirectory(command[1]);
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -288,7 +304,7 @@ namespace SharpGMad
                     else
                         tags.Add(tagsInput[0]);
                 }
-                
+
                 // More than one (two) elements: add the second one too.
                 if (tagsInput.Count() > 1)
                 {
