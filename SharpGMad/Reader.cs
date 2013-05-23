@@ -114,6 +114,7 @@ namespace SharpGMad
         /// </summary>
         /// <param name="path">The path of the file.</param>
         /// <exception cref="System.IO.IOException">Any sort of error regarding access to the specified file.</exception>
+        /// <exception cref="ReaderException">Errors parsing the file</exception>
         public Reader(string path)
             : this()
         {
@@ -129,7 +130,14 @@ namespace SharpGMad
                 throw ex;
             }
 
-            Parse();
+            try
+            {
+                Parse();
+            }
+            catch (ReaderException ex)
+            {
+                throw ex;
+            }
         }
 
         /// <summary>
@@ -137,6 +145,7 @@ namespace SharpGMad
         /// </summary>
         /// <param name="stream">The file stream representing the addon file.</param>
         /// <exception cref="System.IO.IOException">Any sort of error regarding reading from the provided stream.</exception>
+        /// <exception cref="ReaderException">Errors parsing the file</exception>
         public Reader(FileStream stream)
             : this()
         {
@@ -150,7 +159,14 @@ namespace SharpGMad
                 throw ex;
             }
 
-            Parse();
+            try
+            {
+                Parse();
+            }
+            catch (ReaderException ex)
+            {
+                throw ex;
+            }
         }
 
         /// <summary>

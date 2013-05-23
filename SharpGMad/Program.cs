@@ -21,6 +21,7 @@ namespace SharpGMad
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
+        [STAThread]
         static int Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -64,8 +65,7 @@ namespace SharpGMad
                     // There is no console window or this is a debug run.
                     // Start the main form
 
-                    //Application.Run();
-                    Console.WriteLine("Would start the main form.");
+                    Application.Run(new Main());
                 else
                 {
                     // There is a console the program is running in.
@@ -76,7 +76,6 @@ namespace SharpGMad
                         CreateNoWindow = true,
                         UseShellExecute = false,
                     });
-
                 }
             }
 
