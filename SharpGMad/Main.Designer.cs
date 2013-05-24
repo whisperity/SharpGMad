@@ -209,7 +209,7 @@
             this.txtDescription.Multiline = true;
             this.txtDescription.Name = "txtDescription";
             this.txtDescription.ReadOnly = true;
-            this.txtDescription.Size = new System.Drawing.Size(184, 135);
+            this.txtDescription.Size = new System.Drawing.Size(184, 116);
             this.txtDescription.TabIndex = 7;
             // 
             // tsMetadata
@@ -301,7 +301,6 @@
             this.txtTitle.ReadOnly = true;
             this.txtTitle.Size = new System.Drawing.Size(184, 13);
             this.txtTitle.TabIndex = 1;
-            this.txtTitle.TextChanged += new System.EventHandler(this.txtTitle_TextChanged);
             // 
             // lblTitle
             // 
@@ -311,7 +310,6 @@
             this.lblTitle.Size = new System.Drawing.Size(30, 13);
             this.lblTitle.TabIndex = 0;
             this.lblTitle.Text = "Title:";
-            this.lblTitle.Click += new System.EventHandler(this.lblTitle_Click);
             // 
             // tsToolbar
             // 
@@ -391,6 +389,8 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Main";
             this.Text = "SharpGMad";
+            this.Load += new System.EventHandler(this.Main_Load);
+            this.Resize += new System.EventHandler(this.Main_Resize);
             this.tsFileOperations.ResumeLayout(false);
             this.tsFileOperations.PerformLayout();
             this.pnlLeftSide.ResumeLayout(false);

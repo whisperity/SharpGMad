@@ -40,5 +40,20 @@ namespace SharpGMad
                 }
             }
         }
+
+        // Dock the txtDescription text box.
+        // It gets automatically resized when the form is resized.
+        Size txtDescriptionSizeDifference;
+        private void Main_Load(object sender, EventArgs e)
+        {
+            txtDescriptionSizeDifference = new Size(this.pnlRightSide.Size.Width - this.txtDescription.Size.Width,
+                this.pnlRightSide.Size.Height - this.txtDescription.Size.Height);
+        }
+
+        private void Main_Resize(object sender, EventArgs e)
+        {
+            this.txtDescription.Size = new Size(this.pnlRightSide.Size.Width - txtDescriptionSizeDifference.Width,
+                this.pnlRightSide.Size.Height - txtDescriptionSizeDifference.Height);
+        }
     }
 }
