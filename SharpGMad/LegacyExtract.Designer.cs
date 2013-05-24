@@ -1,6 +1,6 @@
 ﻿namespace SharpGMad
 {
-    partial class LegacyCreate
+    partial class LegacyExtract
     {
         /// <summary>
         /// Required designer variable.
@@ -28,18 +28,17 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(LegacyCreate));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(LegacyExtract));
             this.lblFolder = new System.Windows.Forms.Label();
             this.lblFile = new System.Windows.Forms.Label();
-            this.chkWarnInvalid = new System.Windows.Forms.CheckBox();
-            this.btnFolderBrowse = new System.Windows.Forms.Button();
             this.btnFileBrowse = new System.Windows.Forms.Button();
-            this.txtFile = new System.Windows.Forms.TextBox();
+            this.btnFolderBrowse = new System.Windows.Forms.Button();
             this.txtFolder = new System.Windows.Forms.TextBox();
+            this.txtFile = new System.Windows.Forms.TextBox();
             this.fbdFolder = new System.Windows.Forms.FolderBrowserDialog();
-            this.sfdOutFile = new System.Windows.Forms.SaveFileDialog();
-            this.btnCreate = new System.Windows.Forms.Button();
+            this.btnExtract = new System.Windows.Forms.Button();
             this.btnAbort = new System.Windows.Forms.Button();
+            this.ofdFile = new System.Windows.Forms.OpenFileDialog();
             this.SuspendLayout();
             // 
             // lblFolder
@@ -47,84 +46,66 @@
             this.lblFolder.AutoSize = true;
             this.lblFolder.Location = new System.Drawing.Point(12, 9);
             this.lblFolder.Name = "lblFolder";
-            this.lblFolder.Size = new System.Drawing.Size(234, 13);
+            this.lblFolder.Size = new System.Drawing.Size(212, 13);
             this.lblFolder.TabIndex = 0;
-            this.lblFolder.Text = "Create an addon from the contents of this folder:";
+            this.lblFolder.Text = "Extract the contents of the following addon:";
             // 
             // lblFile
             // 
             this.lblFile.AutoSize = true;
             this.lblFile.Location = new System.Drawing.Point(12, 31);
             this.lblFile.Name = "lblFile";
-            this.lblFile.Size = new System.Drawing.Size(114, 13);
+            this.lblFile.Size = new System.Drawing.Size(71, 13);
             this.lblFile.TabIndex = 1;
-            this.lblFile.Text = "Save the output file to:";
-            // 
-            // chkWarnInvalid
-            // 
-            this.chkWarnInvalid.AutoSize = true;
-            this.chkWarnInvalid.Location = new System.Drawing.Point(15, 49);
-            this.chkWarnInvalid.Name = "chkWarnInvalid";
-            this.chkWarnInvalid.Size = new System.Drawing.Size(204, 17);
-            this.chkWarnInvalid.TabIndex = 4;
-            this.chkWarnInvalid.Text = "Continue even if files failed to validate";
-            this.chkWarnInvalid.UseVisualStyleBackColor = true;
-            // 
-            // btnFolderBrowse
-            // 
-            this.btnFolderBrowse.Location = new System.Drawing.Point(533, 4);
-            this.btnFolderBrowse.Name = "btnFolderBrowse";
-            this.btnFolderBrowse.Size = new System.Drawing.Size(75, 23);
-            this.btnFolderBrowse.TabIndex = 1;
-            this.btnFolderBrowse.Text = "Browse";
-            this.btnFolderBrowse.UseVisualStyleBackColor = true;
-            this.btnFolderBrowse.Click += new System.EventHandler(this.btnFolderBrowse_Click);
+            this.lblFile.Text = "To this folder:";
             // 
             // btnFileBrowse
             // 
-            this.btnFileBrowse.Location = new System.Drawing.Point(533, 30);
+            this.btnFileBrowse.Location = new System.Drawing.Point(533, 4);
             this.btnFileBrowse.Name = "btnFileBrowse";
             this.btnFileBrowse.Size = new System.Drawing.Size(75, 23);
-            this.btnFileBrowse.TabIndex = 3;
+            this.btnFileBrowse.TabIndex = 1;
             this.btnFileBrowse.Text = "Browse";
             this.btnFileBrowse.UseVisualStyleBackColor = true;
             this.btnFileBrowse.Click += new System.EventHandler(this.btnFileBrowse_Click);
             // 
-            // txtFile
+            // btnFolderBrowse
             // 
-            this.txtFile.Location = new System.Drawing.Point(252, 32);
-            this.txtFile.Name = "txtFile";
-            this.txtFile.Size = new System.Drawing.Size(275, 20);
-            this.txtFile.TabIndex = 2;
+            this.btnFolderBrowse.Location = new System.Drawing.Point(533, 30);
+            this.btnFolderBrowse.Name = "btnFolderBrowse";
+            this.btnFolderBrowse.Size = new System.Drawing.Size(75, 23);
+            this.btnFolderBrowse.TabIndex = 3;
+            this.btnFolderBrowse.Text = "Browse";
+            this.btnFolderBrowse.UseVisualStyleBackColor = true;
+            this.btnFolderBrowse.Click += new System.EventHandler(this.btnFolderBrowse_Click);
             // 
             // txtFolder
             // 
-            this.txtFolder.Location = new System.Drawing.Point(252, 6);
+            this.txtFolder.Location = new System.Drawing.Point(252, 32);
             this.txtFolder.Name = "txtFolder";
             this.txtFolder.Size = new System.Drawing.Size(275, 20);
-            this.txtFolder.TabIndex = 0;
+            this.txtFolder.TabIndex = 2;
+            // 
+            // txtFile
+            // 
+            this.txtFile.Location = new System.Drawing.Point(252, 6);
+            this.txtFile.Name = "txtFile";
+            this.txtFile.Size = new System.Drawing.Size(275, 20);
+            this.txtFile.TabIndex = 0;
             // 
             // fbdFolder
             // 
             this.fbdFolder.Description = "Select the folder you want to compile into an addon";
-            this.fbdFolder.ShowNewFolderButton = false;
             // 
-            // sfdOutFile
+            // btnExtract
             // 
-            this.sfdOutFile.CheckFileExists = true;
-            this.sfdOutFile.DefaultExt = "gma";
-            this.sfdOutFile.Filter = "Garry\'s Mod Addons|*.gma";
-            this.sfdOutFile.Title = "Save as addon";
-            // 
-            // btnCreate
-            // 
-            this.btnCreate.Location = new System.Drawing.Point(15, 72);
-            this.btnCreate.Name = "btnCreate";
-            this.btnCreate.Size = new System.Drawing.Size(75, 23);
-            this.btnCreate.TabIndex = 5;
-            this.btnCreate.Text = "Create";
-            this.btnCreate.UseVisualStyleBackColor = true;
-            this.btnCreate.Click += new System.EventHandler(this.btnCreate_Click);
+            this.btnExtract.Location = new System.Drawing.Point(15, 72);
+            this.btnExtract.Name = "btnExtract";
+            this.btnExtract.Size = new System.Drawing.Size(75, 23);
+            this.btnExtract.TabIndex = 5;
+            this.btnExtract.Text = "Extract";
+            this.btnExtract.UseVisualStyleBackColor = true;
+            this.btnExtract.Click += new System.EventHandler(this.btnExtract_Click);
             // 
             // btnAbort
             // 
@@ -137,30 +118,34 @@
             this.btnAbort.UseVisualStyleBackColor = true;
             this.btnAbort.Click += new System.EventHandler(this.btnAbort_Click);
             // 
-            // LegacyCreate
+            // ofdFile
             // 
-            this.AcceptButton = this.btnCreate;
+            this.ofdFile.Filter = "Garry\'s Mod Addons|*.gma";
+            this.ofdFile.Title = "Extract addon";
+            // 
+            // LegacyExtract
+            // 
+            this.AcceptButton = this.btnExtract;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnAbort;
             this.ClientSize = new System.Drawing.Size(618, 107);
             this.Controls.Add(this.btnAbort);
-            this.Controls.Add(this.btnCreate);
-            this.Controls.Add(this.txtFolder);
+            this.Controls.Add(this.btnExtract);
             this.Controls.Add(this.txtFile);
-            this.Controls.Add(this.btnFileBrowse);
+            this.Controls.Add(this.txtFolder);
             this.Controls.Add(this.btnFolderBrowse);
-            this.Controls.Add(this.chkWarnInvalid);
+            this.Controls.Add(this.btnFileBrowse);
             this.Controls.Add(this.lblFile);
             this.Controls.Add(this.lblFolder);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "LegacyCreate";
+            this.Name = "LegacyExtract";
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Create addon";
+            this.Text = "Extract addon";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -170,14 +155,13 @@
 
         private System.Windows.Forms.Label lblFolder;
         private System.Windows.Forms.Label lblFile;
-        private System.Windows.Forms.CheckBox chkWarnInvalid;
-        private System.Windows.Forms.Button btnFolderBrowse;
         private System.Windows.Forms.Button btnFileBrowse;
-        private System.Windows.Forms.TextBox txtFile;
+        private System.Windows.Forms.Button btnFolderBrowse;
         private System.Windows.Forms.TextBox txtFolder;
+        private System.Windows.Forms.TextBox txtFile;
         private System.Windows.Forms.FolderBrowserDialog fbdFolder;
-        private System.Windows.Forms.SaveFileDialog sfdOutFile;
-        private System.Windows.Forms.Button btnCreate;
+        private System.Windows.Forms.Button btnExtract;
         private System.Windows.Forms.Button btnAbort;
+        private System.Windows.Forms.OpenFileDialog ofdFile;
     }
 }

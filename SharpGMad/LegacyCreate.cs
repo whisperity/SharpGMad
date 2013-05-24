@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using System.IO;
+using System.Windows.Forms;
 
 namespace SharpGMad
 {
@@ -50,16 +45,37 @@ namespace SharpGMad
                 txtFile.Text = sfdOutFile.FileName;
         }
 
+        /// <summary>
+        /// Specifies the type of addon creation error.
+        /// </summary>
         private enum CreateErrorType
         {
+            /// <summary>
+            /// Indicates inability to read the file from the source device.
+            /// </summary>
             FileRead,
+            /// <summary>
+            /// Indicates the file path matching the addon's ignore patterns.
+            /// </summary>
             Ignored,
+            /// <summary>
+            /// Indicates the file path violating the global whitelist patterns.
+            /// </summary>
             WhitelistFailure
         }
 
+        /// <summary>
+        /// Provides an instance to represent addon creation errors.
+        /// </summary>
         private struct CreateError
         {
+            /// <summary>
+            /// Gets or seth the path of the errorneous file.
+            /// </summary>
             public string Path;
+            /// <summary>
+            /// Gets or sets the type of the error.
+            /// </summary>
             public CreateErrorType Type;
         }
 
@@ -88,7 +104,7 @@ namespace SharpGMad
             }
             catch (AddonJSONException ex)
             {
-                MessageBox.Show(ex.Message, "addon.json parse error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(ex.Message, "addon.json parse error", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
 
@@ -126,7 +142,7 @@ namespace SharpGMad
                     if (!chkWarnInvalid.Checked)
                     {
                         MessageBox.Show("The following file is not allowed by the whitelist:\n" + file,
-                            "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                         return;
                     }
                 }
@@ -148,7 +164,7 @@ namespace SharpGMad
             catch (Exception be)
             {
                 MessageBox.Show("An exception happened while compiling the addon.\n\n" + be.Message,
-                    "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
 
@@ -166,7 +182,7 @@ namespace SharpGMad
             catch (Exception)
             {
                 MessageBox.Show("Couldn't save to file " + txtFile.Text,
-                    "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
 

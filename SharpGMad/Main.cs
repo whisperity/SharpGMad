@@ -97,5 +97,11 @@ namespace SharpGMad
             LegacyCreate lcForm = new LegacyCreate();
             lcForm.ShowDialog(this);
         }
+
+        private void tsmiLegacyExtract_Click(object sender, EventArgs e)
+        {
+            LegacyExtract leForm = new LegacyExtract();
+            leForm.ShowDialog(this);
+        }
     }
 }

@@ -178,21 +178,21 @@ namespace SharpGMad
                 {
                     addon.AddFile(file, File.ReadAllBytes(f));
                 }
-                catch (System.IO.IOException)
+                catch (IOException)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Unable to read file " + file);
                     Console.ResetColor();
                     continue;
                 }
-                catch (IgnoredException iex)
+                catch (IgnoredException)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("\t\t[Ignored]");
                     Console.ResetColor();
                     continue;
                 }
-                catch (WhitelistException wex)
+                catch (WhitelistException)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("\t\t[Not allowed by whitelist]");
@@ -280,7 +280,7 @@ namespace SharpGMad
             {
                 addon = new Addon(new Reader(strFile));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("There was a problem opening or parsing the file");
@@ -302,18 +302,18 @@ namespace SharpGMad
                     // Noop
                 }
                 // Write the file to the disk
-                using (FileStream file = new FileStream(strOutPath + entry.Path, FileMode.Create, FileAccess.Write))
+                try
                 {
-                    try
+                    using (FileStream file = new FileStream(strOutPath + entry.Path, FileMode.Create, FileAccess.Write))
                     {
                         file.Write(entry.Content, 0, (int)entry.Size);
                     }
-                    catch (Exception ex)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("\t\tCouldn't extract!");
-                        Console.ResetColor();
-                    }
+                }
+                catch (Exception)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\t\tCouldn't extract!");
+                    Console.ResetColor();
                 }
             }
             Console.WriteLine("Done!");

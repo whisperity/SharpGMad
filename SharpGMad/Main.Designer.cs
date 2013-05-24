@@ -380,6 +380,7 @@
             this.tsmiLegacyExtract.Name = "tsmiLegacyExtract";
             this.tsmiLegacyExtract.Size = new System.Drawing.Size(171, 22);
             this.tsmiLegacyExtract.Text = "Extract to folder";
+            this.tsmiLegacyExtract.Click += new System.EventHandler(this.tsmiLegacyExtract_Click);
             // 
             // Main
             // 
