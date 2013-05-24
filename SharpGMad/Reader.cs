@@ -57,7 +57,7 @@ namespace SharpGMad
         /// <summary>
         /// The internal buffer where the addon is loaded.
         /// </summary>
-        private MemoryStream Buffer;
+        private Stream Buffer;
         /// <summary>
         /// The byte representing the version character.
         /// </summary>
@@ -104,7 +104,6 @@ namespace SharpGMad
         /// </summary>
         private Reader()
         {
-            Buffer = new MemoryStream();
             _Index = new List<IndexEntry>();
             _Tags = new List<string>();
         }
@@ -118,12 +117,12 @@ namespace SharpGMad
         public Reader(string path)
             : this()
         {
+            FileStream gmaFileStream;
             try
             {
-                using (FileStream gmaFileStream = new FileStream(path, FileMode.Open, FileAccess.Read))
-                {
-                    gmaFileStream.CopyTo(Buffer);
-                }
+                gmaFileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
+
+                Buffer = gmaFileStream;
             }
             catch (IOException ex)
             {
@@ -151,8 +150,12 @@ namespace SharpGMad
         {
             try
             {
+                // Seek and read a byte to test access to the stream.
                 stream.Seek(0, SeekOrigin.Begin);
-                stream.CopyTo(Buffer);
+                stream.ReadByte();
+                stream.Seek(0, SeekOrigin.Begin);
+
+                Buffer = stream;
             }
             catch (IOException ex)
             {
