@@ -5,18 +5,27 @@ SharpGMad is a reimplementation of Garry Newman's
 [GMad](http://github.com/garrynewman/gmad) application.
 
 _GMad_ is used to manipulate Garry's Mod (his game) addon files and is
-written in C++. SharpGMod takes it to be in C#, written directly from the
-code available by garry.
+written in C++. SharpGMod takes it to be in C#, originally written directly
+from the code available by garry.
 
-(The current version of SharpGMad implements [8b1c7b9011](http://github.com/garrynewman/gmad/tree/8b1c7b9011d81ef0f7378eae482a6a94a6536b0e).)
+(The current version of SharpGMad implements and complies with
+[`8b1c7b9011`](http://github.com/garrynewman/gmad/tree/8b1c7b9011d81ef0f7378eae482a6a94a6536b0e).)
+
+Ever since, SharpGMad's code has been refurbished to match more with
+development style used in C# applications, and to, of course, support new
+opportunities.
 
 Usage
 -----
 
+Currently three operation modes are supported:
+
+### [`gmad`](http://github.com/garrynewman/gmad) (legacy) mode
+
 This code is a straight mirror-implementation, so the command interface is the
 same.
 
-`SharpGMad <command> <options>`
+`SharpGMad.exe <command> <options>`
 
 To create a new .gma file
 
@@ -33,13 +42,29 @@ To extract an existing .gma file into another folder
 `SharpGMad.exe extract -file "C:\steam\etc\garrysmod\addons\my_addon_12345.gma"
 -out "C:\this\folder"`
 
-The realtime console
---------------------
+### Realtime access
 
-The realtime console lets you "mount" an addon into the application and
-use it like it was a simple archive.
+What is the main feature of SharpGMad, however, is the so-called realtime
+wrapper. With it, you can load a GMA file like any other archive (zip,
+rar, tar, ...) and update the contents of the files in it without having
+to fully extract and then repack the file.
 
-To use it, simply start the program as
+The realtime wrapper comes in two flavours.
+
+#### GUI
+
+`SharpGMad.exe [path]`
+
+If the program is started with no command-line arguments (or the only
+argument is a file path), a GUI will load. (Because of this, dragging and
+dropping a file onto SharpGMad in Explorer is supported.)
+
+The GUI supports all the functionality you can have by using the realtime
+console, only with an added, neat graphical interface.
+
+(Should insert a picture here of Main form.)
+
+#### Console
 
 `SharpGMad.exe realtime`
 
