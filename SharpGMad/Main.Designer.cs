@@ -340,6 +340,7 @@
             this.tsbOpenAddon.Name = "tsbOpenAddon";
             this.tsbOpenAddon.Size = new System.Drawing.Size(56, 22);
             this.tsbOpenAddon.Text = "Open";
+            this.tsbOpenAddon.Click += new System.EventHandler(this.tsbOpenAddon_Click);
             // 
             // tsbSaveAddon
             // 

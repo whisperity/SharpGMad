@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.IO;
 
 namespace SharpGMad
 {
@@ -18,25 +19,60 @@ namespace SharpGMad
             InitializeComponent();
         }
 
-        private void LoadFile()
+        private void tsbOpenAddon_Click(object sender, EventArgs e)
         {
-            DialogResult file = ofdAddon.ShowDialog();
-
-            if (file != DialogResult.Cancel)
+            DialogResult dropChanges = new DialogResult();
+            if (addon is Addon)
             {
-                try
+                dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
+                    "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            }
+            if (dropChanges == DialogResult.Yes || addon == null)
+            {
+                DialogResult file = ofdAddon.ShowDialog();
+
+                if (file != DialogResult.Cancel)
                 {
-                    addon = new Addon(new Reader(ofdAddon.FileName));
+                    try
+                    {
+                        addon = new Addon(new Reader(ofdAddon.FileName));
+                    }
+                    catch (System.IO.IOException ex)
+                    {
+                        MessageBox.Show("Unable to load the addon.\nAn exception happened.\n\n" + ex.Message, "Addon reading error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    catch (ReaderException ex)
+                    {
+                        MessageBox.Show("There was an error parsing the file.\n\n" + ex.Message, "Addon reading error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
-                catch (System.IO.IOException ex)
+
+                if (addon is Addon)
                 {
-                    MessageBox.Show("Unable to load the addon.\nAn exception happened.\n\n" + ex.Message, "Addon reading error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                catch (ReaderException ex)
-                {
-                    MessageBox.Show("There was an error parsing the file.\n\n" + ex.Message, "Addon reading error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    txtTitle.Text = addon.Title;
+                    txtAuthor.Text = addon.Author;
+                    txtType.Text = addon.Type;
+                    txtTags.Text = String.Join(", ", addon.Tags.ToArray());
+                    txtDescription.Text = addon.Description;
+
+                    // Put the files into the list
+                    lstFiles.Items.Clear();
+                    lstFiles.Groups.Clear();
+                    
+                    IEnumerable<IGrouping<string, ContentFile>> folders =
+                        addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path));
+                    foreach (IGrouping<string, ContentFile> folder in folders)
+                    {
+                        lstFiles.Groups.Add(folder.Key, folder.Key);
+                    }
+
+                    foreach (ContentFile cfile in addon.Files)
+                    {
+                        lstFiles.Items.Add(new ListViewItem(Path.GetFileName(cfile.Path),
+                            lstFiles.Groups[Path.GetDirectoryName(cfile.Path)]));
+                    }
                 }
             }
         }
