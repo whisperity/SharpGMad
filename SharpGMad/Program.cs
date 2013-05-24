@@ -65,7 +65,7 @@ namespace SharpGMad
                     // There is no console window or this is a debug run.
                     // Start the main form
 
-                    Application.Run(new Main());
+                    Application.Run(new Main(args));
                 else
                 {
                     // There is a console the program is running in.

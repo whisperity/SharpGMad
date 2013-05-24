@@ -14,9 +14,32 @@ namespace SharpGMad
     {
         Addon addon;
 
-        public Main()
+        private Main()
         {
             InitializeComponent();
+        }
+
+        public Main(string[] args)
+            : this()
+        {
+            // Try to autoload the addon if there's a first parameter specified.
+            // This supports drag&dropping an addon file onto the EXE in Explorer.
+
+            string path = String.Join(" ", args);
+            if (path != String.Empty)
+            {
+                try
+                {
+                    FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
+                    fs.Dispose();
+
+                    LoadAddon(path);
+                }
+                catch (IOException)
+                {
+                    return;
+                }
+            }
         }
 
         private void tsbOpenAddon_Click(object sender, EventArgs e)
@@ -27,52 +50,62 @@ namespace SharpGMad
                 dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
                     "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             }
+
             if (dropChanges == DialogResult.Yes || addon == null)
             {
                 DialogResult file = ofdAddon.ShowDialog();
 
-                if (file != DialogResult.Cancel)
+                if (file == DialogResult.OK)
+                    LoadAddon(ofdAddon.FileName);
+            }
+        }
+
+        private void LoadAddon(string path)
+        {
+            try
+            {
+                addon = new Addon(new Reader(path));
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return;
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show("Unable to load the addon.\nAn exception happened.\n\n" + ex.Message, "Addon reading error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            catch (ReaderException ex)
+            {
+                MessageBox.Show("There was an error parsing the file.\n\n" + ex.Message, "Addon reading error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (addon is Addon)
+            {
+                txtTitle.Text = addon.Title;
+                txtAuthor.Text = addon.Author;
+                txtType.Text = addon.Type;
+                txtTags.Text = String.Join(", ", addon.Tags.ToArray());
+                txtDescription.Text = addon.Description;
+
+                // Put the files into the list
+                lstFiles.Items.Clear();
+                lstFiles.Groups.Clear();
+
+                IEnumerable<IGrouping<string, ContentFile>> folders =
+                    addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path));
+                foreach (IGrouping<string, ContentFile> folder in folders)
                 {
-                    try
-                    {
-                        addon = new Addon(new Reader(ofdAddon.FileName));
-                    }
-                    catch (System.IO.IOException ex)
-                    {
-                        MessageBox.Show("Unable to load the addon.\nAn exception happened.\n\n" + ex.Message, "Addon reading error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    catch (ReaderException ex)
-                    {
-                        MessageBox.Show("There was an error parsing the file.\n\n" + ex.Message, "Addon reading error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    lstFiles.Groups.Add(folder.Key, folder.Key);
                 }
 
-                if (addon is Addon)
+                foreach (ContentFile cfile in addon.Files)
                 {
-                    txtTitle.Text = addon.Title;
-                    txtAuthor.Text = addon.Author;
-                    txtType.Text = addon.Type;
-                    txtTags.Text = String.Join(", ", addon.Tags.ToArray());
-                    txtDescription.Text = addon.Description;
-
-                    // Put the files into the list
-                    lstFiles.Items.Clear();
-                    lstFiles.Groups.Clear();
-                    
-                    IEnumerable<IGrouping<string, ContentFile>> folders =
-                        addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path));
-                    foreach (IGrouping<string, ContentFile> folder in folders)
-                    {
-                        lstFiles.Groups.Add(folder.Key, folder.Key);
-                    }
-
-                    foreach (ContentFile cfile in addon.Files)
-                    {
-                        lstFiles.Items.Add(new ListViewItem(Path.GetFileName(cfile.Path),
-                            lstFiles.Groups[Path.GetDirectoryName(cfile.Path)]));
-                    }
+                    lstFiles.Items.Add(new ListViewItem(Path.GetFileName(cfile.Path),
+                        lstFiles.Groups[Path.GetDirectoryName(cfile.Path)]));
                 }
             }
         }
