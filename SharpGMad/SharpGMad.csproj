@@ -50,6 +50,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Addon.cs" />
+    <Compile Include="LegacyCreate.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LegacyCreate.Designer.cs">
+      <DependentUpon>LegacyCreate.cs</DependentUpon>
+    </Compile>
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -75,6 +81,9 @@
     <Compile Include="StreamDiffer.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="LegacyCreate.resx">
+      <DependentUpon>LegacyCreate.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
     </EmbeddedResource>
@@ -94,6 +103,7 @@
     <None Include="Resources\open.png" />
     <None Include="Resources\remove.png" />
     <None Include="Resources\save.png" />
+    <None Include="Resources\create.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

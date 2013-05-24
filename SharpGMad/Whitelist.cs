@@ -73,6 +73,9 @@ namespace SharpGMad
         /// <returns>True if there is match, false if not.</returns>
         public static bool Check(string wildcard, string input)
         {
+            if (wildcard == null)
+                return false;
+
             string pattern = "^" + Regex.Escape(wildcard).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
             Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
 

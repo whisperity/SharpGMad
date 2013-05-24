@@ -372,6 +372,7 @@
             this.tsmiLegacyCreate.Name = "tsmiLegacyCreate";
             this.tsmiLegacyCreate.Size = new System.Drawing.Size(171, 22);
             this.tsmiLegacyCreate.Text = "Create from folder";
+            this.tsmiLegacyCreate.Click += new System.EventHandler(this.tsmiLegacyCreate_Click);
             // 
             // tsmiLegacyExtract
             // 

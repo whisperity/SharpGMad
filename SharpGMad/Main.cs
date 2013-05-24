@@ -91,5 +91,11 @@ namespace SharpGMad
             this.txtDescription.Size = new Size(this.pnlRightSide.Size.Width - txtDescriptionSizeDifference.Width,
                 this.pnlRightSide.Size.Height - txtDescriptionSizeDifference.Height);
         }
+
+        private void tsmiLegacyCreate_Click(object sender, EventArgs e)
+        {
+            LegacyCreate lcForm = new LegacyCreate();
+            lcForm.ShowDialog(this);
+        }
     }
 }

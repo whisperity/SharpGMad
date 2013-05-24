@@ -123,6 +123,14 @@ namespace SharpGMad
             return 0;
         }
 
+        /// <summary>
+        /// Legacy GMAD operation to create an addon file using contents of a specified folder.
+        /// </summary>
+        /// <param name="strFolder">The folder containing the raw content.</param>
+        /// <param name="strOutfile">The path of the addon file to write.</param>
+        /// <param name="warnInvalid">Whether there should be a warning for files failing to validate
+        /// instead of a full exception halt.</param>
+        /// <returns>Integer error code: 0 if success, 1 if error.</returns>
         static int CreateAddonFile(string strFolder, string strOutfile, bool warnInvalid)
         {
             //bool bErrors = false;
@@ -145,7 +153,7 @@ namespace SharpGMad
             {
                 addonInfo = new Json(strFolder + "addon.json");
             }
-            catch (Exception ex)
+            catch (AddonJSONException ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(strFolder + "addon.json error: " + ex.Message);
@@ -189,7 +197,8 @@ namespace SharpGMad
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("\t\t[Not allowed by whitelist]");
                     Console.ResetColor();
-                    return 1;
+                    if (!warnInvalid)
+                        return 1;
                 }
             }
             //
@@ -243,6 +252,12 @@ namespace SharpGMad
             return 0;
         }
 
+        /// <summary>
+        /// Legacy GMAD operation to extract an addon file to a specified folder.
+        /// </summary>
+        /// <param name="strFile">The file path of the GMA to extract.</param>
+        /// <param name="strOutPath">The folder where the addon is to be extracted to.</param>
+        /// <returns>Integer error code: 0 if success, 1 if error.</returns>
         static int ExtractAddonFile(string strFile, string strOutPath = "")
         {
             Console.WriteLine("Opening " + strFile);
