@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.lstFiles = new System.Windows.Forms.ListView();
             this.ofdAddon = new System.Windows.Forms.OpenFileDialog();
@@ -63,6 +64,8 @@
             this.tsmiLegacyCreate = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiLegacyExtract = new System.Windows.Forms.ToolStripMenuItem();
             this.ofdAddFile = new System.Windows.Forms.OpenFileDialog();
+            this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmFileRemove = new System.Windows.Forms.ToolStripMenuItem();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
             this.pnlFilelist.SuspendLayout();
@@ -73,17 +76,21 @@
             this.pnlRightSide.SuspendLayout();
             this.tsMetadata.SuspendLayout();
             this.tsToolbar.SuspendLayout();
+            this.cmsFileEntry.SuspendLayout();
             this.SuspendLayout();
             // 
             // lstFiles
             // 
             this.lstFiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lstFiles.HideSelection = false;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
             this.lstFiles.Size = new System.Drawing.Size(530, 274);
             this.lstFiles.TabIndex = 0;
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.View = System.Windows.Forms.View.Tile;
+            this.lstFiles.SelectedIndexChanged += new System.EventHandler(this.lstFiles_SelectedIndexChanged);
+            this.lstFiles.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseClick);
             // 
             // ofdAddon
             // 
@@ -104,6 +111,7 @@
             // 
             // tsbAddFile
             // 
+            this.tsbAddFile.AutoToolTip = false;
             this.tsbAddFile.Enabled = false;
             this.tsbAddFile.Image = global::SharpGMad.Properties.Resources.add;
             this.tsbAddFile.ImageTransparentColor = System.Drawing.Color.Magenta;
@@ -114,12 +122,14 @@
             // 
             // tsbRemoveFile
             // 
+            this.tsbRemoveFile.AutoToolTip = false;
             this.tsbRemoveFile.Enabled = false;
             this.tsbRemoveFile.Image = global::SharpGMad.Properties.Resources.remove;
             this.tsbRemoveFile.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbRemoveFile.Name = "tsbRemoveFile";
             this.tsbRemoveFile.Size = new System.Drawing.Size(89, 23);
             this.tsbRemoveFile.Text = "Remove file";
+            this.tsbRemoveFile.Click += new System.EventHandler(this.tsbRemoveFile_Click);
             // 
             // pnlLeftSide
             // 
@@ -228,12 +238,14 @@
             // 
             // tsbUpdateMetadata
             // 
+            this.tsbUpdateMetadata.AutoToolTip = false;
             this.tsbUpdateMetadata.Enabled = false;
             this.tsbUpdateMetadata.Image = global::SharpGMad.Properties.Resources.metadata;
             this.tsbUpdateMetadata.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbUpdateMetadata.Name = "tsbUpdateMetadata";
             this.tsbUpdateMetadata.Size = new System.Drawing.Size(118, 22);
             this.tsbUpdateMetadata.Text = "Update metadata";
+            this.tsbUpdateMetadata.ToolTipText = "Edit the metadata of the addon";
             // 
             // txtAuthor
             // 
@@ -332,6 +344,7 @@
             // 
             // tsbCreateAddon
             // 
+            this.tsbCreateAddon.AutoToolTip = false;
             this.tsbCreateAddon.Image = global::SharpGMad.Properties.Resources.newaddon;
             this.tsbCreateAddon.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbCreateAddon.Name = "tsbCreateAddon";
@@ -340,6 +353,7 @@
             // 
             // tsbOpenAddon
             // 
+            this.tsbOpenAddon.AutoToolTip = false;
             this.tsbOpenAddon.Image = global::SharpGMad.Properties.Resources.open;
             this.tsbOpenAddon.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbOpenAddon.Name = "tsbOpenAddon";
@@ -349,6 +363,7 @@
             // 
             // tsbSaveAddon
             // 
+            this.tsbSaveAddon.AutoToolTip = false;
             this.tsbSaveAddon.Enabled = false;
             this.tsbSaveAddon.Image = global::SharpGMad.Properties.Resources.save;
             this.tsbSaveAddon.ImageTransparentColor = System.Drawing.Color.Magenta;
@@ -363,6 +378,7 @@
             // 
             // tsddbLegacy
             // 
+            this.tsddbLegacy.AutoToolTip = false;
             this.tsddbLegacy.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiLegacyCreate,
             this.tsmiLegacyExtract});
@@ -371,6 +387,7 @@
             this.tsddbLegacy.Name = "tsddbLegacy";
             this.tsddbLegacy.Size = new System.Drawing.Size(132, 22);
             this.tsddbLegacy.Text = "Legacy operations";
+            this.tsddbLegacy.ToolTipText = "Access the legacy wrapper windows";
             // 
             // tsmiLegacyCreate
             // 
@@ -378,6 +395,7 @@
             this.tsmiLegacyCreate.Name = "tsmiLegacyCreate";
             this.tsmiLegacyCreate.Size = new System.Drawing.Size(171, 22);
             this.tsmiLegacyCreate.Text = "Create from folder";
+            this.tsmiLegacyCreate.ToolTipText = "Use the legacy method to compile a folder into an addon";
             this.tsmiLegacyCreate.Click += new System.EventHandler(this.tsmiLegacyCreate_Click);
             // 
             // tsmiLegacyExtract
@@ -386,11 +404,27 @@
             this.tsmiLegacyExtract.Name = "tsmiLegacyExtract";
             this.tsmiLegacyExtract.Size = new System.Drawing.Size(171, 22);
             this.tsmiLegacyExtract.Text = "Extract to folder";
+            this.tsmiLegacyExtract.ToolTipText = "Use the legacy method to fully unpack an addon to a folder";
             this.tsmiLegacyExtract.Click += new System.EventHandler(this.tsmiLegacyExtract_Click);
             // 
             // ofdAddFile
             // 
             this.ofdAddFile.Title = "Add file";
+            // 
+            // cmsFileEntry
+            // 
+            this.cmsFileEntry.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmFileRemove});
+            this.cmsFileEntry.Name = "cmsFileEntry";
+            this.cmsFileEntry.Size = new System.Drawing.Size(118, 26);
+            // 
+            // tsmFileRemove
+            // 
+            this.tsmFileRemove.Image = global::SharpGMad.Properties.Resources.remove;
+            this.tsmFileRemove.Name = "tsmFileRemove";
+            this.tsmFileRemove.Size = new System.Drawing.Size(117, 22);
+            this.tsmFileRemove.Text = "Remove";
+            this.tsmFileRemove.Click += new System.EventHandler(this.tsbRemoveFile_Click);
             // 
             // Main
             // 
@@ -421,6 +455,7 @@
             this.tsMetadata.PerformLayout();
             this.tsToolbar.ResumeLayout(false);
             this.tsToolbar.PerformLayout();
+            this.cmsFileEntry.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -462,6 +497,8 @@
         private System.Windows.Forms.ToolStrip tsMetadata;
         private System.Windows.Forms.ToolStripButton tsbUpdateMetadata;
         private System.Windows.Forms.OpenFileDialog ofdAddFile;
+        private System.Windows.Forms.ContextMenuStrip cmsFileEntry;
+        private System.Windows.Forms.ToolStripMenuItem tsmFileRemove;
 
 
 

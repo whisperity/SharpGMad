@@ -116,7 +116,7 @@ namespace SharpGMad
             lstFiles.Groups.Clear();
 
             IEnumerable<IGrouping<string, ContentFile>> folders =
-                addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path));
+                addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/'));
             foreach (IGrouping<string, ContentFile> folder in folders)
             {
                 lstFiles.Groups.Add(folder.Key, folder.Key);
@@ -125,7 +125,7 @@ namespace SharpGMad
             foreach (ContentFile cfile in addon.Files)
             {
                 lstFiles.Items.Add(new ListViewItem(Path.GetFileName(cfile.Path),
-                    lstFiles.Groups[Path.GetDirectoryName(cfile.Path)]));
+                    lstFiles.Groups[Path.GetDirectoryName(cfile.Path).Replace('\\', '/')]));
             }
         }
 
@@ -162,7 +162,7 @@ namespace SharpGMad
                 return;
 
             DialogResult result = ofdAddFile.ShowDialog();
-            if ( result != DialogResult.Cancel )
+            if (result != DialogResult.Cancel)
             {
                 byte[] bytes;
                 try
@@ -207,6 +207,66 @@ namespace SharpGMad
 
                 UpdateFileList();
                 ofdAddFile.Reset();
+            }
+        }
+
+        private void lstFiles_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (((System.Windows.Forms.ListView)sender).FocusedItem == null)
+            {
+                tsbRemoveFile.Enabled = false;
+                tsbRemoveFile.Text = "Remove file";
+                tsmFileRemove.Enabled = false;
+            }
+            else
+            {
+                tsbRemoveFile.Enabled = true;
+                tsbRemoveFile.Text = "Remove " + ((System.Windows.Forms.ListView)sender).FocusedItem.Group.Header + "/" +
+                    ((System.Windows.Forms.ListView)sender).FocusedItem.Text;
+                tsmFileRemove.Enabled = true;
+            }
+        }
+
+        private void lstFiles_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                if (((System.Windows.Forms.ListView)sender).FocusedItem.Bounds.Contains(e.Location) == true)
+                {
+                    cmsFileEntry.Show(Cursor.Position);
+                }
+            }
+        }
+
+        private void tsbRemoveFile_Click(object sender, EventArgs e)
+        {
+            if (lstFiles.FocusedItem != null)
+            {
+                DialogResult remove = MessageBox.Show("Do you really wish to remove " +
+                    lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text + "?", "Remove file",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (remove == DialogResult.Yes)
+                {
+                    try
+                    {
+                        addon.RemoveFile(lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        MessageBox.Show("The file was not found in the archive!", "Remove file",
+                            MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        return;
+                    }
+
+                    UpdateFileList();
+                }
+            }
+            else
+            {
+                tsbRemoveFile.Enabled = false;
+                tsbRemoveFile.Text = "Remove file";
+                tsmFileRemove.Enabled = false;
             }
         }
     }
