@@ -17,6 +17,16 @@ namespace SharpGMad
         private Main()
         {
             InitializeComponent();
+
+            string filter = String.Empty;
+            foreach (KeyValuePair<string, string[]> filetype in Whitelist.WildcardFileTypes)
+            {
+                filter += filetype.Key + "|" + String.Join(";", filetype.Value) + "|";
+            }
+            filter += "All files|*.*";
+
+            ofdAddFile.Filter = filter;
+            ofdAddFile.FilterIndex = Whitelist.WildcardFileTypes.Count + 1;
         }
 
         public Main(string[] args)
@@ -85,28 +95,37 @@ namespace SharpGMad
 
             if (addon is Addon)
             {
+                this.Text = "[" + Path.GetFileName(path) + "] - SharpGMad";
+
                 txtTitle.Text = addon.Title;
                 txtAuthor.Text = addon.Author;
                 txtType.Text = addon.Type;
                 txtTags.Text = String.Join(", ", addon.Tags.ToArray());
                 txtDescription.Text = addon.Description;
 
-                // Put the files into the list
-                lstFiles.Items.Clear();
-                lstFiles.Groups.Clear();
+                UpdateFileList();
 
-                IEnumerable<IGrouping<string, ContentFile>> folders =
-                    addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path));
-                foreach (IGrouping<string, ContentFile> folder in folders)
-                {
-                    lstFiles.Groups.Add(folder.Key, folder.Key);
-                }
+                tsbAddFile.Enabled = true;
+            }
+        }
 
-                foreach (ContentFile cfile in addon.Files)
-                {
-                    lstFiles.Items.Add(new ListViewItem(Path.GetFileName(cfile.Path),
-                        lstFiles.Groups[Path.GetDirectoryName(cfile.Path)]));
-                }
+        private void UpdateFileList()
+        {
+            // Put the files into the list
+            lstFiles.Items.Clear();
+            lstFiles.Groups.Clear();
+
+            IEnumerable<IGrouping<string, ContentFile>> folders =
+                addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path));
+            foreach (IGrouping<string, ContentFile> folder in folders)
+            {
+                lstFiles.Groups.Add(folder.Key, folder.Key);
+            }
+
+            foreach (ContentFile cfile in addon.Files)
+            {
+                lstFiles.Items.Add(new ListViewItem(Path.GetFileName(cfile.Path),
+                    lstFiles.Groups[Path.GetDirectoryName(cfile.Path)]));
             }
         }
 
@@ -115,14 +134,14 @@ namespace SharpGMad
         Size txtDescriptionSizeDifference;
         private void Main_Load(object sender, EventArgs e)
         {
-            txtDescriptionSizeDifference = new Size(this.pnlRightSide.Size.Width - this.txtDescription.Size.Width,
-                this.pnlRightSide.Size.Height - this.txtDescription.Size.Height);
+            txtDescriptionSizeDifference = new Size(pnlRightSide.Size.Width - txtDescription.Size.Width,
+                pnlRightSide.Size.Height - txtDescription.Size.Height);
         }
 
         private void Main_Resize(object sender, EventArgs e)
         {
-            this.txtDescription.Size = new Size(this.pnlRightSide.Size.Width - txtDescriptionSizeDifference.Width,
-                this.pnlRightSide.Size.Height - txtDescriptionSizeDifference.Height);
+            txtDescription.Size = new Size(pnlRightSide.Size.Width - txtDescriptionSizeDifference.Width,
+                pnlRightSide.Size.Height - txtDescriptionSizeDifference.Height);
         }
 
         private void tsmiLegacyCreate_Click(object sender, EventArgs e)
@@ -135,6 +154,60 @@ namespace SharpGMad
         {
             LegacyExtract leForm = new LegacyExtract();
             leForm.ShowDialog(this);
+        }
+
+        private void tsbAddFile_Click(object sender, EventArgs e)
+        {
+            if (addon == null)
+                return;
+
+            DialogResult result = ofdAddFile.ShowDialog();
+            if ( result != DialogResult.Cancel )
+            {
+                byte[] bytes;
+                try
+                {
+                    using (FileStream fs = new FileStream(ofdAddFile.FileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        bytes = new byte[fs.Length];
+                        fs.Read(bytes, 0, (int)fs.Length);
+                    }
+                }
+                catch (IOException)
+                {
+                    MessageBox.Show(ofdAddFile.FileName + "\n\nThere was an error reading the file.", "Cannot add file",
+                        MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    return;
+                }
+
+                string filename = ofdAddFile.FileName.Replace("\\", "/");
+
+                try
+                {
+                    addon.AddFile(Whitelist.GetMatchingString(filename), bytes);
+                }
+                catch (IgnoredException)
+                {
+                    MessageBox.Show(ofdAddFile.FileName + "\n\nThis file is ignored by the addon.", "Cannot add file",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                catch (WhitelistException)
+                {
+                    MessageBox.Show(ofdAddFile.FileName + "\n\nThis file is not allowed by the whitelist!", "Cannot add file",
+                        MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    return;
+                }
+                catch (ArgumentException)
+                {
+                    MessageBox.Show(ofdAddFile.FileName + "\n\nA file like this has already been added. Please remove it first.",
+                        "Cannot add file", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                UpdateFileList();
+                ofdAddFile.Reset();
+            }
         }
     }
 }

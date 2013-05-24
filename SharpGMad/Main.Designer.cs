@@ -62,6 +62,7 @@
             this.tsddbLegacy = new System.Windows.Forms.ToolStripDropDownButton();
             this.tsmiLegacyCreate = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiLegacyExtract = new System.Windows.Forms.ToolStripMenuItem();
+            this.ofdAddFile = new System.Windows.Forms.OpenFileDialog();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
             this.pnlFilelist.SuspendLayout();
@@ -103,14 +104,17 @@
             // 
             // tsbAddFile
             // 
+            this.tsbAddFile.Enabled = false;
             this.tsbAddFile.Image = global::SharpGMad.Properties.Resources.add;
             this.tsbAddFile.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbAddFile.Name = "tsbAddFile";
             this.tsbAddFile.Size = new System.Drawing.Size(68, 23);
             this.tsbAddFile.Text = "Add file";
+            this.tsbAddFile.Click += new System.EventHandler(this.tsbAddFile_Click);
             // 
             // tsbRemoveFile
             // 
+            this.tsbRemoveFile.Enabled = false;
             this.tsbRemoveFile.Image = global::SharpGMad.Properties.Resources.remove;
             this.tsbRemoveFile.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbRemoveFile.Name = "tsbRemoveFile";
@@ -224,6 +228,7 @@
             // 
             // tsbUpdateMetadata
             // 
+            this.tsbUpdateMetadata.Enabled = false;
             this.tsbUpdateMetadata.Image = global::SharpGMad.Properties.Resources.metadata;
             this.tsbUpdateMetadata.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbUpdateMetadata.Name = "tsbUpdateMetadata";
@@ -344,6 +349,7 @@
             // 
             // tsbSaveAddon
             // 
+            this.tsbSaveAddon.Enabled = false;
             this.tsbSaveAddon.Image = global::SharpGMad.Properties.Resources.save;
             this.tsbSaveAddon.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbSaveAddon.Name = "tsbSaveAddon";
@@ -381,6 +387,10 @@
             this.tsmiLegacyExtract.Size = new System.Drawing.Size(171, 22);
             this.tsmiLegacyExtract.Text = "Extract to folder";
             this.tsmiLegacyExtract.Click += new System.EventHandler(this.tsmiLegacyExtract_Click);
+            // 
+            // ofdAddFile
+            // 
+            this.ofdAddFile.Title = "Add file";
             // 
             // Main
             // 
@@ -451,6 +461,7 @@
         private System.Windows.Forms.Label lblAuthor;
         private System.Windows.Forms.ToolStrip tsMetadata;
         private System.Windows.Forms.ToolStripButton tsbUpdateMetadata;
+        private System.Windows.Forms.OpenFileDialog ofdAddFile;
 
 
 

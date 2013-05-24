@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -54,6 +55,38 @@ namespace SharpGMad
 			"resource/fonts/*.ttf",
 			null
         };
+
+        /// <summary>
+        /// Contains a list of whitelist patterns grouped by file type.
+        /// </summary>
+        private static Dictionary<string, string[]> _WildcardFileTypes = new Dictionary<string, string[]>();
+        /// <summary>
+        /// Get a list of known whitelist patterns grouped by file type.
+        /// </summary>
+        public static Dictionary<string, string[]> WildcardFileTypes
+        {
+            get
+            {
+                return new Dictionary<string, string[]>(_WildcardFileTypes);
+            }
+        }
+
+        /// <summary>
+        /// Static constructor
+        /// </summary>
+        static Whitelist()
+        {
+            // Initialize the known file types into the internal dictionary.
+            _WildcardFileTypes.Add("Maps", new string[] { "*.bsp", "*.png", "*.nav", "*.ain" });
+            _WildcardFileTypes.Add("Lua script files", new string[] { "*.lua" });
+            _WildcardFileTypes.Add("Materials", new string[] { "*.vmt", "*.vtf", "*.png" });
+            _WildcardFileTypes.Add("Models", new string[] { "*.mdl", "*.vtx", "*.phy", "*.ani", "*.vvd" });
+            _WildcardFileTypes.Add("Text files", new string[] { "*.txt" });
+            _WildcardFileTypes.Add("Fonts", new string[] { "*.ttf" });
+            _WildcardFileTypes.Add("Images", new string[] { "*.png", "*.jpg" });
+            _WildcardFileTypes.Add("Scenes", new string[] { "*.vcd" });
+            _WildcardFileTypes.Add("Particle effects", new string[] { "*.pcf" });
+        }
 
         /// <summary>
         /// Check a path against the internal whitelist determining whether it's allowed or not.
