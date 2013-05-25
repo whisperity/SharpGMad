@@ -36,7 +36,7 @@ namespace SharpGMad
                 writer.WriteNullTerminatedString(addon.DescriptionJSON);
                 // Addon Author (n) [unused]
                 writer.WriteNullTerminatedString("Author Name");
-                // Addon v ersion (4) [unused]
+                // Addon version (4) [unused]
                 writer.Write((int)1);
 
                 // File list

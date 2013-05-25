@@ -84,6 +84,10 @@ namespace SharpGMad
         /// </summary>
         public string Title;
         /// <summary>
+        /// Gets the format version byte of the addon (from header).
+        /// </summary>
+        public char FormatVersion { get; private set; }
+        /// <summary>
         /// Gets or sets the author of the addon.
         /// Currently it has no use, as the author is always written as "Author Name".
         /// </summary>
@@ -100,6 +104,19 @@ namespace SharpGMad
         /// Gets or sets the type of the addon.
         /// </summary>
         public string Type;
+        /// <summary>
+        /// Gets or sets the Steam ID of the creator.
+        /// </summary>
+        public ulong SteamID;
+        /// <summary>
+        /// Gets the creation time of the addon.
+        /// </summary>
+        public DateTime Timestamp { get; private set; }
+        /// <summary>
+        /// Gets or sets the version of the addon.
+        /// Currently unused.
+        /// </summary>
+        public int AddonVersion;
         /// <summary>
         /// Contains a list of file contents of the addon.
         /// </summary>
@@ -139,6 +156,10 @@ namespace SharpGMad
             Description = reader.Description;
             Type = reader.Type;
             Tags = reader.Tags;
+            AddonVersion = reader.Version;
+            FormatVersion = reader.FormatVersion;
+            SteamID = reader.SteamID;
+            Timestamp = reader.Timestamp;
 
             foreach (Reader.IndexEntry file in reader.Index)
             {
@@ -166,6 +187,10 @@ namespace SharpGMad
             Type = addonJson.Type;
             Tags = new List<string>(addonJson.Tags);
             Ignores = new List<string>(addonJson.Ignores);
+            FormatVersion = Addon.Version;
+            SteamID = (ulong)0;
+            AddonVersion = (int)1;
+            Timestamp = DateTime.Now;
         }
         
         /// <summary>

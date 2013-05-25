@@ -61,7 +61,7 @@ namespace SharpGMad
         /// <summary>
         /// The byte representing the version character.
         /// </summary>
-        private char FormatVersion;
+        public char FormatVersion { get; private set; }
         /// <summary>
         /// Gets the name of the addon.
         /// </summary>
@@ -78,6 +78,20 @@ namespace SharpGMad
         /// Gets the type of the addon.
         /// </summary>
         public string Type { get; private set; }
+        /// <summary>
+        /// Gets the SteamID of the creator.
+        /// Currently unused.
+        /// </summary>
+        public ulong SteamID { get; private set; }
+        /// <summary>
+        /// Gets the creation date and time of the addon
+        /// </summary>
+        public DateTime Timestamp { get; private set; }
+        /// <summary>
+        /// Gets the version of the addon.
+        /// Currently unused.
+        /// </summary>
+        public int Version { get; private set; }
         /// <summary>
         /// Represents the index area of the addon.
         /// </summary>
@@ -207,8 +221,9 @@ namespace SharpGMad
                 throw new ReaderException("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
             }
 
-            reader.ReadInt64(); // SteamID (long)
-            reader.ReadInt64(); // Timestamp (long)
+            SteamID = (ulong)reader.ReadInt64(); // SteamID (long)
+            Timestamp = new DateTime(1970, 1, 1, 0, 0, 0).ToLocalTime().
+                AddSeconds((double)reader.ReadInt64()); // Timestamp (long)
 
             // Required content (not used at the moment, just read out)
             if (FormatVersion > 1)
@@ -222,7 +237,7 @@ namespace SharpGMad
             Name = reader.ReadNullTerminatedString();
             Description = reader.ReadNullTerminatedString();
             Author = reader.ReadNullTerminatedString();
-            reader.ReadInt32(); // Addon version (unused)
+            Version = reader.ReadInt32(); // Addon version (unused)
 
             // File index
             int FileNumber = 1;
