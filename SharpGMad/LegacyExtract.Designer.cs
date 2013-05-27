@@ -95,7 +95,7 @@
             // 
             // fbdFolder
             // 
-            this.fbdFolder.Description = "Select the folder you want to compile into an addon";
+            this.fbdFolder.Description = "Select the destination folder where the addon will be extracted to";
             // 
             // btnExtract
             // 
@@ -144,6 +144,7 @@
             this.MinimizeBox = false;
             this.Name = "LegacyExtract";
             this.ShowInTaskbar = false;
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Extract addon";
             this.ResumeLayout(false);

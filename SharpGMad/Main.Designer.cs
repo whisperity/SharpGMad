@@ -246,6 +246,7 @@
             this.tsbUpdateMetadata.Size = new System.Drawing.Size(118, 22);
             this.tsbUpdateMetadata.Text = "Update metadata";
             this.tsbUpdateMetadata.ToolTipText = "Edit the metadata of the addon";
+            this.tsbUpdateMetadata.Click += new System.EventHandler(this.tsbUpdateMetadata_Click);
             // 
             // txtAuthor
             // 

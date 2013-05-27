@@ -97,16 +97,21 @@ namespace SharpGMad
             {
                 this.Text = "[" + Path.GetFileName(path) + "] - SharpGMad";
 
-                txtTitle.Text = addon.Title;
-                txtAuthor.Text = addon.Author;
-                txtType.Text = addon.Type;
-                txtTags.Text = String.Join(", ", addon.Tags.ToArray());
-                txtDescription.Text = addon.Description;
-
+                UpdateMetadataPanel();
                 UpdateFileList();
 
                 tsbAddFile.Enabled = true;
+                tsbUpdateMetadata.Enabled = true;
             }
+        }
+
+        public void UpdateMetadataPanel()
+        {
+            txtTitle.Text = addon.Title;
+            txtAuthor.Text = addon.Author;
+            txtType.Text = addon.Type;
+            txtTags.Text = String.Join(", ", addon.Tags.ToArray());
+            txtDescription.Text = addon.Description;
         }
 
         private void UpdateFileList()
@@ -268,6 +273,13 @@ namespace SharpGMad
                 tsbRemoveFile.Text = "Remove file";
                 tsmFileRemove.Enabled = false;
             }
+        }
+
+        private void tsbUpdateMetadata_Click(object sender, EventArgs e)
+        {
+            UpdateMetadata mdForm = new UpdateMetadata(addon);
+            mdForm.Owner = this;
+            mdForm.ShowDialog(this);
         }
     }
 }

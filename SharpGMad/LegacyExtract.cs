@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace SharpGMad
 {
-    public partial class LegacyExtract : Form
+    partial class LegacyExtract : Form
     {
         public LegacyExtract()
         {
