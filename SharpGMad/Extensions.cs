@@ -50,7 +50,7 @@ namespace System.IO
         /// <param name="str">The string to write.</param>
         public static void WriteNullTerminatedString(this BinaryWriter bw, string str)
         {
-            bw.Write(Encoding.ASCII.GetBytes(str));
+            bw.Write(Encoding.UTF8.GetBytes(str));
             bw.Write((byte)0x00);
         }
     }
@@ -72,7 +72,7 @@ namespace System.IO
             while ((read = br.ReadByte()) != 0x00)
                 bytes.Add(read);
 
-            return (bytes.Count > 0 ? Encoding.ASCII.GetString(bytes.ToArray()) : "");
+            return (bytes.Count > 0 ? Encoding.UTF8.GetString(bytes.ToArray()) : "");
         }
     }
 }

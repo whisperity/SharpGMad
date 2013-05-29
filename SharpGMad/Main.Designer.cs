@@ -371,6 +371,7 @@
             this.tsbSaveAddon.Name = "tsbSaveAddon";
             this.tsbSaveAddon.Size = new System.Drawing.Size(51, 22);
             this.tsbSaveAddon.Text = "Save";
+            this.tsbSaveAddon.Click += new System.EventHandler(this.tsbSaveAddon_Click);
             // 
             // tssAddonSeparator
             // 

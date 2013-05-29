@@ -278,7 +278,8 @@ namespace SharpGMad
             Addon addon;
             try
             {
-                addon = new Addon(new Reader(strFile));
+                FileStream fs = new FileStream(strFile, FileMode.Open, FileAccess.ReadWrite);
+                addon = new Addon(new Reader(fs));
             }
             catch (Exception)
             {

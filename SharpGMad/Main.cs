@@ -12,21 +12,14 @@ namespace SharpGMad
 {
     partial class Main : Form
     {
+        FileStream addonFS;
         Addon addon;
+        string path;
+        bool modified;
 
         private Main()
         {
             InitializeComponent();
-
-            string filter = String.Empty;
-            foreach (KeyValuePair<string, string[]> filetype in Whitelist.WildcardFileTypes)
-            {
-                filter += filetype.Key + "|" + String.Join(";", filetype.Value) + "|";
-            }
-            filter += "All files|*.*";
-
-            ofdAddFile.Filter = filter;
-            ofdAddFile.FilterIndex = Whitelist.WildcardFileTypes.Count + 1;
         }
 
         public Main(string[] args)
@@ -74,7 +67,8 @@ namespace SharpGMad
         {
             try
             {
-                addon = new Addon(new Reader(path));
+                addonFS = new FileStream(path, FileMode.Open, FileAccess.ReadWrite);
+                addon = new Addon(new Reader(addonFS));
             }
             catch (IndexOutOfRangeException)
             {
@@ -95,7 +89,9 @@ namespace SharpGMad
 
             if (addon is Addon)
             {
-                this.Text = "[" + Path.GetFileName(path) + "] - SharpGMad";
+                this.path = path;
+
+                SetModified(false);
 
                 UpdateMetadataPanel();
                 UpdateFileList();
@@ -134,6 +130,24 @@ namespace SharpGMad
             }
         }
 
+        public void SetModified(bool modified)
+        {
+            if (modified)
+            {
+                this.modified = true;
+                tsbSaveAddon.Enabled = true;
+
+                this.Text = Path.GetFileName(this.path) + "* - SharpGMad";
+            }
+            else
+            {
+                this.modified = false;
+                tsbSaveAddon.Enabled = false;
+
+                this.Text = Path.GetFileName(this.path) + " - SharpGMad";
+            }
+        }
+
         // Dock the txtDescription text box.
         // It gets automatically resized when the form is resized.
         Size txtDescriptionSizeDifference;
@@ -165,6 +179,20 @@ namespace SharpGMad
         {
             if (addon == null)
                 return;
+
+            // If there is no value for file filtering, load a file list
+            if (ofdAddFile.Filter == String.Empty)
+            {
+                string filter = String.Empty;
+                foreach (KeyValuePair<string, string[]> filetype in Whitelist.WildcardFileTypes)
+                {
+                    filter += filetype.Key + "|" + String.Join(";", filetype.Value) + "|";
+                }
+                filter += "All files|*.*";
+
+                ofdAddFile.Filter = filter;
+                ofdAddFile.FilterIndex = Whitelist.WildcardFileTypes.Count + 1;
+            }
 
             DialogResult result = ofdAddFile.ShowDialog();
             if (result != DialogResult.Cancel)
@@ -210,6 +238,7 @@ namespace SharpGMad
                     return;
                 }
 
+                SetModified(true);
                 UpdateFileList();
                 ofdAddFile.Reset();
             }
@@ -235,12 +264,8 @@ namespace SharpGMad
         private void lstFiles_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
-            {
                 if (((System.Windows.Forms.ListView)sender).FocusedItem.Bounds.Contains(e.Location) == true)
-                {
                     cmsFileEntry.Show(Cursor.Position);
-                }
-            }
         }
 
         private void tsbRemoveFile_Click(object sender, EventArgs e)
@@ -264,15 +289,14 @@ namespace SharpGMad
                         return;
                     }
 
+                    SetModified(true);
                     UpdateFileList();
                 }
             }
-            else
-            {
-                tsbRemoveFile.Enabled = false;
-                tsbRemoveFile.Text = "Remove file";
-                tsmFileRemove.Enabled = false;
-            }
+
+            tsbRemoveFile.Enabled = false;
+            tsbRemoveFile.Text = "Remove file";
+            tsmFileRemove.Enabled = false;
         }
 
         private void tsbUpdateMetadata_Click(object sender, EventArgs e)
@@ -280,6 +304,24 @@ namespace SharpGMad
             UpdateMetadata mdForm = new UpdateMetadata(addon);
             mdForm.Owner = this;
             mdForm.ShowDialog(this);
+        }
+
+        private void tsbSaveAddon_Click(object sender, EventArgs e)
+        {
+            if (this.modified)
+            {
+                MemoryStream ms;
+                StreamDiffer sd = new StreamDiffer(addonFS);
+                Writer.Create(addon, out ms);
+                sd.Write(ms);
+                int count = sd.Push();
+
+                SetModified(false);
+
+                MessageBox.Show("Successfully saved " + ((int)ms.Length).HumanReadableSize() + ", " +
+                    count.HumanReadableSize() + " was modified.", "Save addon",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
     }
 }

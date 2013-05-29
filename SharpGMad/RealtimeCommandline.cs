@@ -370,8 +370,8 @@ namespace SharpGMad
             }
 
             Console.WriteLine("Loading file...");
-
-            addon = new Addon(new Reader(filename));
+            FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite);
+            addon = new Addon(new Reader(fs));
 
             foreach (ContentFile f in addon.Files)
                 Console.WriteLine("\t" + f.Path + " [" + ((int)f.Size).HumanReadableSize() + "]");

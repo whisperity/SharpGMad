@@ -121,38 +121,7 @@ namespace SharpGMad
             _Index = new List<IndexEntry>();
             _Tags = new List<string>();
         }
-
-        /// <summary>
-        /// Reads and parses the specified addon file.
-        /// </summary>
-        /// <param name="path">The path of the file.</param>
-        /// <exception cref="System.IO.IOException">Any sort of error regarding access to the specified file.</exception>
-        /// <exception cref="ReaderException">Errors parsing the file</exception>
-        public Reader(string path)
-            : this()
-        {
-            FileStream gmaFileStream;
-            try
-            {
-                gmaFileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-
-                Buffer = gmaFileStream;
-            }
-            catch (IOException ex)
-            {
-                throw ex;
-            }
-
-            try
-            {
-                Parse();
-            }
-            catch (ReaderException ex)
-            {
-                throw ex;
-            }
-        }
-
+        
         /// <summary>
         /// Reads and parses the specified addon file.
         /// </summary>

@@ -99,7 +99,10 @@ namespace SharpGMad
 
             // Callback to update the metadata panel
             if (this.Owner is Main)
+            {
                 ((Main)this.Owner).UpdateMetadataPanel();
+                ((Main)this.Owner).SetModified(true);
+            }
 
             this.Hide();
             this.Dispose();
