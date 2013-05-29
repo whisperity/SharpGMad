@@ -156,6 +156,40 @@ namespace SharpGMad
                             break;
                         }
                         break;
+                    case "ls":
+                        try
+                        {
+                            IEnumerable<string> files = Directory.EnumerateFiles(Directory.GetCurrentDirectory(),
+                                "*", SearchOption.TopDirectoryOnly);
+
+                            if (files.Count() == 0)
+                            {
+                                Console.WriteLine("0 files.");
+                                break;
+                            }
+                            else
+                                Console.WriteLine(files.Count() + " files:");
+
+                            foreach (string f in files)
+                            {
+                                FileInfo fi = new FileInfo(f);
+
+                                Console.WriteLine(
+                                    String.Format("{0,10} {1,20} {2,30}", ((int)fi.Length).HumanReadableSize(),
+                                    fi.LastWriteTime.ToString(), fi.Name)
+                                );
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("There was a problem listing the files.");
+                            Console.ResetColor();
+                            Console.WriteLine(e.Message);
+                            break;
+                        }
+
+                        break;
                     case "?":
                     case "help":
                         Console.ForegroundColor = ConsoleColor.Green;
@@ -182,6 +216,7 @@ namespace SharpGMad
 
                         Console.WriteLine("pwd                        Prints SharpGMad's current working directory");
                         Console.WriteLine("cd <folder>                Changes the current working directory to <folder>");
+                        Console.WriteLine("ls                         List all files in the current directory");
                         Console.WriteLine("help                       Show the list of available commands");
 
                         if (addon == null)
