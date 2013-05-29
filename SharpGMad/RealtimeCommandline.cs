@@ -119,15 +119,12 @@ namespace SharpGMad
                         }
 
                         break;
-                    case "abort":
+                    case "close":
                         CloseAddon();
                         break;
                     case "push":
                         Push();
                         break;
-                    case "close":
-                        Push();
-                        CloseAddon();
                         break;
                     case "path":
                         FullPath();
@@ -208,9 +205,8 @@ namespace SharpGMad
                             Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
                             Console.WriteLine("list                       Lists the files in the memory");
                             Console.WriteLine("remove <filename>          Removes <filename> from the archive");
-                            Console.WriteLine("push                       Writes the addon to the disk");
-                            Console.WriteLine("close                      Writes addon and closes it");
-                            Console.WriteLine("abort                      Unloads the addon from memory, dropping all changes");
+                            Console.WriteLine("push                       Writes the changes to the disk");
+                            Console.WriteLine("close                      Closes the addon (dropping all changes)");
                             Console.WriteLine("path                       Prints the full path of the current addon.");
                         }
 

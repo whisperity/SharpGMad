@@ -80,9 +80,8 @@ Once running, the following commands will be available to you
     addfolder <folder>       Adds all files from <folder> to the archive
     list                     Lists the files in the memory
     remove <filename>        Removes <filename> from the archive
-    push                     Writes the addon to the disk
-    close                    Writes the addon and closes it
-    abort                    Unloads the addon from memory, dropping all changes
+    push                     Writes the changes to the disk
+    close                    Closes the addon (dropping all changes)
     path                     Prints the full path of the current addon
     pwd                      Prints SharpGMad's current working directory
     cd <folder>              Changes the current working directory to <folder>
