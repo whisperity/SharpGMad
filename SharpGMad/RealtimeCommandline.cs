@@ -119,12 +119,110 @@ namespace SharpGMad
                         }
 
                         break;
+                    case "get":
+                        string parameter;
+                        try
+                        {
+                            parameter = args[1];
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The parameter was not specified.");
+                            Console.ResetColor();
+                            Console.WriteLine("The valid paramteres are: author description tags title type");
+                            break;
+                        }
+
+                        switch (parameter)
+                        {
+                            case "author":
+                                Console.WriteLine(addon.Author);
+                                break;
+                            case "description":
+                                Console.WriteLine(addon.Description);
+                                break;
+                            case "tags":
+                                Console.WriteLine(String.Join(" ", addon.Tags.ToArray()));
+                                break;
+                            case "title":
+                                Console.WriteLine(addon.Title);
+                                break;
+                            case "type":
+                                Console.WriteLine(addon.Type);
+                                break;
+                            default:
+                                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                                Console.WriteLine("The specified parameter is not valid.");
+                                Console.ResetColor();
+                                Console.WriteLine("The valid paramteres are: author description tags title type");
+                                break;
+                        }
+
+                        break;
+                    case "set":
+                        string Sparameter;
+                        try
+                        {
+                            Sparameter = args[1];
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The parameter was not specified.");
+                            Console.ResetColor();
+                            Console.WriteLine("The valid paramteres are: author description tags title type");
+                            break;
+                        }
+
+                        string value;
+                        try
+                        {
+                            string[] param = new string[args.Length - 2];
+                            for (int i = 2; i < args.Length; i++)
+                            {
+                                param[i - 2] = args[i];
+                            }
+
+                            value = String.Join(" ", param);
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            // Noop.
+                            value = String.Empty;
+                        }
+
+                        switch (Sparameter)
+                        {
+                            case "author":
+                                SetAuthor(addon, value);
+                                break;
+                            case "description":
+                                SetDescription(addon, value);
+                                break;
+                            case "tags":
+                                SetTags(addon, value.Split(' '));
+                                break;
+                            case "title":
+                                SetTitle(addon, value);
+                                break;
+                            case "type":
+                                SetType(addon, value);
+                                break;
+                            default:
+                                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                                Console.WriteLine("The specified parameter is not valid.");
+                                Console.ResetColor();
+                                Console.WriteLine("The valid paramteres are: author description tags title type");
+                                break;
+                        }
+
+                        break;
                     case "close":
                         CloseAddon();
                         break;
                     case "push":
                         Push();
-                        break;
                         break;
                     case "path":
                         FullPath();
@@ -205,6 +303,8 @@ namespace SharpGMad
                             Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
                             Console.WriteLine("list                       Lists the files in the memory");
                             Console.WriteLine("remove <filename>          Removes <filename> from the archive");
+                            Console.WriteLine("get <parameter>            Prints the value of metadata <parameter>");
+                            Console.WriteLine("set <parameter> [value]    Sets metadata <parameter> to the specified [value]");
                             Console.WriteLine("push                       Writes the changes to the disk");
                             Console.WriteLine("close                      Closes the addon (dropping all changes)");
                             Console.WriteLine("path                       Prints the full path of the current addon.");
@@ -270,93 +370,11 @@ namespace SharpGMad
             CommandlinePrefix = filename + " (setup)>";
             addon = new Addon();
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write("Title? ");
-            Console.ResetColor();
-            string title = Console.ReadLine();
-
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write("Short description? ");
-            Console.ResetColor();
-            string desc = Console.ReadLine();
-
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Author? ");
-            Console.ResetColor();
-            Console.WriteLine("This currently has no effect as the addon is always written with \"Author Name\".");
-            //string author = Console.ReadLine();
-            string author = "Author Name";
-
-            string type = String.Empty;
-            while (!Tags.TypeExists(type))
-            {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Type? ");
-                Console.ResetColor();
-                Console.Write("Please choose ONE from the following: ");
-                Console.WriteLine(String.Join(" ", Tags.Type));
-                type = Console.ReadLine();
-
-                if (!Tags.TypeExists(type))
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("The specified type is not valid.");
-                    Console.ResetColor();
-                }
-            }
-
-            List<string> tags = new List<string>(2);
-            bool allTagsValid = false;
-            while (!allTagsValid)
-            {
-                tags.Clear();
-
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Tags? ");
-                Console.ResetColor();
-                Console.Write("Please choose ZERO, ONE or TWO from the following: ");
-                Console.WriteLine(String.Join(" ", Tags.Misc));
-
-                string[] tagsInput = Console.ReadLine().Split(' ');
-
-                allTagsValid = true;
-
-                // More than zero (one or two) elements: add the first one.
-                if (tagsInput.Count() > 0)
-                {
-                    if (!Tags.TagExists(tagsInput[0]))
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("The specified tag \"" + tagsInput[0] + "\" is not valid.");
-                        Console.ResetColor();
-                        allTagsValid = false;
-                        continue;
-                    }
-                    else
-                        tags.Add(tagsInput[0]);
-                }
-
-                // More than one (two) elements: add the second one too.
-                if (tagsInput.Count() > 1)
-                {
-                    if (!Tags.TagExists(tagsInput[1]))
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("The specified tag \"" + tagsInput[1] + "\" is not valid.");
-                        Console.ResetColor();
-                        allTagsValid = false;
-                        continue;
-                    }
-                    else
-                        tags.Add(tagsInput[1]);
-                }
-            }
-
-            addon.Title = title;
-            addon.Description = desc;
-            addon.Author = author;
-            addon.Type = type;
-            addon.Tags = tags;
+            SetTitle(addon);
+            SetDescription(addon);
+            //SetAuthor(addon); // Author name setting is not yet implemented.
+            SetType(addon);
+            SetTags(addon);
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Successfully set up initial addon.");
@@ -388,6 +406,167 @@ namespace SharpGMad
             fileStream.Close();
 
             CommandlinePrefix = Path.GetFileName(filename) + ">";
+        }
+
+        private static void SetTitle(Addon addon, string title = null)
+        {
+            if (title == String.Empty || title == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write("Title? ");
+                Console.ResetColor();
+                title = Console.ReadLine();
+            }
+
+            addon.Title = title;
+        }
+
+        private static void SetDescription(Addon addon, string description = null)
+        {
+            if (description == String.Empty || description == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write("Short description? ");
+                Console.ResetColor();
+                description = Console.ReadLine();
+            }
+
+            addon.Description = description;
+        }
+
+        private static void SetAuthor(Addon addon, string author = null)
+        {
+            if (author == String.Empty || author == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Author? ");
+                Console.ResetColor();
+                Console.WriteLine("This currently has no effect as the addon is always written with \"Author Name\".");
+                //author = Console.ReadLine();
+                author = "Author Name";
+            }
+
+            addon.Author = author;
+        }
+
+        private static void SetType(Addon addon, string type = null)
+        {
+            if (type == String.Empty || type == null)
+            {
+                while (!Tags.TypeExists(type))
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Type? ");
+                    Console.ResetColor();
+                    Console.Write("Please choose ONE from the following: ");
+                    Console.WriteLine(String.Join(" ", Tags.Type));
+                    type = Console.ReadLine();
+
+                    if (!Tags.TypeExists(type))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("The specified type is not valid.");
+                        Console.ResetColor();
+                    }
+                }
+            }
+            else
+            {
+                if (!Tags.TypeExists(type))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("The specified type is not valid.");
+                    Console.ResetColor();
+                    return;
+                }
+            }
+
+            addon.Type = type;
+        }
+
+        private static void SetTags(Addon addon, string[] tagsInput = null)
+        {
+            List<string> tags = new List<string>(2);
+            if (tagsInput == null || tagsInput.Length == 0)
+            {
+                bool allTagsValid = false;
+                while (!allTagsValid)
+                {
+                    tags.Clear();
+
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Tags? ");
+                    Console.ResetColor();
+                    Console.Write("Please choose ZERO, ONE or TWO from the following: ");
+                    Console.WriteLine(String.Join(" ", Tags.Misc));
+
+                    tagsInput = Console.ReadLine().Split(' ');
+
+                    allTagsValid = true;
+
+                    // More than zero (one or two) elements: add the first one.
+                    if (tagsInput.Count() > 0)
+                    {
+                        if (!Tags.TagExists(tagsInput[0]))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The specified tag \"" + tagsInput[0] + "\" is not valid.");
+                            Console.ResetColor();
+                            allTagsValid = false;
+                            continue;
+                        }
+                        else
+                            tags.Add(tagsInput[0]);
+                    }
+
+                    // More than one (two) elements: add the second one too.
+                    if (tagsInput.Count() > 1)
+                    {
+                        if (!Tags.TagExists(tagsInput[1]))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The specified tag \"" + tagsInput[1] + "\" is not valid.");
+                            Console.ResetColor();
+                            allTagsValid = false;
+                            continue;
+                        }
+                        else
+                            tags.Add(tagsInput[1]);
+                    }
+                }
+            }
+            else
+            {
+                // More than zero (one or two) elements: add the first one.
+                if (tagsInput.Count() > 0)
+                {
+                    if (!Tags.TagExists(tagsInput[0]))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("The specified tag \"" + tagsInput[0] + "\" is not valid.");
+                        Console.ResetColor();
+                        return;
+                    }
+                    else
+                        tags.Add(tagsInput[0]);
+                }
+
+                // More than one (two) elements: add the second one too.
+                if (tagsInput.Count() > 1)
+                {
+                    if (!Tags.TagExists(tagsInput[1]))
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("The specified tag \"" + tagsInput[1] + "\" is not valid.");
+                        Console.ResetColor();
+                        return;
+                    }
+                    else
+                        tags.Add(tagsInput[1]);
+                }
+            }
+
+            addon.Tags = tags;
         }
 
         static void LoadAddon(string filename)
