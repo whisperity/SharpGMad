@@ -487,7 +487,7 @@ namespace SharpGMad
         private static void SetTags(Addon addon, string[] tagsInput = null)
         {
             List<string> tags = new List<string>(2);
-            if (tagsInput == null || tagsInput.Length == 0)
+            if (tagsInput == null || tagsInput.Length == 0 || tagsInput[0] == String.Empty)
             {
                 bool allTagsValid = false;
                 while (!allTagsValid)
@@ -503,66 +503,85 @@ namespace SharpGMad
                     tagsInput = Console.ReadLine().Split(' ');
 
                     allTagsValid = true;
+                    if (tagsInput[0] != String.Empty)
+                    {
+                        // More than zero (one or two) elements: add the first one.
+                        if (tagsInput.Length > 0)
+                        {
+                            if (!Tags.TagExists(tagsInput[0]))
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("The specified tag \"" + tagsInput[0] + "\" is not valid.");
+                                Console.ResetColor();
+                                allTagsValid = false;
+                                continue;
+                            }
+                            else
+                                tags.Add(tagsInput[0]);
+                        }
 
+                        // More than one (two) elements: add the second one too.
+                        if (tagsInput.Length > 1)
+                        {
+                            if (!Tags.TagExists(tagsInput[1]))
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("The specified tag \"" + tagsInput[1] + "\" is not valid.");
+                                Console.ResetColor();
+                                allTagsValid = false;
+                                continue;
+                            }
+                            else
+                                tags.Add(tagsInput[1]);
+                        }
+
+                        if (tagsInput.Length > 2)
+                        {
+                            Console.ForegroundColor = ConsoleColor.DarkYellow;
+                            Console.WriteLine("More than two tags specified. Only the first two is saved.");
+                            Console.ResetColor();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (tagsInput[0] != String.Empty)
+                {
                     // More than zero (one or two) elements: add the first one.
-                    if (tagsInput.Count() > 0)
+                    if (tagsInput.Length > 0)
                     {
                         if (!Tags.TagExists(tagsInput[0]))
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("The specified tag \"" + tagsInput[0] + "\" is not valid.");
                             Console.ResetColor();
-                            allTagsValid = false;
-                            continue;
+                            return;
                         }
                         else
                             tags.Add(tagsInput[0]);
                     }
 
                     // More than one (two) elements: add the second one too.
-                    if (tagsInput.Count() > 1)
+                    if (tagsInput.Length > 1)
                     {
                         if (!Tags.TagExists(tagsInput[1]))
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("The specified tag \"" + tagsInput[1] + "\" is not valid.");
                             Console.ResetColor();
-                            allTagsValid = false;
-                            continue;
+                            return;
                         }
                         else
                             tags.Add(tagsInput[1]);
                     }
-                }
-            }
-            else
-            {
-                // More than zero (one or two) elements: add the first one.
-                if (tagsInput.Count() > 0)
-                {
-                    if (!Tags.TagExists(tagsInput[0]))
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("The specified tag \"" + tagsInput[0] + "\" is not valid.");
-                        Console.ResetColor();
-                        return;
-                    }
-                    else
-                        tags.Add(tagsInput[0]);
-                }
 
-                // More than one (two) elements: add the second one too.
-                if (tagsInput.Count() > 1)
-                {
-                    if (!Tags.TagExists(tagsInput[1]))
+                    if (tagsInput.Length > 2)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("The specified tag \"" + tagsInput[1] + "\" is not valid.");
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.WriteLine("More than two tags specified. Only the first two is saved.");
                         Console.ResetColor();
-                        return;
                     }
-                    else
-                        tags.Add(tagsInput[1]);
                 }
             }
 
