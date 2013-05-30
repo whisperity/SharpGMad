@@ -318,10 +318,40 @@ namespace SharpGMad
 
                 SetModified(false);
 
-                MessageBox.Show("Successfully saved " + ((int)ms.Length).HumanReadableSize() + ", " +
-                    count.HumanReadableSize() + " was modified.", "Save addon",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (!(e is FormClosingEventArgs))
+                {
+                    MessageBox.Show("Successfully saved " + ((int)ms.Length).HumanReadableSize() + ", " +
+                        count.HumanReadableSize() + " was modified.", "Save addon",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
+        }
+
+        private void Main_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            //if (e.CloseReason == CloseReason.UserClosing) // Not sure if this should be put in
+            //{
+                if (addon is Addon && this.modified)
+                {
+                    DialogResult yesClose = MessageBox.Show("Do you want to save your changes before quiting?",
+                        this.path, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+
+                    switch (yesClose)
+                    {
+                        case DialogResult.Cancel:
+                            e.Cancel = true;
+                            break;
+                        case DialogResult.No:
+                            // Noop, we just close.
+                            break;
+                        case DialogResult.Yes:
+                            tsbSaveAddon_Click(sender, e); // Invoke the addon saving mechanism
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            //}
         }
     }
 }
