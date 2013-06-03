@@ -44,7 +44,7 @@ namespace SharpGMad
                 string input = Console.ReadLine();
                 string[] command = input.Split(' ');
 
-                switch (command[0])
+                switch (command[0].ToLowerInvariant())
                 {
                     case "new":
                         try
@@ -285,6 +285,9 @@ namespace SharpGMad
                         }
 
                         break;
+                    case "gui":
+                        System.Windows.Forms.Application.Run(new Main(args));
+                        break;
                     case "?":
                     case "help":
                         Console.ForegroundColor = ConsoleColor.Green;
@@ -313,6 +316,7 @@ namespace SharpGMad
                         Console.WriteLine("pwd                        Prints SharpGMad's current working directory");
                         Console.WriteLine("cd <folder>                Changes the current working directory to <folder>");
                         Console.WriteLine("ls                         List all files in the current directory");
+                        Console.WriteLine("gui                        Load the GUI");
                         Console.WriteLine("help                       Show the list of available commands");
 
                         if (addon == null)

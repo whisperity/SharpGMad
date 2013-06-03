@@ -88,6 +88,7 @@ Once running, the following commands will be available to you
     pwd                      Prints SharpGMad's current working directory
     cd <folder>              Changes the current working directory to <folder>
     ls                       List all files in the current directory
+    gui                      Load the GUI
     help                     Show the list of available commands
     exit                     Exits
 
