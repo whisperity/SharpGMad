@@ -20,6 +20,7 @@ namespace SharpGMad
         private Main()
         {
             InitializeComponent();
+            UnloadAddon();
         }
 
         public Main(string[] args)
@@ -56,6 +57,7 @@ namespace SharpGMad
 
             if (dropChanges == DialogResult.Yes || addon == null)
             {
+                UnloadAddon();
                 DialogResult file = ofdAddon.ShowDialog();
 
                 if (file == DialogResult.OK)
@@ -128,6 +130,36 @@ namespace SharpGMad
                 lstFiles.Items.Add(new ListViewItem(Path.GetFileName(cfile.Path),
                     lstFiles.Groups[Path.GetDirectoryName(cfile.Path).Replace('\\', '/')]));
             }
+        }
+
+        private void UnloadAddon()
+        {
+            txtTitle.Text = String.Empty;
+            txtAuthor.Text = String.Empty;
+            txtType.Text = String.Empty;
+            txtTags.Text = String.Empty;
+            txtDescription.Text = String.Empty;
+
+            lstFiles.Items.Clear();
+            lstFiles.Groups.Clear();
+
+            this.path = null;
+
+            SetModified(false);
+            this.Text = "SharpGMad";
+            tsbSaveAddon.Enabled = false;
+
+            if (addonFS != null)
+            {
+                addonFS.Dispose();
+                addonFS = null;
+            }
+
+            addon = null;
+
+            tsbUpdateMetadata.Enabled = false;
+            tsbAddFile.Enabled = false;
+            tsbRemoveFile.Enabled = false;
         }
 
         public void SetModified(bool modified)
@@ -352,6 +384,56 @@ namespace SharpGMad
                     }
                 }
             //}
+        }
+
+        private void tsbCreateAddon_Click(object sender, EventArgs e)
+        {
+            DialogResult dropChanges = new DialogResult();
+            if (addon is Addon)
+            {
+                dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
+                    "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            }
+
+            if (dropChanges == DialogResult.Yes || addon == null)
+            {
+                UnloadAddon();
+                DialogResult file = sfdAddon.ShowDialog();
+                
+                if (file == DialogResult.OK)
+                {
+                    try
+                    {
+                        this.addonFS = new FileStream(sfdAddon.FileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("There was a problem creating the addon.", "New addon",
+                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
+
+                    this.path = sfdAddon.FileName;
+
+                    addon = new Addon();
+                    addon.Title = Path.GetFileNameWithoutExtension(sfdAddon.FileName);
+                    addon.Author = "Author Name"; // This is currently not changable
+                    tsbUpdateMetadata_Click(sender, e); // This will make the metadata form pop up setting the initial value
+
+                    // Fire the save event for an initial addon saving
+                    SetModified(true);
+                    tsbSaveAddon_Click(sender, e);
+
+                    // (Excerpt from LoadAddon)
+                    SetModified(false);
+
+                    UpdateMetadataPanel();
+                    UpdateFileList();
+
+                    tsbAddFile.Enabled = true;
+                    tsbUpdateMetadata.Enabled = true;
+                }
+            }
         }
     }
 }

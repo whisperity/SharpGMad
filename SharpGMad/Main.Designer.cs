@@ -37,9 +37,6 @@
             this.tsbRemoveFile = new System.Windows.Forms.ToolStripButton();
             this.pnlLeftSide = new System.Windows.Forms.Panel();
             this.pnlFilelist = new System.Windows.Forms.Panel();
-            this.pnlFileInformation = new System.Windows.Forms.Panel();
-            this.ssStatus = new System.Windows.Forms.StatusStrip();
-            this.tslStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.pnlFileOpsToolbar = new System.Windows.Forms.Panel();
             this.pnlForm = new System.Windows.Forms.Panel();
             this.pnlRightSide = new System.Windows.Forms.Panel();
@@ -66,11 +63,10 @@
             this.ofdAddFile = new System.Windows.Forms.OpenFileDialog();
             this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmFileRemove = new System.Windows.Forms.ToolStripMenuItem();
+            this.sfdAddon = new System.Windows.Forms.SaveFileDialog();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
             this.pnlFilelist.SuspendLayout();
-            this.pnlFileInformation.SuspendLayout();
-            this.ssStatus.SuspendLayout();
             this.pnlFileOpsToolbar.SuspendLayout();
             this.pnlForm.SuspendLayout();
             this.pnlRightSide.SuspendLayout();
@@ -85,7 +81,7 @@
             this.lstFiles.HideSelection = false;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
-            this.lstFiles.Size = new System.Drawing.Size(530, 274);
+            this.lstFiles.Size = new System.Drawing.Size(530, 300);
             this.lstFiles.TabIndex = 0;
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.View = System.Windows.Forms.View.Tile;
@@ -134,7 +130,6 @@
             // pnlLeftSide
             // 
             this.pnlLeftSide.Controls.Add(this.pnlFilelist);
-            this.pnlLeftSide.Controls.Add(this.pnlFileInformation);
             this.pnlLeftSide.Controls.Add(this.pnlFileOpsToolbar);
             this.pnlLeftSide.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlLeftSide.Location = new System.Drawing.Point(0, 0);
@@ -148,35 +143,8 @@
             this.pnlFilelist.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlFilelist.Location = new System.Drawing.Point(0, 26);
             this.pnlFilelist.Name = "pnlFilelist";
-            this.pnlFilelist.Size = new System.Drawing.Size(530, 274);
+            this.pnlFilelist.Size = new System.Drawing.Size(530, 300);
             this.pnlFilelist.TabIndex = 2;
-            // 
-            // pnlFileInformation
-            // 
-            this.pnlFileInformation.Controls.Add(this.ssStatus);
-            this.pnlFileInformation.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlFileInformation.Location = new System.Drawing.Point(0, 300);
-            this.pnlFileInformation.Name = "pnlFileInformation";
-            this.pnlFileInformation.Size = new System.Drawing.Size(530, 26);
-            this.pnlFileInformation.TabIndex = 1;
-            // 
-            // ssStatus
-            // 
-            this.ssStatus.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ssStatus.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tslStatus});
-            this.ssStatus.Location = new System.Drawing.Point(0, 0);
-            this.ssStatus.Name = "ssStatus";
-            this.ssStatus.RenderMode = System.Windows.Forms.ToolStripRenderMode.ManagerRenderMode;
-            this.ssStatus.ShowItemToolTips = true;
-            this.ssStatus.Size = new System.Drawing.Size(530, 26);
-            this.ssStatus.SizingGrip = false;
-            this.ssStatus.TabIndex = 0;
-            // 
-            // tslStatus
-            // 
-            this.tslStatus.Name = "tslStatus";
-            this.tslStatus.Size = new System.Drawing.Size(0, 21);
             // 
             // pnlFileOpsToolbar
             // 
@@ -223,6 +191,7 @@
             this.txtDescription.Multiline = true;
             this.txtDescription.Name = "txtDescription";
             this.txtDescription.ReadOnly = true;
+            this.txtDescription.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtDescription.Size = new System.Drawing.Size(184, 116);
             this.txtDescription.TabIndex = 7;
             // 
@@ -351,6 +320,7 @@
             this.tsbCreateAddon.Name = "tsbCreateAddon";
             this.tsbCreateAddon.Size = new System.Drawing.Size(86, 22);
             this.tsbCreateAddon.Text = "Create new";
+            this.tsbCreateAddon.Click += new System.EventHandler(this.tsbCreateAddon_Click);
             // 
             // tsbOpenAddon
             // 
@@ -428,6 +398,12 @@
             this.tsmFileRemove.Text = "Remove";
             this.tsmFileRemove.Click += new System.EventHandler(this.tsbRemoveFile_Click);
             // 
+            // sfdAddon
+            // 
+            this.sfdAddon.DefaultExt = "gma";
+            this.sfdAddon.Filter = "Garry\'s Mod Addons|*.gma";
+            this.sfdAddon.Title = "Create new addon as";
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -445,10 +421,6 @@
             this.tsFileOperations.PerformLayout();
             this.pnlLeftSide.ResumeLayout(false);
             this.pnlFilelist.ResumeLayout(false);
-            this.pnlFileInformation.ResumeLayout(false);
-            this.pnlFileInformation.PerformLayout();
-            this.ssStatus.ResumeLayout(false);
-            this.ssStatus.PerformLayout();
             this.pnlFileOpsToolbar.ResumeLayout(false);
             this.pnlFileOpsToolbar.PerformLayout();
             this.pnlForm.ResumeLayout(false);
@@ -471,10 +443,7 @@
         private System.Windows.Forms.ToolStrip tsFileOperations;
         private System.Windows.Forms.Panel pnlLeftSide;
         private System.Windows.Forms.Panel pnlFilelist;
-        private System.Windows.Forms.Panel pnlFileInformation;
         private System.Windows.Forms.Panel pnlFileOpsToolbar;
-        private System.Windows.Forms.StatusStrip ssStatus;
-        private System.Windows.Forms.ToolStripStatusLabel tslStatus;
         private System.Windows.Forms.Panel pnlForm;
         private System.Windows.Forms.Panel pnlRightSide;
         private System.Windows.Forms.ToolStrip tsToolbar;
@@ -502,6 +471,7 @@
         private System.Windows.Forms.OpenFileDialog ofdAddFile;
         private System.Windows.Forms.ContextMenuStrip cmsFileEntry;
         private System.Windows.Forms.ToolStripMenuItem tsmFileRemove;
+        private System.Windows.Forms.SaveFileDialog sfdAddon;
 
 
 

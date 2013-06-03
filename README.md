@@ -62,7 +62,7 @@ dropping a file onto SharpGMad in Explorer is supported.)
 The GUI supports all the functionality you can have by using the realtime
 console, only with an added, neat graphical interface.
 
-(Should insert a picture here of Main form.)
+![Screenshot of GUI mode](Screenshot.png)
 
 #### Console
 

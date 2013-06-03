@@ -70,7 +70,7 @@ namespace SharpGMad
             addon.Author = txtAuthor.Text;
             addon.Description = txtDescription.Text;
 
-            if (Tags.TypeExists(cmbType.SelectedItem.ToString()))
+            if (cmbType.SelectedItem != null && Tags.TypeExists(cmbType.SelectedItem.ToString()))
                 addon.Type = cmbType.SelectedItem.ToString();
             else
             {
