@@ -6,11 +6,21 @@ using System.IO;
 
 namespace SharpGMad
 {
+    class FileWatch
+    {
+        public string FilePath;
+        public string ContentPath;
+        public bool Modified;
+        public FileSystemWatcher Watcher;
+    }
+
     class Realtime
     {
         static Addon addon;
+        static FileStream addonFS;
         static string filePath;
         static string CommandlinePrefix = "SharpGMad>";
+        static List<FileWatch> watchedFiles = new List<FileWatch>();
 
         public static int Main(string[] args)
         {
@@ -111,6 +121,80 @@ namespace SharpGMad
                             RemoveFile(command[1]);
                         }
                         catch (IndexOutOfRangeException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The filename was not specified.");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        break;
+                    case "export":
+                        string exportPath = String.Empty;
+                        try
+                        {
+                            exportPath = command[2];
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            // Noop.
+                        }
+
+                        try
+                        {
+                            ExportFile(command[1], exportPath);
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            if (watchedFiles.Count == 0)
+                            {
+                                Console.WriteLine("No files are exported.");
+                            }
+                            else
+                            {
+
+                                Console.WriteLine(watchedFiles.Count + " files currently exported:");
+                                int i = 0;
+                                foreach (FileWatch watch in watchedFiles)
+                                {
+                                    Console.WriteLine(++i + 
+                                        ((watch.Modified) ? "* " : " ") +
+                                        watch.ContentPath + " at " + watch.FilePath);
+                                }
+                            }
+                        }
+
+                        break;
+                    case "pull":
+                        try
+                        {
+                            PullFile(command[1]);
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            if (watchedFiles.Count == 0)
+                            {
+                                Console.WriteLine("No files are exported.");
+                            }
+                            else
+                            {
+
+                                Console.WriteLine("Pulling " + watchedFiles.Count + " files:");
+                                int i = 0;
+                                foreach (FileWatch watch in watchedFiles)
+                                {
+                                    PullFile(watch.ContentPath);
+                                }
+                            }
+                        }
+
+                        break;
+                    case "drop":
+                        try
+                        {
+                            DropExport(command[1]);
+                        }
+                        catch(IndexOutOfRangeException)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("The filename was not specified.");
@@ -254,7 +338,7 @@ namespace SharpGMad
                     case "ls":
                         try
                         {
-                            IEnumerable<string> files = Directory.EnumerateFiles(Directory.GetCurrentDirectory(),
+                            IEnumerable<string> files = Directory.EnumerateFileSystemEntries(Directory.GetCurrentDirectory(),
                                 "*", SearchOption.TopDirectoryOnly);
 
                             if (files.Count() == 0)
@@ -267,12 +351,26 @@ namespace SharpGMad
 
                             foreach (string f in files)
                             {
-                                FileInfo fi = new FileInfo(f);
+                                FileSystemInfo fi;
+                                fi = new FileInfo(f);
 
-                                Console.WriteLine(
-                                    String.Format("{0,10} {1,20} {2,30}", ((int)fi.Length).HumanReadableSize(),
-                                    fi.LastWriteTime.ToString(), fi.Name)
-                                );
+                                try
+                                {
+                                    Console.WriteLine(
+                                        String.Format("{0,10} {1,20} {2,30}", ((int)((FileInfo)fi).Length).HumanReadableSize(),
+                                        fi.LastWriteTime.ToString(), fi.Name)
+                                    );
+                                }
+                                catch (FileNotFoundException)
+                                {
+                                    // Noop. The entry is a folder.
+                                    fi = new DirectoryInfo(f);
+                                    Console.WriteLine(
+                                        String.Format("{0,10} {1,20} {2,30}", "[DIR]",
+                                        fi.LastWriteTime.ToString(), fi.Name)
+                                    );
+                                    continue;
+                                }
                             }
                         }
                         catch (Exception e)
@@ -306,6 +404,11 @@ namespace SharpGMad
                             Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
                             Console.WriteLine("list                       Lists the files in the memory");
                             Console.WriteLine("remove <filename>          Removes <filename> from the archive");
+                            Console.WriteLine("export                     View the list of exported files");
+                            Console.WriteLine("export <filename> [path]   Export <filename> for editing (to [path] if specified)");
+                            Console.WriteLine("pull                       Pull changes from all exported files");
+                            Console.WriteLine("pull <filename>            Pull the changes of exported <filename>");
+                            Console.WriteLine("drop <filename>            Drops the export for <filename>");
                             Console.WriteLine("get <parameter>            Prints the value of metadata <parameter>");
                             Console.WriteLine("set <parameter> [value]    Sets metadata <parameter> to the specified [value]");
                             Console.WriteLine("push                       Writes the changes to the disk");
@@ -386,10 +489,9 @@ namespace SharpGMad
 
             // Write initial content
             filePath = Path.GetFullPath(filename);
-            FileStream fileStream;
             try
             {
-                fileStream = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+                addonFS = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
             }
             catch (Exception e)
             {
@@ -402,12 +504,10 @@ namespace SharpGMad
             }
 
             MemoryStream ms;
-            StreamDiffer sd = new StreamDiffer(fileStream);
+            StreamDiffer sd = new StreamDiffer(addonFS);
             Writer.Create(addon, out ms);
             sd.Write(ms);
             sd.Push();
-
-            fileStream.Close();
 
             CommandlinePrefix = Path.GetFileName(filename) + ">";
         }
@@ -602,9 +702,27 @@ namespace SharpGMad
                 return;
             }
 
+            foreach (FileWatch watch in watchedFiles)
+            {
+                watch.Watcher.Dispose();
+            }
+            watchedFiles.Clear();
+
             Console.WriteLine("Loading file...");
-            FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite);
-            addon = new Addon(new Reader(fs));
+            try
+            {
+                addonFS = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite);
+                addon = new Addon(new Reader(addonFS));
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("There was a problem opening the file.");
+                Console.ResetColor();
+                Console.WriteLine(e.Message);
+                CloseAddon();
+                return;
+            }
 
             foreach (ContentFile f in addon.Files)
                 Console.WriteLine("\t" + f.Path + " [" + ((int)f.Size).HumanReadableSize() + "]");
@@ -721,7 +839,7 @@ namespace SharpGMad
             }
         }
 
-        static void Push()
+        static void ExportFile(string filename, string exportPath = null)
         {
             if (addon == null)
             {
@@ -731,27 +849,292 @@ namespace SharpGMad
                 return;
             }
 
-            FileStream fileStream;
+            IEnumerable<FileWatch> isExported = watchedFiles.Where(f => f.ContentPath == filename);
+            if (isExported.Count() != 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("This file is already exported!");
+                Console.ResetColor();
+                return;
+            }
+
+            IEnumerable<ContentFile> file = addon.Files.Where(f => f.Path == filename);
+
+            if (file.Count() == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("The specified file does not exist in the archive.");
+                Console.ResetColor();
+                return;
+            }
+
+            if (exportPath == null || exportPath == String.Empty)
+            {
+                exportPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(filename);
+            }
+            else
+            {
+                exportPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(exportPath);
+            }
+
+            if (File.Exists(exportPath))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("A file at " + exportPath + " already exists. Aborting export!");
+                Console.ResetColor();
+                return;
+            }
+
+            FileStream export;
             try
             {
-                fileStream = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+                export = new FileStream(exportPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
             }
             catch (Exception e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("There was a problem opening the file.");
+                Console.WriteLine("There was a problem exporting the file.");
+                Console.ResetColor();
+                Console.WriteLine(e.Message);
+                return;
+            }
+            export.SetLength(0); // Truncate the file.
+            export.Write(file.First().Content, 0, (int)file.First().Size);
+            export.Flush();
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Written " + ((int)export.Length).HumanReadableSize() + " to " + exportPath + ".");
+            Console.ResetColor();
+
+            export.Dispose();
+
+            // Set up a watcher
+            FileSystemWatcher fsw = new FileSystemWatcher(Path.GetDirectoryName(exportPath), Path.GetFileName(exportPath));
+            fsw.NotifyFilter = NotifyFilters.LastWrite;
+            fsw.Changed += new FileSystemEventHandler(fsw_Changed);
+            fsw.Deleted += new FileSystemEventHandler(fsw_Deleted);
+            fsw.EnableRaisingEvents = true;
+
+            FileWatch watch = new FileWatch();
+            watch.FilePath = exportPath;
+            watch.ContentPath = filename;
+            watch.Watcher = fsw;
+
+            IEnumerable<FileWatch> search = watchedFiles.Where(f => f.FilePath == file.First().Path);
+
+            if (search.Count() != 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("This file was already watched.");
+                Console.ResetColor();
+
+                watchedFiles.Remove(search.First());
+            }
+
+            watchedFiles.Add(watch);
+        }
+
+        static void fsw_Deleted(object sender, FileSystemEventArgs e)
+        {
+            Console.WriteLine(e.Name + " deleted. Removing watch and disposing watcher.");
+            ((FileSystemWatcher)sender).Dispose();
+            watchedFiles.Remove(watchedFiles.Find(f => f.FilePath == e.FullPath));
+        }
+
+        static void fsw_Changed(object sender, FileSystemEventArgs e)
+        {
+            Console.WriteLine(e.Name + " changed!");
+            
+            IEnumerable<FileWatch> search = watchedFiles.Where(f => f.FilePath == e.FullPath);
+
+            if (search.Count() != 0)
+            {
+                Console.WriteLine("Administering changed state.");
+
+                IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
+
+                if (content.Count() == 1)
+                {
+                    search.First().Modified = true;
+                    content.First().RealtimeChanged = true;
+                }
+                else
+                {
+                    Console.WriteLine("The linked content entry was not found.");
+                    Console.WriteLine("Disposing watch object.");
+                    watchedFiles.Remove(search.First());
+                    ((FileSystemWatcher)sender).Dispose();
+                }
+            }
+            else
+            {
+                Console.WriteLine("The file was not watched.");
+                Console.WriteLine("Disposing watch object.");
+                watchedFiles.Remove(search.First());
+                ((FileSystemWatcher)sender).Dispose();
+            }
+        }
+
+        static void DropExport(string filename)
+        {
+            if (addon == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+
+            IEnumerable<FileWatch> search = watchedFiles.Where(f => f.ContentPath == filename);
+
+            if (search.Count() == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("The file is not in an exported state.");
+                Console.ResetColor();
+                return;
+            }
+
+            IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
+            if (content.Count() == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Failed to find representing file in addon.");
+                Console.ResetColor();
+                Console.WriteLine("The watch is corrupted. Disposing.");
+                search.First().Watcher.Dispose();
+                return;
+            }
+
+            search.First().Watcher.Dispose();
+            content.First().RealtimeChanged = false;
+            Console.WriteLine("Export dropped.");
+
+            Console.Write("Delete the exported file too? (Y/N) ");
+            string response = Console.ReadLine();
+            if (response.ToUpperInvariant() == "Y")
+            {
+                try
+                {
+
+                    File.Delete(search.First().FilePath);
+                }
+                catch (Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Was unable to delete the file.");
+                    Console.ResetColor();
+                    Console.WriteLine(e.Message);
+                }
+            }
+
+            watchedFiles.Remove(search.First());
+        }
+
+        static void PullFile(string filename)
+        {
+            if (addon == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+
+            IEnumerable<FileWatch> search = watchedFiles.Where(f => f.ContentPath == filename);
+
+            if (search.Count() == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("The file is not in an exported state.");
+                Console.ResetColor();
+                return;
+            }
+
+            if (search.First().Modified == false)
+            {
+                Console.WriteLine("The file is not modified.");
+                return;
+            }
+
+            IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
+            if (content.Count() == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Failed to find representing file in addon.");
+                Console.ResetColor();
+                Console.WriteLine("The watch is corrupted. Disposing.");
+                search.First().Watcher.Dispose();
+                return;
+            }
+
+            Console.WriteLine(((int)content.First().Size).HumanReadableSize() + " in memory [CRC: " + content.First().CRC +
+                "]");
+
+            FileStream fs;
+            try
+            {
+                fs = new FileStream(search.First().FilePath, FileMode.Open, FileAccess.Read);
+            }
+            catch (IOException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Failed to open exported file on disk.");
                 Console.ResetColor();
                 Console.WriteLine(e.Message);
                 return;
             }
 
+            Console.WriteLine(((int)fs.Length).HumanReadableSize() + " exported on disk.");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Pulling in changes...");
+            Console.ResetColor();
+
+            // Load contents to a stream
+            MemoryStream ms = new MemoryStream((int)content.First().Size);
+            ms.Write(content.First().Content, 0, (int)content.First().Size);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            // Load changes from the file and write it to stream
+            StreamDiffer sd = new StreamDiffer(ms);
+            sd.Write(fs);
+            int count = sd.Push();
+
+            // Drop the stream
+            byte[] contBytes = new byte[ms.Length];
+            ms.Seek(0, SeekOrigin.Begin);
+            ms.Read(contBytes, 0, (int)ms.Length);
+            content.First().Content = contBytes;
+
+            ms.Dispose();
+            fs.Dispose();
+
+            Console.WriteLine("Pulled. " + count.HumanReadableSize() + " was modified [CRC: " +
+                content.First().CRC + "]");
+
+            // Consider the file unmodified
+            search.First().Modified = false;
+            content.First().RealtimeChanged = false;
+        }
+
+
+        static void Push()
+        {
+            if (addon == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+            
             MemoryStream ms;
-            StreamDiffer sd = new StreamDiffer(fileStream);
+            StreamDiffer sd = new StreamDiffer(addonFS);
             Writer.Create(addon, out ms);
             sd.Write(ms);
             int count = sd.Push();
 
-            fileStream.Close();
+            addonFS.Flush();
 
             Console.WriteLine("Successfully saved. " + count.HumanReadableSize() + " was modified.");
         }
@@ -768,6 +1151,13 @@ namespace SharpGMad
 
             addon = null;
             CommandlinePrefix = "SharpGMad>";
+            addonFS.Dispose();
+
+            foreach (FileWatch watch in watchedFiles)
+            {
+                watch.Watcher.Dispose();
+            }
+            watchedFiles.Clear();
         }
 
         static void FullPath()

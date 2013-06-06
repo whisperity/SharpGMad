@@ -95,11 +95,7 @@ namespace SharpGMad
         /// <summary>
         /// Represents the index area of the addon.
         /// </summary>
-        private List<IndexEntry> _Index;
-        /// <summary>
-        /// Gets a list of files.
-        /// </summary>
-        public List<IndexEntry> Index { get { return new List<IndexEntry>(_Index); } }
+        public List<IndexEntry> Index;
         /// <summary>
         /// Represents the offset where the file content storage begins.
         /// </summary>
@@ -107,21 +103,17 @@ namespace SharpGMad
         /// <summary>
         /// Contains a list of strings, the tags of the read addon.
         /// </summary>
-        private List<string> _Tags;
-        /// <summary>
-        /// Gets a list of addon tags.
-        /// </summary>
-        public List<string> Tags { get { return new List<string>(_Tags); } }
-
+        public List<string> Tags;
+        
         /// <summary>
         /// Private constructor to set up object references.
         /// </summary>
         private Reader()
         {
-            _Index = new List<IndexEntry>();
-            _Tags = new List<string>();
+            Index = new List<IndexEntry>();
+            Tags = new List<string>();
         }
-        
+
         /// <summary>
         /// Reads and parses the specified addon file.
         /// </summary>
@@ -221,7 +213,7 @@ namespace SharpGMad
                 entry.Offset = Offset;
                 entry.FileNumber = (uint)FileNumber;
 
-                _Index.Add(entry);
+                Index.Add(entry);
 
                 Offset += (int)entry.Size;
                 FileNumber++;
@@ -239,13 +231,13 @@ namespace SharpGMad
 
                     Description = dJSON.Description;
                     Type = dJSON.Type;
-                    _Tags = new List<string>(dJSON.Tags);
+                    Tags = new List<string>(dJSON.Tags);
                 }
                 catch (SerializationException)
                 {
                     // The description is a plaintext in the file.
                     Type = String.Empty;
-                    _Tags = new List<string>();
+                    Tags = new List<string>();
                 }
             }
         }

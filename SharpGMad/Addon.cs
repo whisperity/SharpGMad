@@ -120,11 +120,7 @@ namespace SharpGMad
         /// <summary>
         /// Contains a list of file contents of the addon.
         /// </summary>
-        private List<ContentFile> _Files;
-        /// <summary>
-        /// Gets a list of files and contents currently added to the addon.
-        /// </summary>
-        public List<ContentFile> Files { get { return new List<ContentFile>(_Files); } }
+        public List<ContentFile> Files;
         /// <summary>
         /// Gets or sets a list of addon tags.
         /// </summary>
@@ -139,7 +135,7 @@ namespace SharpGMad
         /// </summary>
         public Addon()
         {
-            _Files = new List<ContentFile>();
+            Files = new List<ContentFile>();
             Tags = new List<string>();
             Ignores = new List<string>();
         }
@@ -256,7 +252,7 @@ namespace SharpGMad
                 throw new WhitelistException(path + ": not allowed by whitelist.");
 
             if ( !IsIgnored(path) && IsWhitelisted(path) )
-                _Files.Add(file);
+                Files.Add(file);
         }
 
         /// <summary>
@@ -264,7 +260,7 @@ namespace SharpGMad
         /// </summary>
         public void Sort()
         {
-            _Files.Sort((x, y) => String.Compare(x.Path, y.Path));
+            Files.Sort((x, y) => String.Compare(x.Path, y.Path));
         }
 
         /// <summary>
@@ -274,19 +270,19 @@ namespace SharpGMad
         /// <exception cref="FileNotFoundException">The specified file is not in the collection.</exception>
         public void RemoveFile(string path)
         {
-            IEnumerable<ContentFile> toRemove = _Files.Where(e => e.Path == path);
+            IEnumerable<ContentFile> toRemove = Files.Where(e => e.Path == path);
 
             if (toRemove.Count() == 0)
                 throw new FileNotFoundException("The file is not in the archive.");
             else if (toRemove.Count() == 1)
-                _Files.Remove(toRemove.First());
+                Files.Remove(toRemove.First());
         }
     }
 
     /// <summary>
     /// Represents a file entry to an Addon instance.
     /// </summary>
-    struct ContentFile
+    class ContentFile
     {
         /// <summary>
         /// Gets or sets the path of the file.
@@ -296,6 +292,8 @@ namespace SharpGMad
         /// Gets or sets an array of bytes containg the file content.
         /// </summary>
         public byte[] Content;
+
+        public bool RealtimeChanged = false;
 
         /// <summary>
         /// Gets the size of the content.

@@ -80,6 +80,11 @@ Once running, the following commands will be available to you
     addfolder <folder>       Adds all files from <folder> to the archive
     list                     Lists the files in the memory
     remove <filename>        Removes <filename> from the archive
+    export                   View the list of exported files
+    export <filename> [path] Export <filename> for editing (to [path] if specified)
+    pull                     Pull the changes from all exported files
+    pull <filename>          Pull the changes of exported <filename>
+    drop <filename>          Drops the export for <filename>
     get <paramter>           Prints the value of metadata <parameter>
     set <parameter> [value]  Sets metadata <parameter> to the specified [value]
     push                     Writes the changes to the disk
