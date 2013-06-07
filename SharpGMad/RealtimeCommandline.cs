@@ -912,7 +912,6 @@ namespace SharpGMad
             FileSystemWatcher fsw = new FileSystemWatcher(Path.GetDirectoryName(exportPath), Path.GetFileName(exportPath));
             fsw.NotifyFilter = NotifyFilters.LastWrite;
             fsw.Changed += new FileSystemEventHandler(fsw_Changed);
-            fsw.Deleted += new FileSystemEventHandler(fsw_Deleted);
             fsw.EnableRaisingEvents = true;
 
             FileWatch watch = new FileWatch();
@@ -920,25 +919,7 @@ namespace SharpGMad
             watch.ContentPath = filename;
             watch.Watcher = fsw;
 
-            IEnumerable<FileWatch> search = watchedFiles.Where(f => f.FilePath == file.First().Path);
-
-            if (search.Count() != 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("This file was already watched.");
-                Console.ResetColor();
-
-                watchedFiles.Remove(search.First());
-            }
-
             watchedFiles.Add(watch);
-        }
-
-        static void fsw_Deleted(object sender, FileSystemEventArgs e)
-        {
-            Console.WriteLine(e.Name + " deleted. Removing watch and disposing watcher.");
-            ((FileSystemWatcher)sender).Dispose();
-            watchedFiles.Remove(watchedFiles.Find(f => f.FilePath == e.FullPath));
         }
 
         static void fsw_Changed(object sender, FileSystemEventArgs e)
@@ -956,7 +937,6 @@ namespace SharpGMad
                 if (content.Count() == 1)
                 {
                     search.First().Modified = true;
-                    content.First().RealtimeChanged = true;
                 }
                 else
                 {
@@ -1007,7 +987,6 @@ namespace SharpGMad
             }
 
             search.First().Watcher.Dispose();
-            content.First().RealtimeChanged = false;
             Console.WriteLine("Export dropped.");
 
             Console.Write("Delete the exported file too? (Y/N) ");
@@ -1114,7 +1093,6 @@ namespace SharpGMad
 
             // Consider the file unmodified
             search.First().Modified = false;
-            content.First().RealtimeChanged = false;
         }
 
 

@@ -124,6 +124,10 @@
     <None Include="Resources\create.ico" />
     <None Include="Resources\extract.ico" />
     <None Include="Resources\metadata.ico" />
+    <None Include="Resources\drop.png" />
+    <None Include="Resources\export.png" />
+    <None Include="Resources\pull.png" />
+    <None Include="Resources\pull_all.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

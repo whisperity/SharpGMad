@@ -293,8 +293,6 @@ namespace SharpGMad
         /// </summary>
         public byte[] Content;
 
-        public bool RealtimeChanged = false;
-
         /// <summary>
         /// Gets the size of the content.
         /// </summary>

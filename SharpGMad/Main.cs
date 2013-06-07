@@ -14,12 +14,14 @@ namespace SharpGMad
     {
         FileStream addonFS;
         Addon addon;
+        List<FileWatch> watches;
         string path;
         bool modified;
 
         private Main()
         {
             InitializeComponent();
+            watches = new List<FileWatch>();
             UnloadAddon();
         }
 
@@ -95,6 +97,11 @@ namespace SharpGMad
 
                 SetModified(false);
 
+                foreach (FileWatch watch in watches)
+                    watch.Watcher.Dispose();
+
+                watches.Clear();
+
                 UpdateMetadataPanel();
                 UpdateFileList();
 
@@ -114,21 +121,56 @@ namespace SharpGMad
 
         private void UpdateFileList()
         {
-            // Put the files into the list
-            lstFiles.Items.Clear();
-            lstFiles.Groups.Clear();
-
-            IEnumerable<IGrouping<string, ContentFile>> folders =
-                addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/'));
-            foreach (IGrouping<string, ContentFile> folder in folders)
+            // Invoke the method if it was called from a thread which is not the thread lstFiles was created in.
+            //
+            // (For example when fsw_Changed fires.)
+            //
+            // Prevents the exception:
+            // Cross-thread operation not valid: Control 'lstFiles' accessed from a
+            // thread other than the thread it was created on.
+            if (lstFiles.InvokeRequired)
             {
-                lstFiles.Groups.Add(folder.Key, folder.Key);
+                this.Invoke((MethodInvoker)delegate { UpdateFileList(); });
             }
-
-            foreach (ContentFile cfile in addon.Files)
+            else
             {
-                lstFiles.Items.Add(new ListViewItem(Path.GetFileName(cfile.Path),
-                    lstFiles.Groups[Path.GetDirectoryName(cfile.Path).Replace('\\', '/')]));
+                // Reset the export counters
+                tsbPullAll.Enabled = false;
+                tsbDropAll.Enabled = false;
+
+                // Clear the list
+                lstFiles.Items.Clear();
+                lstFiles.Groups.Clear();
+
+                // Get and add the groups (folders)
+                IEnumerable<IGrouping<string, ContentFile>> folders =
+                    addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/'));
+                foreach (IGrouping<string, ContentFile> folder in folders)
+                {
+                    lstFiles.Groups.Add(folder.Key, folder.Key);
+                }
+
+                // Get and add the files
+                foreach (ContentFile cfile in addon.Files)
+                {
+                    ListViewItem item = new ListViewItem(Path.GetFileName(cfile.Path),
+                        lstFiles.Groups[Path.GetDirectoryName(cfile.Path).Replace('\\', '/')]);
+
+                    IEnumerable<FileWatch> watch = watches.Where(f => f.ContentPath == cfile.Path);
+                    if (watch.Count() == 1)
+                    {
+                        tsbDropAll.Enabled = true; // At least one file is exported
+                        item.ForeColor = Color.Blue;
+
+                        if (watch.First().Modified)
+                        {
+                            tsbPullAll.Enabled = true; // At least one file is modified externally
+                            item.ForeColor = Color.Indigo;
+                        }
+                    }
+
+                    lstFiles.Items.Add(item);
+                }
             }
         }
 
@@ -157,9 +199,13 @@ namespace SharpGMad
 
             addon = null;
 
+            foreach (FileWatch watch in watches)
+                watch.Watcher.Dispose();
+
+            watches.Clear();
+
             tsbUpdateMetadata.Enabled = false;
             tsbAddFile.Enabled = false;
-            tsbRemoveFile.Enabled = false;
         }
 
         public void SetModified(bool modified)
@@ -280,16 +326,29 @@ namespace SharpGMad
         {
             if (((System.Windows.Forms.ListView)sender).FocusedItem == null)
             {
-                tsbRemoveFile.Enabled = false;
-                tsbRemoveFile.Text = "Remove file";
                 tsmFileRemove.Enabled = false;
+                tsmFileExportTo.Enabled = false;
+                tsmFilePull.Enabled = false;
+                tsmFileDropExport.Enabled = false;
             }
             else
             {
-                tsbRemoveFile.Enabled = true;
-                tsbRemoveFile.Text = "Remove " + ((System.Windows.Forms.ListView)sender).FocusedItem.Group.Header + "/" +
-                    ((System.Windows.Forms.ListView)sender).FocusedItem.Text;
                 tsmFileRemove.Enabled = true;
+
+                IEnumerable<FileWatch> isExported = watches.Where(f => f.ContentPath ==
+                    lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+                if (isExported.Count() == 0)
+                {
+                    tsmFileExportTo.Enabled = true;
+                    tsmFilePull.Enabled = false;
+                    tsmFileDropExport.Enabled = false;
+                }
+                else
+                {
+                    tsmFileExportTo.Enabled = false;
+                    tsmFilePull.Enabled = isExported.First().Modified;
+                    tsmFileDropExport.Enabled = true;
+                }
             }
         }
 
@@ -300,7 +359,7 @@ namespace SharpGMad
                     cmsFileEntry.Show(Cursor.Position);
         }
 
-        private void tsbRemoveFile_Click(object sender, EventArgs e)
+        private void tsmFileRemove_Click(object sender, EventArgs e)
         {
             if (lstFiles.FocusedItem != null)
             {
@@ -325,10 +384,6 @@ namespace SharpGMad
                     UpdateFileList();
                 }
             }
-
-            tsbRemoveFile.Enabled = false;
-            tsbRemoveFile.Text = "Remove file";
-            tsmFileRemove.Enabled = false;
         }
 
         private void tsbUpdateMetadata_Click(object sender, EventArgs e)
@@ -434,6 +489,308 @@ namespace SharpGMad
                     tsbUpdateMetadata.Enabled = true;
                 }
             }
+        }
+
+        private void tsmFileExportTo_Click(object sender, EventArgs e)
+        {
+            if (lstFiles.FocusedItem != null)
+            {
+                string contentPath = lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text;
+
+                IEnumerable<FileWatch> isExported = watches.Where(f => f.ContentPath == contentPath);
+                if (isExported.Count() != 0)
+                {
+                    MessageBox.Show("This file is already exported. Drop the export first!", "Export file",
+                        MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    return;
+                }
+
+                sfdExportFile.FileName = Path.GetFileName(lstFiles.FocusedItem.Text);
+                sfdExportFile.DefaultExt = Path.GetExtension(lstFiles.FocusedItem.Text);
+                sfdExportFile.Title = "Export " + Path.GetFileName(lstFiles.FocusedItem.Text) + " to...";
+
+                DialogResult save = sfdExportFile.ShowDialog();
+
+                if (save == DialogResult.OK)
+                {
+                    string exportPath = sfdExportFile.FileName;
+
+                    IEnumerable<FileWatch> checkPathCollision = watches.Where(f => f.FilePath == exportPath);
+                    if (checkPathCollision.Count() != 0)
+                    {
+                        MessageBox.Show("Another file is already exported as " + exportPath, "Export file",
+                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
+
+                    IEnumerable<ContentFile> file = addon.Files.Where(f => f.Path == contentPath);
+                    
+                    FileStream export;
+                    try
+                    {
+                        export = new FileStream(exportPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("There was a problem opening the file.", "Export file",
+                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
+                    export.SetLength(0); // Truncate the file.
+                    export.Write(file.First().Content, 0, (int)file.First().Size);
+                    export.Flush();
+                    export.Dispose();
+
+                    // Set up a watcher
+                    FileSystemWatcher fsw = new FileSystemWatcher(Path.GetDirectoryName(exportPath), Path.GetFileName(exportPath));
+                    fsw.NotifyFilter = NotifyFilters.LastWrite;
+                    fsw.Changed += new FileSystemEventHandler(fsw_Changed);
+                    fsw.EnableRaisingEvents = true;
+
+                    FileWatch watch = new FileWatch();
+                    watch.FilePath = exportPath;
+                    watch.ContentPath = contentPath;
+                    watch.Watcher = fsw;
+
+                    watches.Add(watch);
+                }
+
+                sfdExportFile.Reset();
+                UpdateFileList();
+            }
+        }
+
+        private void fsw_Changed(object sender, FileSystemEventArgs e)
+        {
+            IEnumerable<FileWatch> search = watches.Where(f => f.FilePath == e.FullPath);
+
+            if (search.Count() != 0)
+            {
+                IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
+
+                if (content.Count() == 1)
+                {
+                    search.First().Modified = true;
+
+                }
+                else
+                {
+                    watches.Remove(search.First());
+                    ((FileSystemWatcher)sender).Dispose();
+                }
+            }
+            else
+            {
+                watches.Remove(search.First());
+                ((FileSystemWatcher)sender).Dispose();
+            }
+
+            UpdateFileList();
+        }
+
+        private void tsmFileDropExport_Click(object sender, EventArgs e)
+        {
+            if (lstFiles.FocusedItem != null)
+            {
+                DropFileExport(lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+            }
+        }
+
+        
+
+        private void tsbDropAll_Click(object sender, EventArgs e)
+        {
+            List<string> pathsFailedToDelete = new List<string>();
+
+            foreach (FileWatch watch in watches)
+            {
+                watch.Watcher.Dispose();
+                try
+                {
+                    File.Delete(watch.FilePath);
+                }
+                catch (Exception)
+                {
+                    pathsFailedToDelete.Add(watch.FilePath);
+                }
+            }
+
+            watches.Clear();
+
+            if (pathsFailedToDelete.Count == 0)
+            {
+                MessageBox.Show("Successfully removed all currently exported files.", "Drop all exports",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("Removed all currently exported files.\n\nThe following files failed to remove:" +
+                    "\n\n" + String.Join("\n", pathsFailedToDelete), "Drop all exports",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            UpdateFileList();
+        }
+
+        private void DropFileExport(string filename)
+        {
+            IEnumerable<FileWatch> search = watches.Where(f => f.ContentPath == filename);
+
+                if (search.Count() == 0)
+                {
+                    MessageBox.Show("This file is not exported!", "Drop export",
+                        MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    return;
+                }
+
+                search.First().Watcher.Dispose();
+                try
+                {
+
+                    File.Delete(search.First().FilePath);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Failed to delete the exported file:" +
+                        "\n" + search.First().FilePath + ".\n\n" + ex.Message, "Drop export",
+                        MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                }
+
+                watches.Remove(search.First());
+                UpdateFileList();
+        }
+
+        private void tsmFilePull_Click(object sender, EventArgs e)
+        {
+            if (lstFiles.FocusedItem != null)
+            {
+                PullFile(lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+            }
+        }
+
+        private void tsbPullAll_Click(object sender, EventArgs e)
+        {
+            List<string> pathsFailedToPull = new List<string>();
+
+            foreach (FileWatch watch in watches)
+            {
+                if (watch.Modified)
+                {
+                    IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == watch.ContentPath);
+
+                    FileStream fs;
+                    try
+                    {
+                        fs = new FileStream(watch.FilePath, FileMode.Open, FileAccess.Read);
+                    }
+                    catch (IOException)
+                    {
+                        pathsFailedToPull.Add(watch.ContentPath + " from " + watch.FilePath);
+                        return;
+                    }
+
+                    // Load contents to a stream
+                    MemoryStream ms = new MemoryStream((int)content.First().Size);
+                    ms.Write(content.First().Content, 0, (int)content.First().Size);
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    // Load changes from the file and write it to stream
+                    StreamDiffer sd = new StreamDiffer(ms);
+                    sd.Write(fs);
+                    int count = sd.Push();
+
+                    // Drop the stream
+                    byte[] contBytes = new byte[ms.Length];
+                    ms.Seek(0, SeekOrigin.Begin);
+                    ms.Read(contBytes, 0, (int)ms.Length);
+                    content.First().Content = contBytes;
+
+                    ms.Dispose();
+                    fs.Dispose();
+
+                    watch.Modified = false;
+                }
+            }
+
+            SetModified(true);
+
+            if (pathsFailedToPull.Count == 0)
+            {
+                MessageBox.Show("Successfully updated changes from all exported files.", "Update exported files",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("Successfully updated changes from all exported files.\n\nThe following files failed to update:" +
+                    "\n\n" + String.Join("\n", pathsFailedToPull), "Update exported files",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            UpdateFileList();
+        }
+
+        private void PullFile(string filename)
+        {
+            IEnumerable<FileWatch> search = watches.Where(f => f.ContentPath == filename);
+
+            if (search.Count() == 0)
+            {
+                MessageBox.Show("This file is not exported!", "Pull changes",
+                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
+            }
+
+            if (search.First().Modified == false)
+            {
+                MessageBox.Show("The file is not modified.", "Pull changes",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
+
+            FileStream fs;
+            try
+            {
+                fs = new FileStream(search.First().FilePath, FileMode.Open, FileAccess.Read);
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show("Failed to open the exported file on the disk (" +
+                    search.First().FilePath + "). An exception happened:\n\n" + ex.Message, "Pull changes",
+                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
+            }
+
+            // Load contents to a stream
+            MemoryStream ms = new MemoryStream((int)content.First().Size);
+            ms.Write(content.First().Content, 0, (int)content.First().Size);
+            ms.Seek(0, SeekOrigin.Begin);
+
+            // Load changes from the file and write it to stream
+            StreamDiffer sd = new StreamDiffer(ms);
+            sd.Write(fs);
+            int count = sd.Push();
+
+            // Drop the stream
+            byte[] contBytes = new byte[ms.Length];
+            ms.Seek(0, SeekOrigin.Begin);
+            ms.Read(contBytes, 0, (int)ms.Length);
+            content.First().Content = contBytes;
+
+            ms.Dispose();
+            fs.Dispose();
+
+            MessageBox.Show("Successfully pulled " + count.HumanReadableSize() + " changes.", "Pull changes",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // Consider the file unmodified
+            search.First().Modified = false;
+
+            // But consider the addon itself modified
+            SetModified(true);
+
+            UpdateFileList();
         }
     }
 }

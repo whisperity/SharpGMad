@@ -34,7 +34,9 @@
             this.ofdAddon = new System.Windows.Forms.OpenFileDialog();
             this.tsFileOperations = new System.Windows.Forms.ToolStrip();
             this.tsbAddFile = new System.Windows.Forms.ToolStripButton();
-            this.tsbRemoveFile = new System.Windows.Forms.ToolStripButton();
+            this.tssExportHeaderSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.tsbPullAll = new System.Windows.Forms.ToolStripButton();
+            this.tsbDropAll = new System.Windows.Forms.ToolStripButton();
             this.pnlLeftSide = new System.Windows.Forms.Panel();
             this.pnlFilelist = new System.Windows.Forms.Panel();
             this.pnlFileOpsToolbar = new System.Windows.Forms.Panel();
@@ -63,7 +65,12 @@
             this.ofdAddFile = new System.Windows.Forms.OpenFileDialog();
             this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmFileRemove = new System.Windows.Forms.ToolStripMenuItem();
+            this.tssExportSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.tsmFileExportTo = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmFilePull = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmFileDropExport = new System.Windows.Forms.ToolStripMenuItem();
             this.sfdAddon = new System.Windows.Forms.SaveFileDialog();
+            this.sfdExportFile = new System.Windows.Forms.SaveFileDialog();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
             this.pnlFilelist.SuspendLayout();
@@ -99,7 +106,9 @@
             this.tsFileOperations.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.tsFileOperations.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsbAddFile,
-            this.tsbRemoveFile});
+            this.tssExportHeaderSeparator,
+            this.tsbPullAll,
+            this.tsbDropAll});
             this.tsFileOperations.Location = new System.Drawing.Point(0, 0);
             this.tsFileOperations.Name = "tsFileOperations";
             this.tsFileOperations.Size = new System.Drawing.Size(530, 26);
@@ -116,16 +125,34 @@
             this.tsbAddFile.Text = "Add file";
             this.tsbAddFile.Click += new System.EventHandler(this.tsbAddFile_Click);
             // 
-            // tsbRemoveFile
+            // tssExportHeaderSeparator
             // 
-            this.tsbRemoveFile.AutoToolTip = false;
-            this.tsbRemoveFile.Enabled = false;
-            this.tsbRemoveFile.Image = global::SharpGMad.Properties.Resources.remove;
-            this.tsbRemoveFile.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbRemoveFile.Name = "tsbRemoveFile";
-            this.tsbRemoveFile.Size = new System.Drawing.Size(89, 23);
-            this.tsbRemoveFile.Text = "Remove file";
-            this.tsbRemoveFile.Click += new System.EventHandler(this.tsbRemoveFile_Click);
+            this.tssExportHeaderSeparator.Name = "tssExportHeaderSeparator";
+            this.tssExportHeaderSeparator.Size = new System.Drawing.Size(6, 26);
+            // 
+            // tsbPullAll
+            // 
+            this.tsbPullAll.AutoToolTip = false;
+            this.tsbPullAll.Enabled = false;
+            this.tsbPullAll.Image = global::SharpGMad.Properties.Resources.pull_all;
+            this.tsbPullAll.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbPullAll.Name = "tsbPullAll";
+            this.tsbPullAll.Size = new System.Drawing.Size(138, 23);
+            this.tsbPullAll.Text = "Update exported files";
+            this.tsbPullAll.ToolTipText = "Updates all changes from external files into the addon";
+            this.tsbPullAll.Click += new System.EventHandler(this.tsbPullAll_Click);
+            // 
+            // tsbDropAll
+            // 
+            this.tsbDropAll.AutoToolTip = false;
+            this.tsbDropAll.Enabled = false;
+            this.tsbDropAll.Image = global::SharpGMad.Properties.Resources.drop;
+            this.tsbDropAll.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbDropAll.Name = "tsbDropAll";
+            this.tsbDropAll.Size = new System.Drawing.Size(94, 23);
+            this.tsbDropAll.Text = "Drop exports";
+            this.tsbDropAll.ToolTipText = "Deletes all exported files";
+            this.tsbDropAll.Click += new System.EventHandler(this.tsbDropAll_Click);
             // 
             // pnlLeftSide
             // 
@@ -386,23 +413,63 @@
             // cmsFileEntry
             // 
             this.cmsFileEntry.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmFileRemove});
+            this.tsmFileRemove,
+            this.tssExportSeparator,
+            this.tsmFileExportTo,
+            this.tsmFilePull,
+            this.tsmFileDropExport});
             this.cmsFileEntry.Name = "cmsFileEntry";
-            this.cmsFileEntry.Size = new System.Drawing.Size(118, 26);
+            this.cmsFileEntry.Size = new System.Drawing.Size(137, 98);
             // 
             // tsmFileRemove
             // 
             this.tsmFileRemove.Image = global::SharpGMad.Properties.Resources.remove;
             this.tsmFileRemove.Name = "tsmFileRemove";
-            this.tsmFileRemove.Size = new System.Drawing.Size(117, 22);
+            this.tsmFileRemove.Size = new System.Drawing.Size(136, 22);
             this.tsmFileRemove.Text = "Remove";
-            this.tsmFileRemove.Click += new System.EventHandler(this.tsbRemoveFile_Click);
+            this.tsmFileRemove.Click += new System.EventHandler(this.tsmFileRemove_Click);
+            // 
+            // tssExportSeparator
+            // 
+            this.tssExportSeparator.Name = "tssExportSeparator";
+            this.tssExportSeparator.Size = new System.Drawing.Size(133, 6);
+            // 
+            // tsmFileExportTo
+            // 
+            this.tsmFileExportTo.Enabled = false;
+            this.tsmFileExportTo.Image = global::SharpGMad.Properties.Resources.export;
+            this.tsmFileExportTo.Name = "tsmFileExportTo";
+            this.tsmFileExportTo.Size = new System.Drawing.Size(136, 22);
+            this.tsmFileExportTo.Text = "Export to...";
+            this.tsmFileExportTo.Click += new System.EventHandler(this.tsmFileExportTo_Click);
+            // 
+            // tsmFilePull
+            // 
+            this.tsmFilePull.Enabled = false;
+            this.tsmFilePull.Image = global::SharpGMad.Properties.Resources.pull;
+            this.tsmFilePull.Name = "tsmFilePull";
+            this.tsmFilePull.Size = new System.Drawing.Size(136, 22);
+            this.tsmFilePull.Text = "Update";
+            this.tsmFilePull.Click += new System.EventHandler(this.tsmFilePull_Click);
+            // 
+            // tsmFileDropExport
+            // 
+            this.tsmFileDropExport.Enabled = false;
+            this.tsmFileDropExport.Image = global::SharpGMad.Properties.Resources.drop;
+            this.tsmFileDropExport.Name = "tsmFileDropExport";
+            this.tsmFileDropExport.Size = new System.Drawing.Size(136, 22);
+            this.tsmFileDropExport.Text = "Drop export";
+            this.tsmFileDropExport.Click += new System.EventHandler(this.tsmFileDropExport_Click);
             // 
             // sfdAddon
             // 
             this.sfdAddon.DefaultExt = "gma";
             this.sfdAddon.Filter = "Garry\'s Mod Addons|*.gma";
             this.sfdAddon.Title = "Create new addon as";
+            // 
+            // sfdExportFile
+            // 
+            this.sfdExportFile.Filter = "All files|*.*";
             // 
             // Main
             // 
@@ -455,7 +522,6 @@
         private System.Windows.Forms.ToolStripMenuItem tsmiLegacyCreate;
         private System.Windows.Forms.ToolStripMenuItem tsmiLegacyExtract;
         private System.Windows.Forms.ToolStripButton tsbAddFile;
-        private System.Windows.Forms.ToolStripButton tsbRemoveFile;
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.TextBox txtTitle;
         private System.Windows.Forms.TextBox txtDescription;
@@ -472,6 +538,14 @@
         private System.Windows.Forms.ContextMenuStrip cmsFileEntry;
         private System.Windows.Forms.ToolStripMenuItem tsmFileRemove;
         private System.Windows.Forms.SaveFileDialog sfdAddon;
+        private System.Windows.Forms.ToolStripButton tsbPullAll;
+        private System.Windows.Forms.ToolStripSeparator tssExportSeparator;
+        private System.Windows.Forms.ToolStripMenuItem tsmFileExportTo;
+        private System.Windows.Forms.ToolStripMenuItem tsmFilePull;
+        private System.Windows.Forms.ToolStripMenuItem tsmFileDropExport;
+        private System.Windows.Forms.SaveFileDialog sfdExportFile;
+        private System.Windows.Forms.ToolStripSeparator tssExportHeaderSeparator;
+        private System.Windows.Forms.ToolStripButton tsbDropAll;
 
 
 
