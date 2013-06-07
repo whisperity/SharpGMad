@@ -49,6 +49,12 @@ wrapper. With it, you can load a GMA file like any other archive (zip,
 rar, tar, ...) and update the contents of the files in it without having
 to fully extract and then repack the file.
 
+In realtime, you can also _export_ a single file to a specific location in
+your system and see/run/edit. If a file is exported and then edited
+"outside", SharpGMad offers the possibility to _pull_ the changes and
+instantly update the addon with it. Exported files are indicated with
+blue file name, whilst changed files are purple. 
+
 The realtime wrapper comes in two flavours.
 
 #### GUI
@@ -58,9 +64,6 @@ The realtime wrapper comes in two flavours.
 If the program is started with no command-line arguments (or the only
 argument is a file path), a GUI will load. (Because of this, dragging and
 dropping a file onto SharpGMad in Explorer is supported.)
-
-The GUI supports all the functionality you can have by using the realtime
-console, only with an added, neat graphical interface.
 
 ![Screenshot of GUI mode](Screenshot.png)
 
@@ -72,30 +75,45 @@ Optionally, you can specify a .gma file to be loaded initially
 
 `SharpGMad.exe realtime -file "C:\steam\etc\garrysmod\addons\my_addon_12345.gma"`
 
-Once running, the following commands will be available to you
+#### Realtime functionality
 
-    load <filename>          Loads <filename> addon into the memory
-    new <filename>           Creates a new, empty addon named <filename>
-    add <filename>           Adds <filename> to the archive
-    addfolder <folder>       Adds all files from <folder> to the archive
-    list                     Lists the files in the memory
-    remove <filename>        Removes <filename> from the archive
-    export                   View the list of exported files
-    export <filename> [path] Export <filename> for editing (to [path] if specified)
-    pull                     Pull the changes from all exported files
-    pull <filename>          Pull the changes of exported <filename>
-    drop <filename>          Drops the export for <filename>
-    get <paramter>           Prints the value of metadata <parameter>
-    set <parameter> [value]  Sets metadata <parameter> to the specified [value]
-    push                     Writes the changes to the disk
-    close                    Closes the addon (dropping all changes)
-    path                     Prints the full path of the current addon
-    pwd                      Prints SharpGMad's current working directory
-    cd <folder>              Changes the current working directory to <folder>
-    ls                       List all files in the current directory
-    gui                      Load the GUI
-    help                     Show the list of available commands
-    exit                     Exits
+The following operations are supported in realtime mode.
+(The `command` is applicable in CLI-mode. Most features have a corresponding, 
+easy operation in GUI.)
+
+* _Addon operations_
+ * `new <filename>`: Create new addon and save it as `<filename>`
+ * `load <filename>`: Load an existing addon saved as `<filename>`
+ * `push`: Save changes to the disk
+ * **Console only!** `close`: Drop all changes and close the addon without
+saving
+* **Console only!** _Filesystem operations_
+ * `path`: Print the full file path of the currently opened addon
+ * `pwd`: Print current working directory
+ * `cd <folder>`: Change working directory to `<folder>`
+ * `ls`: List all files in the current folder
+* _Addon file contents_
+ * `add <filename>`: Add `<filename>`
+ * **Console only!** `addfolder <folder>`: Add all files from `<folder>`
+ * `list`: List the files currently added
+ * `remove <filename>`: Remove `<filename>`
+* _Exporting and pulling changes_
+ * **Console only!** `export`: List all currently handled exports
+ * `export <filename> [path]`: Export `<filename>` to the current folder
+(or to `[path]` if specified)
+ * `pull`: Pull all changes from all exported files
+ * `pull <filename>`: Pull changes of `<filename>` (the parameter
+indicates the path of the file **within** the addon, not the path of the
+exported file)
+ * `drop <filename>`: Drop the export and delete the exported file
+(`<filename>` is file path **within** the addon)
+* _Metadata operations_
+ * **Console only!** `get` or `set`: List the handled metadata parameters
+ * `get <parameter>`: Print the value of `<parameter>`
+ * `set <parameter> <value>`: Sets the value of `<parameter>` to `<value>`
+* **Console only!** `gui`: Load a GUI window
+* **Console only!** `help`: Show the list of available commands
+* `exit`: Exit the application
 
 Compiling and requirements
 --------------------------
