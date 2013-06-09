@@ -300,6 +300,6 @@ namespace SharpGMad
         /// <summary>
         /// Gets the CRC32 checksum of the content.
         /// </summary>
-        public ulong CRC { get { return Crc32.ComputeChecksum(Content); } }
+        public ulong CRC { get { return System.Cryptography.CRC32.ComputeChecksum(Content); } }
     }
 }

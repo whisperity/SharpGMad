@@ -47,7 +47,7 @@ namespace SharpGMad
                     // Remove prefix / from filename
                     string file = f.Path.TrimStart('/');
 
-                    uint crc = Crc32.ComputeChecksum(f.Content); // unsigned long
+                    uint crc = System.Cryptography.CRC32.ComputeChecksum(f.Content); // unsigned long
                     long size = f.Size; // long long
                     fileNum++;
 
@@ -76,7 +76,7 @@ namespace SharpGMad
                 writer.Seek(0, SeekOrigin.Begin);
                 byte[] buffer_whole = new byte[writer.BaseStream.Length];
                 writer.BaseStream.Read(buffer_whole, 0, (int)writer.BaseStream.Length);
-                ulong addonCRC = Crc32.ComputeChecksum(buffer_whole);
+                ulong addonCRC = System.Cryptography.CRC32.ComputeChecksum(buffer_whole);
                 writer.Write(addonCRC);
 
                 writer.BaseStream.Seek(0, SeekOrigin.Begin);
