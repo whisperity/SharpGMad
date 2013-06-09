@@ -97,10 +97,13 @@ saving
  * **Console only!** `addfolder <folder>`: Add all files from `<folder>`
  * `list`: List the files currently added
  * `remove <filename>`: Remove `<filename>`
+ * `extract <filename> [path]`: Extract `<filename>` to the current folder
+(or to `[path]` if specified). Unlike `export`, a plain `extract` does not
+set up a realtime change watch.
 * _Exporting and pulling changes_
  * **Console only!** `export`: List all currently handled exports
- * `export <filename> [path]`: Export `<filename>` to the current folder
-(or to `[path]` if specified)
+ * `export <filename> [path]`: Export `<filename>` for editing to the
+current folder (or to `[path]` if specified)
  * `pull`: Pull all changes from all exported files
  * `pull <filename>`: Pull changes of `<filename>` (the parameter
 indicates the path of the file **within** the addon, not the path of the

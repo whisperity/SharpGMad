@@ -360,10 +360,12 @@ namespace SharpGMad
                 tsmFileExportTo.Enabled = false;
                 tsmFilePull.Enabled = false;
                 tsmFileDropExport.Enabled = false;
+                tsmFileExtract.Enabled = false;
             }
             else
             {
                 tsmFileRemove.Enabled = true;
+                tsmFileExtract.Enabled = true;
 
                 IEnumerable<FileWatch> isExported = watches.Where(f => f.ContentPath ==
                     lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
@@ -538,7 +540,7 @@ namespace SharpGMad
                 IEnumerable<FileWatch> isExported = watches.Where(f => f.ContentPath == contentPath);
                 if (isExported.Count() != 0)
                 {
-                    MessageBox.Show("This file is already exported. Drop the export first!", "Export file",
+                    MessageBox.Show("This file is already exported. Drop the extract first!", "Export file",
                         MessageBoxButtons.OK, MessageBoxIcon.Stop);
                     return;
                 }
@@ -674,7 +676,7 @@ namespace SharpGMad
 
                 if (search.Count() == 0)
                 {
-                    MessageBox.Show("This file is not exported!", "Drop export",
+                    MessageBox.Show("This file is not exported!", "Drop extract",
                         MessageBoxButtons.OK, MessageBoxIcon.Stop);
                     return;
                 }
@@ -688,7 +690,7 @@ namespace SharpGMad
                 catch (Exception ex)
                 {
                     MessageBox.Show("Failed to delete the exported file:" +
-                        "\n" + search.First().FilePath + ".\n\n" + ex.Message, "Drop export",
+                        "\n" + search.First().FilePath + ".\n\n" + ex.Message, "Drop extract",
                         MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 }
 
@@ -810,6 +812,45 @@ namespace SharpGMad
             SetModified(true);
 
             UpdateFileList();
+        }
+
+        private void tsmFileExtract_Click(object sender, EventArgs e)
+        {
+            if (lstFiles.FocusedItem != null)
+            {
+                string contentPath = lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text;
+
+                sfdExportFile.FileName = Path.GetFileName(lstFiles.FocusedItem.Text);
+                sfdExportFile.DefaultExt = Path.GetExtension(lstFiles.FocusedItem.Text);
+                sfdExportFile.Title = "Extract " + Path.GetFileName(lstFiles.FocusedItem.Text) + " to...";
+
+                DialogResult save = sfdExportFile.ShowDialog();
+
+                if (save == DialogResult.OK)
+                {
+                    string extractPath = sfdExportFile.FileName;
+                    
+                    IEnumerable<ContentFile> file = addon.Files.Where(f => f.Path == contentPath);
+
+                    FileStream export;
+                    try
+                    {
+                        export = new FileStream(extractPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("There was a problem opening the file.", "Extract file",
+                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
+                    export.SetLength(0); // Truncate the file.
+                    export.Write(file.First().Content, 0, (int)file.First().Size);
+                    export.Flush();
+                    export.Dispose();
+                }
+
+                sfdExportFile.Reset();
+            }
         }
     }
 }

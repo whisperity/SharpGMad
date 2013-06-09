@@ -172,6 +172,30 @@ namespace SharpGMad
                         }
 
                         break;
+                    case "extract":
+                        string extractPath = String.Empty;
+                        try
+                        {
+                            extractPath = command[2];
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            // Noop.
+                        }
+
+                        try
+                        {
+                            ExtractFile(command[1], extractPath);
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The filename was not specified.");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        break;
                     case "export":
                         string exportPath = String.Empty;
                         try
@@ -478,6 +502,7 @@ namespace SharpGMad
                             Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
                             Console.WriteLine("list                       Lists the files in the memory");
                             Console.WriteLine("remove <filename>          Removes <filename> from the archive");
+                            Console.WriteLine("extract <filename> [path]  Extract <filename> (to [path] if specified)");
                             Console.WriteLine("export                     View the list of exported files");
                             Console.WriteLine("export <filename> [path]   Export <filename> for editing (to [path] if specified)");
                             Console.WriteLine("pull                       Pull changes from all exported files");
@@ -1002,6 +1027,74 @@ namespace SharpGMad
                 Console.ResetColor();
                 return;
             }
+        }
+
+        /// <summary>
+        /// Extract a file from the addon to a specified path on the local file system.
+        /// Unlike ExportFile(), this does not set up a watch.
+        /// </summary>
+        /// <param name="filename">The path of the file in the addon to be exported.</param>
+        /// <param name="extractPath">Optional. The path on the local file system where the file should be saved.
+        /// If omitted, the file will be exported to the current working directory.</param>
+        static void ExtractFile(string filename, string extractPath = null)
+        {
+            if (addon == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+
+            IEnumerable<ContentFile> file = addon.Files.Where(f => f.Path == filename);
+
+            if (file.Count() == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("The specified file does not exist in the archive.");
+                Console.ResetColor();
+                return;
+            }
+
+            if (extractPath == null || extractPath == String.Empty)
+            {
+                extractPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(filename);
+            }
+            else
+            {
+                extractPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(extractPath);
+            }
+
+            if (File.Exists(extractPath))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("A file at " + extractPath + " already exists. Aborting extraction!");
+                Console.ResetColor();
+                return;
+            }
+
+            FileStream extract;
+            try
+            {
+                extract = new FileStream(extractPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("There was a problem exporting the file.");
+                Console.ResetColor();
+                Console.WriteLine(e.Message);
+                return;
+            }
+            extract.SetLength(0); // Truncate the file.
+            extract.Write(file.First().Content, 0, (int)file.First().Size);
+            extract.Flush();
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Written " + ((int)extract.Length).HumanReadableSize() + " to " + extractPath + ".");
+            Console.ResetColor();
+
+            extract.Dispose();
         }
 
         /// <summary>

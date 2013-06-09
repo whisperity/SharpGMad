@@ -63,14 +63,15 @@
             this.tsmiLegacyCreate = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiLegacyExtract = new System.Windows.Forms.ToolStripMenuItem();
             this.ofdAddFile = new System.Windows.Forms.OpenFileDialog();
-            this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.sfdAddon = new System.Windows.Forms.SaveFileDialog();
+            this.sfdExportFile = new System.Windows.Forms.SaveFileDialog();
             this.tsmFileRemove = new System.Windows.Forms.ToolStripMenuItem();
             this.tssExportSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.tsmFileExportTo = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFilePull = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFileDropExport = new System.Windows.Forms.ToolStripMenuItem();
-            this.sfdAddon = new System.Windows.Forms.SaveFileDialog();
-            this.sfdExportFile = new System.Windows.Forms.SaveFileDialog();
+            this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmFileExtract = new System.Windows.Forms.ToolStripMenuItem();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
             this.pnlFilelist.SuspendLayout();
@@ -410,57 +411,6 @@
             // 
             this.ofdAddFile.Title = "Add file";
             // 
-            // cmsFileEntry
-            // 
-            this.cmsFileEntry.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmFileRemove,
-            this.tssExportSeparator,
-            this.tsmFileExportTo,
-            this.tsmFilePull,
-            this.tsmFileDropExport});
-            this.cmsFileEntry.Name = "cmsFileEntry";
-            this.cmsFileEntry.Size = new System.Drawing.Size(137, 98);
-            // 
-            // tsmFileRemove
-            // 
-            this.tsmFileRemove.Image = global::SharpGMad.Properties.Resources.remove;
-            this.tsmFileRemove.Name = "tsmFileRemove";
-            this.tsmFileRemove.Size = new System.Drawing.Size(136, 22);
-            this.tsmFileRemove.Text = "Remove";
-            this.tsmFileRemove.Click += new System.EventHandler(this.tsmFileRemove_Click);
-            // 
-            // tssExportSeparator
-            // 
-            this.tssExportSeparator.Name = "tssExportSeparator";
-            this.tssExportSeparator.Size = new System.Drawing.Size(133, 6);
-            // 
-            // tsmFileExportTo
-            // 
-            this.tsmFileExportTo.Enabled = false;
-            this.tsmFileExportTo.Image = global::SharpGMad.Properties.Resources.export;
-            this.tsmFileExportTo.Name = "tsmFileExportTo";
-            this.tsmFileExportTo.Size = new System.Drawing.Size(136, 22);
-            this.tsmFileExportTo.Text = "Export to...";
-            this.tsmFileExportTo.Click += new System.EventHandler(this.tsmFileExportTo_Click);
-            // 
-            // tsmFilePull
-            // 
-            this.tsmFilePull.Enabled = false;
-            this.tsmFilePull.Image = global::SharpGMad.Properties.Resources.pull;
-            this.tsmFilePull.Name = "tsmFilePull";
-            this.tsmFilePull.Size = new System.Drawing.Size(136, 22);
-            this.tsmFilePull.Text = "Update";
-            this.tsmFilePull.Click += new System.EventHandler(this.tsmFilePull_Click);
-            // 
-            // tsmFileDropExport
-            // 
-            this.tsmFileDropExport.Enabled = false;
-            this.tsmFileDropExport.Image = global::SharpGMad.Properties.Resources.drop;
-            this.tsmFileDropExport.Name = "tsmFileDropExport";
-            this.tsmFileDropExport.Size = new System.Drawing.Size(136, 22);
-            this.tsmFileDropExport.Text = "Drop export";
-            this.tsmFileDropExport.Click += new System.EventHandler(this.tsmFileDropExport_Click);
-            // 
             // sfdAddon
             // 
             this.sfdAddon.DefaultExt = "gma";
@@ -470,6 +420,72 @@
             // sfdExportFile
             // 
             this.sfdExportFile.Filter = "All files|*.*";
+            // 
+            // tsmFileRemove
+            // 
+            this.tsmFileRemove.Image = global::SharpGMad.Properties.Resources.remove;
+            this.tsmFileRemove.Name = "tsmFileRemove";
+            this.tsmFileRemove.Size = new System.Drawing.Size(138, 22);
+            this.tsmFileRemove.Text = "Remove";
+            this.tsmFileRemove.Click += new System.EventHandler(this.tsmFileRemove_Click);
+            // 
+            // tssExportSeparator
+            // 
+            this.tssExportSeparator.Name = "tssExportSeparator";
+            this.tssExportSeparator.Size = new System.Drawing.Size(135, 6);
+            // 
+            // tsmFileExportTo
+            // 
+            this.tsmFileExportTo.Enabled = false;
+            this.tsmFileExportTo.Image = global::SharpGMad.Properties.Resources.export;
+            this.tsmFileExportTo.Name = "tsmFileExportTo";
+            this.tsmFileExportTo.Size = new System.Drawing.Size(138, 22);
+            this.tsmFileExportTo.Text = "Export to...";
+            this.tsmFileExportTo.ToolTipText = "Export the selected file to somewhere on your computer and set up a realtime chan" +
+    "ge-watch. Changed files will be purple.";
+            this.tsmFileExportTo.Click += new System.EventHandler(this.tsmFileExportTo_Click);
+            // 
+            // tsmFilePull
+            // 
+            this.tsmFilePull.Enabled = false;
+            this.tsmFilePull.Image = global::SharpGMad.Properties.Resources.pull;
+            this.tsmFilePull.Name = "tsmFilePull";
+            this.tsmFilePull.Size = new System.Drawing.Size(138, 22);
+            this.tsmFilePull.Text = "Update";
+            this.tsmFilePull.ToolTipText = "Update this file with the changes from the exported file on your computer";
+            this.tsmFilePull.Click += new System.EventHandler(this.tsmFilePull_Click);
+            // 
+            // tsmFileDropExport
+            // 
+            this.tsmFileDropExport.Enabled = false;
+            this.tsmFileDropExport.Image = global::SharpGMad.Properties.Resources.drop;
+            this.tsmFileDropExport.Name = "tsmFileDropExport";
+            this.tsmFileDropExport.Size = new System.Drawing.Size(138, 22);
+            this.tsmFileDropExport.Text = "Drop extract";
+            this.tsmFileDropExport.ToolTipText = "Delete the exported file from your computer";
+            this.tsmFileDropExport.Click += new System.EventHandler(this.tsmFileDropExport_Click);
+            // 
+            // cmsFileEntry
+            // 
+            this.cmsFileEntry.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmFileRemove,
+            this.tsmFileExtract,
+            this.tssExportSeparator,
+            this.tsmFileExportTo,
+            this.tsmFilePull,
+            this.tsmFileDropExport});
+            this.cmsFileEntry.Name = "cmsFileEntry";
+            this.cmsFileEntry.Size = new System.Drawing.Size(139, 120);
+            // 
+            // tsmFileExtract
+            // 
+            this.tsmFileExtract.Enabled = false;
+            this.tsmFileExtract.Image = global::SharpGMad.Properties.Resources.extract;
+            this.tsmFileExtract.Name = "tsmFileExtract";
+            this.tsmFileExtract.Size = new System.Drawing.Size(138, 22);
+            this.tsmFileExtract.Text = "Extract";
+            this.tsmFileExtract.ToolTipText = "Save the selected file somewhere on your computer";
+            this.tsmFileExtract.Click += new System.EventHandler(this.tsmFileExtract_Click);
             // 
             // Main
             // 
@@ -535,17 +551,18 @@
         private System.Windows.Forms.ToolStrip tsMetadata;
         private System.Windows.Forms.ToolStripButton tsbUpdateMetadata;
         private System.Windows.Forms.OpenFileDialog ofdAddFile;
-        private System.Windows.Forms.ContextMenuStrip cmsFileEntry;
-        private System.Windows.Forms.ToolStripMenuItem tsmFileRemove;
         private System.Windows.Forms.SaveFileDialog sfdAddon;
         private System.Windows.Forms.ToolStripButton tsbPullAll;
+        private System.Windows.Forms.SaveFileDialog sfdExportFile;
+        private System.Windows.Forms.ToolStripSeparator tssExportHeaderSeparator;
+        private System.Windows.Forms.ToolStripButton tsbDropAll;
+        private System.Windows.Forms.ToolStripMenuItem tsmFileRemove;
         private System.Windows.Forms.ToolStripSeparator tssExportSeparator;
         private System.Windows.Forms.ToolStripMenuItem tsmFileExportTo;
         private System.Windows.Forms.ToolStripMenuItem tsmFilePull;
         private System.Windows.Forms.ToolStripMenuItem tsmFileDropExport;
-        private System.Windows.Forms.SaveFileDialog sfdExportFile;
-        private System.Windows.Forms.ToolStripSeparator tssExportHeaderSeparator;
-        private System.Windows.Forms.ToolStripButton tsbDropAll;
+        private System.Windows.Forms.ContextMenuStrip cmsFileEntry;
+        private System.Windows.Forms.ToolStripMenuItem tsmFileExtract;
 
 
 
