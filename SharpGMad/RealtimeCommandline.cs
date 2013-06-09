@@ -1,29 +1,70 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
+using System.Linq;
 
 namespace SharpGMad
 {
+    /// <summary>
+    /// Represents a watcher declaration for an exported file.
+    /// </summary>
     class FileWatch
     {
+        /// <summary>
+        /// Gets or sets the path of the file on the filesystem.
+        /// </summary>
         public string FilePath;
+        /// <summary>
+        /// Gets or sets the path of the file in the loaded addon.
+        /// </summary>
         public string ContentPath;
+        /// <summary>
+        /// Gets or sets whether the file is modified externally.
+        /// </summary>
         public bool Modified;
+        /// <summary>
+        /// The integrated System.IO.FileSystemWatcher object.
+        /// </summary>
         public FileSystemWatcher Watcher;
     }
 
-    class Realtime
+    /// <summary>
+    /// Provides methods and properties of handling realtime access in the commandline.
+    /// </summary>
+    static class Realtime
     {
+        /// <summary>
+        /// The current open addon.
+        /// </summary>
         static Addon addon;
+        /// <summary>
+        /// The System.IO.FileStream connection to the current open addon on the disk.
+        /// </summary>
         static FileStream addonFS;
+        /// <summary>
+        /// Gets or sets the full path of the current open addon.
+        /// </summary>
         static string filePath;
+        /// <summary>
+        /// Contains the command-line prefix printed before each command reading.
+        /// </summary>
         static string CommandlinePrefix = "SharpGMad>";
+        /// <summary>
+        /// Contains a list of externally exported watched files.
+        /// </summary>
         static List<FileWatch> watchedFiles = new List<FileWatch>();
+        /// <summary>
+        /// Gets or sets whether the current addon is modified.
+        /// </summary>
         static bool modified;
+        /// <summary>
+        /// Gets or sets whether the current addon has exported files which are pullable.
+        /// </summary>
         static bool pullable;
 
+        /// <summary>
+        /// The main method and entry point for command-line operation.
+        /// </summary>
         public static int Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.Green;
@@ -507,6 +548,10 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Creates a new addon.
+        /// </summary>
+        /// <param name="filename">The filename where the addon should be saved to.</param>
         static void NewAddon(string filename)
         {
             if (addon is Addon)
@@ -580,6 +625,11 @@ namespace SharpGMad
             
         }
 
+        /// <summary>
+        /// Sets the title of an addon.
+        /// </summary>
+        /// <param name="addon">The addon which is to be modified</param>
+        /// <param name="title">Optional. The new title the addon should have.</param>
         private static void SetTitle(Addon addon, string title = null)
         {
             if (title == String.Empty || title == null)
@@ -593,6 +643,11 @@ namespace SharpGMad
             addon.Title = title;
         }
 
+        /// <summary>
+        /// Sets the description of an addon.
+        /// </summary>
+        /// <param name="addon">The addon which is to be modified</param>
+        /// <param name="description">Optional. The new description the addon should have.</param>
         private static void SetDescription(Addon addon, string description = null)
         {
             if (description == String.Empty || description == null)
@@ -607,6 +662,11 @@ namespace SharpGMad
             SetModified(true);
         }
 
+        /// <summary>
+        /// Sets the author of an addon.
+        /// </summary>
+        /// <param name="addon">The addon which is to be modified</param>
+        /// <param name="author">Optional. The new author the addon should have.</param>
         private static void SetAuthor(Addon addon, string author = null)
         {
             if (author == String.Empty || author == null)
@@ -623,6 +683,11 @@ namespace SharpGMad
             SetModified(true);
         }
 
+        /// <summary>
+        /// Sets the type of an addon.
+        /// </summary>
+        /// <param name="addon">The addon which is to be modified</param>
+        /// <param name="type">Optional. The new type the addon should have.</param>
         private static void SetType(Addon addon, string type = null)
         {
             if (type == String.Empty || type == null)
@@ -659,6 +724,11 @@ namespace SharpGMad
             SetModified(true);
         }
 
+        /// <summary>
+        /// Sets the tags of an addon.
+        /// </summary>
+        /// <param name="addon">The addon which is to be modified</param>
+        /// <param name="tagsInput">Optional. The new tags the addon should have.</param>
         private static void SetTags(Addon addon, string[] tagsInput = null)
         {
             List<string> tags = new List<string>(2);
@@ -764,6 +834,10 @@ namespace SharpGMad
             SetModified(true);
         }
 
+        /// <summary>
+        /// Loads an addon from the filesystem.
+        /// </summary>
+        /// <param name="filename">The path of the addon to load.</param>
         static void LoadAddon(string filename)
         {
             if (addon is Addon)
@@ -805,6 +879,10 @@ namespace SharpGMad
             SetPullable(false);
         }
 
+        /// <summary>
+        /// Adds a file to the open addon.
+        /// </summary>
+        /// <param name="filename">The path of the file to be added.</param>
         static void AddFile(string filename)
         {
             if (addon == null)
@@ -863,6 +941,10 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Adds all files from a specified folder to the addon.
+        /// </summary>
+        /// <param name="folder">The folder containing the files to be added.</param>
         static void AddFolder(string folder)
         {
             foreach (string f in Directory.GetFiles(folder, "*", SearchOption.AllDirectories))
@@ -874,6 +956,9 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Lists the files currently added to the addon.
+        /// </summary>
         static void ListFiles()
         {
             if (addon == null)
@@ -891,6 +976,10 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Removes a file from the addon.
+        /// </summary>
+        /// <param name="filename">The path of the file to be removed.</param>
         static void RemoveFile(string filename)
         {
             if (addon == null)
@@ -915,6 +1004,12 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Exports a file from the addon to a specified path on the local file system and sets up a watch.
+        /// </summary>
+        /// <param name="filename">The path of the file in the addon to be exported.</param>
+        /// <param name="exportPath">Optional. The path on the local file system where the export should be saved.
+        /// If omitted, the file will be exported to the current working directory.</param>
         static void ExportFile(string filename, string exportPath = null)
         {
             if (addon == null)
@@ -998,6 +1093,10 @@ namespace SharpGMad
             watchedFiles.Add(watch);
         }
 
+        /// <summary>
+        /// The event gets fired whenever a watched exported file gets modified externally.
+        /// This event administers the changed state for the application.
+        /// </summary>
         static void fsw_Changed(object sender, FileSystemEventArgs e)
         {
             Console.WriteLine(e.Name + " changed!");
@@ -1032,6 +1131,11 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Removes a file export watcher and optionally deletes the exported file from the local file system.
+        /// </summary>
+        /// <param name="filename">The path of the file within the addon to be dropped.
+        /// The exported path is known internally.</param>
         static void DropExport(string filename)
         {
             if (addon == null)
@@ -1087,6 +1191,11 @@ namespace SharpGMad
             watchedFiles.Remove(search.First());
         }
 
+        /// <summary>
+        /// Pulls the changes of the specified file from its exported version.
+        /// </summary>
+        /// <param name="filename">The internal path of the file changes should be pulled into.
+        /// The exported path is known automatically.</param>
         static void PullFile(string filename)
         {
             if (addon == null)
@@ -1164,7 +1273,9 @@ namespace SharpGMad
             SetModified(true);
         }
 
-
+        /// <summary>
+        /// Saves the changes of the addon to the disk.
+        /// </summary>
         static void Push()
         {
             if (addon == null)
@@ -1174,7 +1285,9 @@ namespace SharpGMad
                 Console.ResetColor();
                 return;
             }
-            
+
+            addon.Sort();
+
             MemoryStream ms;
             
             Writer.Create(addon, out ms);
@@ -1183,13 +1296,16 @@ namespace SharpGMad
             ms.Seek(0, SeekOrigin.Begin);
             ms.CopyTo(addonFS);
 
-            ms.Dispose();
             addonFS.Flush();
-            
+            ms.Dispose();
+
             SetModified(false);
             Console.WriteLine("Successfully saved the addon.");
         }
 
+        /// <summary>
+        /// Closes the currently open addon connection.
+        /// </summary>
         static void CloseAddon()
         {
             if (addon == null)
@@ -1213,6 +1329,9 @@ namespace SharpGMad
             watchedFiles.Clear();
         }
 
+        /// <summary>
+        /// Prints the full path of the currently open addon to the console.
+        /// </summary>
         static void FullPath()
         {
             if (addon == null)
@@ -1226,6 +1345,9 @@ namespace SharpGMad
             Console.WriteLine(Path.GetFullPath(filePath));
         }
 
+        /// <summary>
+        /// Sets the currently open addon's modified state.
+        /// </summary>
         static void SetModified(bool modified)
         {
             if (modified)
@@ -1242,6 +1364,9 @@ namespace SharpGMad
             Realtime.modified = modified;
         }
 
+        /// <summary>
+        /// Sets whether there are exported files which can be pulled.
+        /// </summary>
         static void SetPullable(bool pullable)
         {
             SetModified(Realtime.modified); // Set the modified state so it resets the shell prefix

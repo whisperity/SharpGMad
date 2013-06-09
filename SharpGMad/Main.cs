@@ -1,21 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using System.IO;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace SharpGMad
 {
     partial class Main : Form
     {
+        /// <summary>
+        /// The System.IO.FileStream connection to the current open addon on the disk.
+        /// </summary>
         FileStream addonFS;
+        /// <summary>
+        /// The current open addon.
+        /// </summary>
         Addon addon;
+        /// <summary>
+        /// Contains a list of externally exported watched files.
+        /// </summary>
         List<FileWatch> watches;
+        /// <summary>
+        /// Gets or sets the full path of the current open addon.
+        /// </summary>
         string path;
+        /// <summary>
+        /// Gets or sets whether the current addon is modified.
+        /// </summary>
         bool modified;
 
         private Main()
@@ -67,6 +79,10 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Loads an addon from the filesystem.
+        /// </summary>
+        /// <param name="filename">The path of the addon to load.</param>
         private void LoadAddon(string path)
         {
             try
@@ -110,6 +126,9 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Updates the metadata information printed to the user with the current metadata of the open addon.
+        /// </summary>
         public void UpdateMetadataPanel()
         {
             txtTitle.Text = addon.Title;
@@ -119,6 +138,9 @@ namespace SharpGMad
             txtDescription.Text = addon.Description;
         }
 
+        /// <summary>
+        /// Updates the filelist (lstFiles) with the changes administered to the known files.
+        /// </summary>
         private void UpdateFileList()
         {
             // Invoke the method if it was called from a thread which is not the thread lstFiles was created in.
@@ -174,6 +196,9 @@ namespace SharpGMad
             }
         }
 
+        /// <summary>
+        /// Closes the currently open addon connection.
+        /// </summary>
         private void UnloadAddon()
         {
             txtTitle.Text = String.Empty;
@@ -210,6 +235,9 @@ namespace SharpGMad
             tsbAddFile.Enabled = false;
         }
 
+        /// <summary>
+        /// Sets the currently open addon's modified state.
+        /// </summary>
         public void SetModified(bool modified)
         {
             if (modified)
@@ -399,6 +427,8 @@ namespace SharpGMad
         {
             if (this.modified)
             {
+                addon.Sort();
+
                 MemoryStream ms;
                 
                 Writer.Create(addon, out ms);
@@ -604,8 +634,6 @@ namespace SharpGMad
             }
         }
 
-        
-
         private void tsbDropAll_Click(object sender, EventArgs e)
         {
             List<string> pathsFailedToDelete = new List<string>();
@@ -726,6 +754,11 @@ namespace SharpGMad
             UpdateFileList();
         }
 
+        /// <summary>
+        /// Pulls the changes of the specified file from its exported version.
+        /// </summary>
+        /// <param name="filename">The internal path of the file changes should be pulled into.
+        /// The exported path is known automatically.</param>
         private void PullFile(string filename)
         {
             IEnumerable<FileWatch> search = watches.Where(f => f.ContentPath == filename);

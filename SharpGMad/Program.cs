@@ -14,7 +14,6 @@ namespace SharpGMad
         /// <summary>
         /// External method to find a pointer for an attached console window.
         /// </summary>
-        /// <returns></returns>
         [DllImport("kernel32.dll", EntryPoint = "GetConsoleWindow")]
         private static extern IntPtr _GetConsoleWindow();
 
@@ -24,9 +23,9 @@ namespace SharpGMad
         [STAThread]
         static int Main(string[] args)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
+            /*Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("Sharp Garry's Addon Creator 1.0");
-            Console.ResetColor();
+            Console.ResetColor();*/
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
