@@ -198,6 +198,8 @@ namespace SharpGMad
             }
 
             addon = null;
+            if (addonFS != null)
+                addonFS.Dispose();
 
             foreach (FileWatch watch in watches)
                 watch.Watcher.Dispose();
@@ -416,8 +418,6 @@ namespace SharpGMad
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //if (e.CloseReason == CloseReason.UserClosing) // Not sure if this should be put in
-            //{
                 if (addon is Addon && this.modified)
                 {
                     DialogResult yesClose = MessageBox.Show("Do you want to save your changes before quiting?",
@@ -438,7 +438,11 @@ namespace SharpGMad
                             break;
                     }
                 }
-            //}
+
+                if (addon is Addon)
+                {
+                    UnloadAddon();
+                }
         }
 
         private void tsbCreateAddon_Click(object sender, EventArgs e)

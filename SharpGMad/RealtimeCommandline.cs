@@ -21,6 +21,8 @@ namespace SharpGMad
         static string filePath;
         static string CommandlinePrefix = "SharpGMad>";
         static List<FileWatch> watchedFiles = new List<FileWatch>();
+        static bool modified;
+        static bool pullable;
 
         public static int Main(string[] args)
         {
@@ -180,13 +182,16 @@ namespace SharpGMad
                             {
 
                                 Console.WriteLine("Pulling " + watchedFiles.Count + " files:");
-                                int i = 0;
                                 foreach (FileWatch watch in watchedFiles)
                                 {
                                     PullFile(watch.ContentPath);
                                 }
                             }
                         }
+
+                        // Get whether there are files still pullable.
+                        bool stillPullables = watchedFiles.Any(fw => fw.Modified == true);
+                        SetPullable(stillPullables);
 
                         break;
                     case "drop":
@@ -207,7 +212,7 @@ namespace SharpGMad
                         string parameter;
                         try
                         {
-                            parameter = args[1];
+                            parameter = command[1];
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -248,7 +253,7 @@ namespace SharpGMad
                         string Sparameter;
                         try
                         {
-                            Sparameter = args[1];
+                            Sparameter = command[1];
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -262,10 +267,10 @@ namespace SharpGMad
                         string value;
                         try
                         {
-                            string[] param = new string[args.Length - 2];
-                            for (int i = 2; i < args.Length; i++)
+                            string[] param = new string[command.Length - 2];
+                            for (int i = 2; i < command.Length; i++)
                             {
-                                param[i - 2] = args[i];
+                                param[i - 2] = command[i];
                             }
 
                             value = String.Join(" ", param);
@@ -384,7 +389,35 @@ namespace SharpGMad
 
                         break;
                     case "gui":
-                        System.Windows.Forms.Application.Run(new Main(args));
+                        if (addon == null)
+                        {
+                            System.Windows.Forms.Application.Run(new Main(new string[] { }));
+                        }
+                        else if (addon is Addon)
+                        {
+                            if (modified)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Your addon is modified.");
+                                Console.ResetColor();
+                                Console.WriteLine("The GUI cannot be opened until the addon is saved.");
+                                break;
+                            }
+                            else
+                            {
+                                Console.WriteLine("The addon will close in the console and will be reopened by the GUI.");
+                                // Save the addon path and close it in the console.
+                                string addonpath = Realtime.filePath;
+                                CloseAddon();
+
+                                // Open the GUI with the path. The addon will automatically reload.
+                                System.Windows.Forms.Application.Run(new Main(new string[] { addonpath }));
+                                
+                                // This thread will hang until the GUI is closed.
+                                Console.WriteLine("GUI was closed. Reopening the addon...");
+                                LoadAddon(addonpath);
+                            }
+                        }
                         break;
                     case "?":
                     case "help":
@@ -419,12 +452,38 @@ namespace SharpGMad
                         Console.WriteLine("pwd                        Prints SharpGMad's current working directory");
                         Console.WriteLine("cd <folder>                Changes the current working directory to <folder>");
                         Console.WriteLine("ls                         List all files in the current directory");
-                        Console.WriteLine("gui                        Load the GUI");
+
+                        if (addon == null | (addon is Addon && !modified))
+                        {
+                            Console.WriteLine("gui                        Load the GUI");
+                        }
+
                         Console.WriteLine("help                       Show the list of available commands");
 
                         if (addon == null)
                         {
                             Console.WriteLine("exit                       Exits");
+                        }
+
+                        if (addon is Addon)
+                        {
+                            if (modified)
+                            {
+                                Console.Write("The addon has been ");
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.Write("modified");
+                                Console.ResetColor();
+                                Console.WriteLine(". Execute `push` to save changes to the disk.");
+                            }
+
+                            if (pullable)
+                            {
+                                Console.Write("There are exported files which have been changed. ");
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.WriteLine("These changes are pullable.");
+                                Console.ResetColor();
+                                Console.WriteLine("`export` lists all exports or type `pull` to pull the changes.");
+                            }
                         }
 
                         break;
@@ -509,7 +568,11 @@ namespace SharpGMad
             sd.Write(ms);
             sd.Push();
 
+            SetModified(false);
+            SetPullable(false);
+
             CommandlinePrefix = Path.GetFileName(filename) + ">";
+            
         }
 
         private static void SetTitle(Addon addon, string title = null)
@@ -536,6 +599,7 @@ namespace SharpGMad
             }
 
             addon.Description = description;
+            SetModified(true);
         }
 
         private static void SetAuthor(Addon addon, string author = null)
@@ -551,6 +615,7 @@ namespace SharpGMad
             }
 
             addon.Author = author;
+            SetModified(true);
         }
 
         private static void SetType(Addon addon, string type = null)
@@ -586,6 +651,7 @@ namespace SharpGMad
             }
 
             addon.Type = type;
+            SetModified(true);
         }
 
         private static void SetTags(Addon addon, string[] tagsInput = null)
@@ -690,6 +756,7 @@ namespace SharpGMad
             }
 
             addon.Tags = tags;
+            SetModified(true);
         }
 
         static void LoadAddon(string filename)
@@ -729,6 +796,8 @@ namespace SharpGMad
 
             filePath = Path.GetFullPath(filename);
             CommandlinePrefix = Path.GetFileName(filename) + ">";
+            SetModified(false);
+            SetPullable(false);
         }
 
         static void AddFile(string filename)
@@ -764,6 +833,7 @@ namespace SharpGMad
             try
             {
                 addon.AddFile(Whitelist.GetMatchingString(filename), bytes);
+                SetModified(true);
             }
             catch (IgnoredException e)
             {
@@ -829,6 +899,7 @@ namespace SharpGMad
             try
             {
                 addon.RemoveFile(filename);
+                SetModified(true);
             }
             catch (FileNotFoundException e)
             {
@@ -930,26 +1001,27 @@ namespace SharpGMad
 
             if (search.Count() != 0)
             {
-                Console.WriteLine("Administering changed state.");
+                //Console.WriteLine("Administering changed state.");
 
                 IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
 
                 if (content.Count() == 1)
                 {
                     search.First().Modified = true;
+                    SetPullable(true);
                 }
                 else
                 {
-                    Console.WriteLine("The linked content entry was not found.");
-                    Console.WriteLine("Disposing watch object.");
+                    //Console.WriteLine("The linked content entry was not found.");
+                    //Console.WriteLine("Disposing watch object.");
                     watchedFiles.Remove(search.First());
                     ((FileSystemWatcher)sender).Dispose();
                 }
             }
             else
             {
-                Console.WriteLine("The file was not watched.");
-                Console.WriteLine("Disposing watch object.");
+                //Console.WriteLine("The file was not watched.");
+                //Console.WriteLine("Disposing watch object.");
                 watchedFiles.Remove(search.First());
                 ((FileSystemWatcher)sender).Dispose();
             }
@@ -1093,6 +1165,9 @@ namespace SharpGMad
 
             // Consider the file unmodified
             search.First().Modified = false;
+
+            // But the addon itself has been modified
+            SetModified(true);
         }
 
 
@@ -1113,7 +1188,7 @@ namespace SharpGMad
             int count = sd.Push();
 
             addonFS.Flush();
-
+            SetModified(false);
             Console.WriteLine("Successfully saved. " + count.HumanReadableSize() + " was modified.");
         }
 
@@ -1130,6 +1205,8 @@ namespace SharpGMad
             addon = null;
             CommandlinePrefix = "SharpGMad>";
             addonFS.Dispose();
+            SetModified(false);
+            SetPullable(false);
 
             foreach (FileWatch watch in watchedFiles)
             {
@@ -1149,6 +1226,35 @@ namespace SharpGMad
             }
 
             Console.WriteLine(Path.GetFullPath(filePath));
+        }
+
+        static void SetModified(bool modified)
+        {
+            if (modified)
+            {
+                if (addon != null)
+                    CommandlinePrefix = Path.GetFileName(Realtime.filePath) + "*>";
+            }
+            else
+            {
+                if (addon != null)
+                    CommandlinePrefix = Path.GetFileName(Realtime.filePath) + ">";
+            }
+
+            Realtime.modified = modified;
+        }
+
+        static void SetPullable(bool pullable)
+        {
+            SetModified(Realtime.modified); // Set the modified state so it resets the shell prefix
+
+            if (pullable)
+            {
+                CommandlinePrefix = CommandlinePrefix.TrimEnd('>');
+                CommandlinePrefix += "#>";
+            }
+
+            Realtime.pullable = pullable;
         }
     }
 }
