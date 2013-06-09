@@ -400,17 +400,21 @@ namespace SharpGMad
             if (this.modified)
             {
                 MemoryStream ms;
-                StreamDiffer sd = new StreamDiffer(addonFS);
+                
                 Writer.Create(addon, out ms);
-                sd.Write(ms);
-                int count = sd.Push();
+                
+                addonFS.Seek(0, SeekOrigin.Begin);
+                ms.Seek(0, SeekOrigin.Begin);
+                ms.CopyTo(addonFS);
+
+                addonFS.Flush();
+                ms.Dispose();
 
                 SetModified(false);
 
                 if (!(e is FormClosingEventArgs))
                 {
-                    MessageBox.Show("Successfully saved " + ((int)ms.Length).HumanReadableSize() + ", " +
-                        count.HumanReadableSize() + " was modified.", "Save addon",
+                    MessageBox.Show("Successfully saved the addon.", "Save addon",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
@@ -693,23 +697,12 @@ namespace SharpGMad
                         return;
                     }
 
-                    // Load contents to a stream
-                    MemoryStream ms = new MemoryStream((int)content.First().Size);
-                    ms.Write(content.First().Content, 0, (int)content.First().Size);
-                    ms.Seek(0, SeekOrigin.Begin);
-
-                    // Load changes from the file and write it to stream
-                    StreamDiffer sd = new StreamDiffer(ms);
-                    sd.Write(fs);
-                    int count = sd.Push();
-
-                    // Drop the stream
-                    byte[] contBytes = new byte[ms.Length];
-                    ms.Seek(0, SeekOrigin.Begin);
-                    ms.Read(contBytes, 0, (int)ms.Length);
+                    // Load and write the changes to memory
+                    byte[] contBytes = new byte[fs.Length];
+                    fs.Seek(0, SeekOrigin.Begin);
+                    fs.Read(contBytes, 0, (int)fs.Length);
                     content.First().Content = contBytes;
 
-                    ms.Dispose();
                     fs.Dispose();
 
                     watch.Modified = false;
@@ -766,26 +759,15 @@ namespace SharpGMad
                 return;
             }
 
-            // Load contents to a stream
-            MemoryStream ms = new MemoryStream((int)content.First().Size);
-            ms.Write(content.First().Content, 0, (int)content.First().Size);
-            ms.Seek(0, SeekOrigin.Begin);
-
-            // Load changes from the file and write it to stream
-            StreamDiffer sd = new StreamDiffer(ms);
-            sd.Write(fs);
-            int count = sd.Push();
-
-            // Drop the stream
-            byte[] contBytes = new byte[ms.Length];
-            ms.Seek(0, SeekOrigin.Begin);
-            ms.Read(contBytes, 0, (int)ms.Length);
+            // Load and write the changes to memory
+            byte[] contBytes = new byte[fs.Length];
+            fs.Seek(0, SeekOrigin.Begin);
+            fs.Read(contBytes, 0, (int)fs.Length);
             content.First().Content = contBytes;
 
-            ms.Dispose();
             fs.Dispose();
 
-            MessageBox.Show("Successfully pulled " + count.HumanReadableSize() + " changes.", "Pull changes",
+            MessageBox.Show("Successfully pulled the changes.", "Pull changes",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             // Consider the file unmodified
