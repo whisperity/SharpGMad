@@ -281,11 +281,12 @@ namespace SharpGMad
                 FileStream fs = new FileStream(strFile, FileMode.Open, FileAccess.ReadWrite);
                 addon = new Addon(new Reader(fs));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("There was a problem opening or parsing the file");
                 Console.ResetColor();
+                Console.WriteLine(ex.Message);
                 return 1;
             }
 
