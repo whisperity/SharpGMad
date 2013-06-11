@@ -19,7 +19,8 @@ namespace SharpGMad
             "npc",
             "tool",
             "effects",
-            "model"
+            "model",
+            "servercontent"
         };
 
         /// <summary>

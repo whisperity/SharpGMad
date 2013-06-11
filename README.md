@@ -9,7 +9,7 @@ written in C++. SharpGMod takes it to be in C#, originally written directly
 from the code available by garry.
 
 (The current version of SharpGMad implements and complies with
-[`8b1c7b9011`](http://github.com/garrynewman/gmad/tree/8b1c7b9011d81ef0f7378eae482a6a94a6536b0e).)
+[`f2a0de4`](http://github.com/garrynewman/gmad/tree/f2a0de42f5d124221ea080f18f338cf8fc23c15f).)
 
 Ever since, SharpGMad's code has been refurbished to match more with
 development style used in C# applications, and to, of course, support new
