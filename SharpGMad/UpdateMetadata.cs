@@ -38,7 +38,7 @@ namespace SharpGMad
                 cmbTag1.SelectedItem = addon.Tags[0];
                 cmbTag2.SelectedItem = addon.Tags[1];
             }
-            catch (IndexOutOfRangeException)
+            catch (ArgumentOutOfRangeException)
             {
                 // There are no first or second tag.
                 // So NOOP.

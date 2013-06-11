@@ -432,9 +432,22 @@ namespace SharpGMad
                 addon.Sort();
 
                 MemoryStream ms;
-                
-                Writer.Create(addon, out ms);
-                
+
+                try
+                {
+                    Writer.Create(addon, out ms);
+                }
+                catch (AddonJSONException ex)
+                // Writer.Create access addon.DescriptionJSON which calls
+                // Json.BuildDescription() which can throw the AddonJSONException
+                {
+                    MessageBox.Show("There was an error saving the addon:\n" + ex.Message + "\n\nThis usually indicates" +
+                         " problems with the addon's metadata containing invalid values.\nPlease use the \"Update metadata\"" +
+                         " panel to set the values properly.", "Save addon",
+                         MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    return;
+                }
+
                 addonFS.Seek(0, SeekOrigin.Begin);
                 ms.Seek(0, SeekOrigin.Begin);
                 ms.CopyTo(addonFS);
@@ -513,6 +526,9 @@ namespace SharpGMad
                     addon = new Addon();
                     addon.Title = Path.GetFileNameWithoutExtension(sfdAddon.FileName);
                     addon.Author = "Author Name"; // This is currently not changable
+                    addon.Description = String.Empty;
+                    addon.Type = String.Empty;
+                    addon.Tags = new List<string>();
                     tsbUpdateMetadata_Click(sender, e); // This will make the metadata form pop up setting the initial value
 
                     // Fire the save event for an initial addon saving

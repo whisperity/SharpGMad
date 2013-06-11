@@ -135,9 +135,15 @@ namespace SharpGMad
         /// </summary>
         public Addon()
         {
+            Author = "Author Name";
+            Title = String.Empty;
+            Type = String.Empty;
+            Description = String.Empty;
             Files = new List<ContentFile>();
             Tags = new List<string>();
             Ignores = new List<string>();
+            SteamID = 0;
+            Timestamp = DateTime.Now;
         }
 
         /// <summary>
