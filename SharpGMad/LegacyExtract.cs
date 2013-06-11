@@ -35,8 +35,7 @@ namespace SharpGMad
 
                 if (txtFolder.Text == String.Empty)
                 {
-                    fbdFolder.SelectedPath = Path.GetDirectoryName(ofdFile.FileName) +
-                        Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(ofdFile.FileName);
+                    fbdFolder.SelectedPath = Path.GetDirectoryName(ofdFile.FileName);
 
                     txtFolder.Text = fbdFolder.SelectedPath;
                 }

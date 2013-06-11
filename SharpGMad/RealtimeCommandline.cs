@@ -67,10 +67,6 @@ namespace SharpGMad
         /// </summary>
         public static int Main(string[] args)
         {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Realtime command-line activated.");
-            Console.ResetColor();
-
             // There might be a parameter specified.
             string strFile;
             try
