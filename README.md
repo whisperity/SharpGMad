@@ -100,6 +100,7 @@ saving
  * `extract <filename> [path]`: Extract `<filename>` to the current folder
 (or to `[path]` if specified). Unlike `export`, a plain `extract` does not
 set up a realtime change watch.
+ * `mget <folder> <f1> [f2...]`: Extract all specified files to `<folder>`
 * _Exporting and pulling changes_
  * **Console only!** `export`: List all currently handled exports
  * `export <filename> [path]`: Export `<filename>` for editing to the

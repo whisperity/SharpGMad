@@ -196,6 +196,68 @@ namespace SharpGMad
                         }
 
                         break;
+                    case "mget":
+                        string folder;
+                        try
+                        {
+                            folder = command[1];
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The folder was not specified.");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        if (!Directory.Exists(folder))
+                        {
+                            try
+                            {
+                                Directory.CreateDirectory(folder);
+                            }
+                            catch (IOException)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("There was a problem creating the output directory.");
+                                Console.ResetColor();
+                                break;
+                            }
+                        }
+
+                        if ( command.Length < 3 )
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The filename was not specified.");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        string[] eparam = new string[command.Length - 2];
+                        try
+                        {
+                            for (int i = 2; i < command.Length; i++)
+                            {
+                                eparam[i - 2] = command[i];
+                            }
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            // Noop.
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("There was an error parsing the filelist.");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        foreach (string path in eparam)
+                        {
+                            string outpath = folder + Path.DirectorySeparatorChar + Path.GetFileName(path);
+
+                            ExtractFile(path, outpath);
+                        }
+
+                        break;
                     case "export":
                         string exportPath = String.Empty;
                         try
@@ -503,6 +565,7 @@ namespace SharpGMad
                             Console.WriteLine("list                       Lists the files in the memory");
                             Console.WriteLine("remove <filename>          Removes <filename> from the archive");
                             Console.WriteLine("extract <filename> [path]  Extract <filename> (to [path] if specified)");
+                            Console.WriteLine("mget <folder> <f1> [f2...] Extract all specified files to <folder>");
                             Console.WriteLine("export                     View the list of exported files");
                             Console.WriteLine("export <filename> [path]   Export <filename> for editing (to [path] if specified)");
                             Console.WriteLine("pull                       Pull changes from all exported files");
@@ -1059,10 +1122,6 @@ namespace SharpGMad
             if (extractPath == null || extractPath == String.Empty)
             {
                 extractPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(filename);
-            }
-            else
-            {
-                extractPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(extractPath);
             }
 
             if (File.Exists(extractPath))

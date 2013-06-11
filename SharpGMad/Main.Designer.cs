@@ -72,6 +72,7 @@
             this.tsmFileDropExport = new System.Windows.Forms.ToolStripMenuItem();
             this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmFileExtract = new System.Windows.Forms.ToolStripMenuItem();
+            this.fbdFileExtractMulti = new System.Windows.Forms.FolderBrowserDialog();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
             this.pnlFilelist.SuspendLayout();
@@ -563,6 +564,7 @@
         private System.Windows.Forms.ToolStripMenuItem tsmFileDropExport;
         private System.Windows.Forms.ContextMenuStrip cmsFileEntry;
         private System.Windows.Forms.ToolStripMenuItem tsmFileExtract;
+        private System.Windows.Forms.FolderBrowserDialog fbdFileExtractMulti;
 
 
 
