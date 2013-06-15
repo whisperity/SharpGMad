@@ -117,47 +117,35 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="create" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\create.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="legacy" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\legacy.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="extract" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\extract.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="remove" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\remove.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="open" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\open.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="save" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\save.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="add" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\add.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="newaddon" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\newaddon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="metadata" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\metadata.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="drop" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\drop.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="export" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\export.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="pull" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\pull.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="pull_all" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\pull_all.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="convert" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\convert.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <metadata name="fbdFolder.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>17, 17</value>
+  </metadata>
+  <metadata name="sfdOutFile.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>186, 17</value>
+  </metadata>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        AAABAAEAEBAAAAAAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAAAAAAAAAAAAAAAAAAAAA
+        AAD///8B////Af///wEmJiYDPz8/MUpKSt9jZGX3aWxt/Wpsbf9GZ3yPV1dXQ2tra/Nra2v3ZGRk9UpK
+        St8/Pz8x////Af///wH///8BKSkpKUxPUd+JjY/5oais/66urv+Xl5f/cXFx/3h4eP+Xl5f/rq6u/6qq
+        qu2NjY3vTU1N1////wH///8BNprNFzBbcbdkam3/09PO/3N+gf9EREX/RkZG/1FRUf9RUVH/RkZG/0FC
+        Q/1QVFbBxMTE/2dnZ+89otAHO6DPZTmdzttUc4L/hIWG/9PTzv+l4vj/Q0dI/729vf/Ozs7/wsLC/62t
+        rf9AQ0b/JYK+4cTExP+CgoL3QKXSu3e93P+/5fb/p7rA/3h6e//T087/bICI/0xNTf9lZWX/kpKS/3l5
+        ef9lZWX/TExN/2BygP/ExMT/cHR2+0Ko0/nn+/7/3fb//77r+v99lZ7/kZGR/+jo6P/d3d3/wcHB/3mJ
+        jv9siZX/1djZ/93d3f/ExMT/kZGR/zpmgv1EqtTx4vb8/9Tz///J8P//uOX3/5Kvu/+IjI3/np6e/3aF
+        iv9Msc//R7bc/3SEiv+enp7/gIeL/3ibsP8nhL/xR63V8eL2/P/X9P//zvL//8jv//+66///ktv7/1bB
+        8f9Iwvn/O73w/0fF7P9Fven/QrXm/0ex5v+Iyu7/KIrG8Umw1vHi9v3/2vT//9Xz//+96///idX3/2nJ
+        9f9MtOn/jdr7/4zc//9IxPn/OLbs/0i/6P9Pu+j/jNDw/yuNx/FLstfx4vj9/9Tz//+w5Pr/hs/x/3/Q
+        9f940PX/TLHk/7Dk+v+26f//m+H//3jW/v9AvfX/PbXp/5DV8f8tj8jxTbTY++H4/v/N6/n/ktLt/4TM
+        6/9vv+X/VrHb/zuUyP/O7Pr/2fX//7nq//+V3/7/d9X//6Xk//+E3Pv/L5LJ+0+32Z9Ntdn/pdnt/9Lr
+        9f++3u3/lcne/4nD2/9wuNb/abnd/5DX9f9/z/X/ndv4/6rj+v+Eyuz/UabV/zKVy6f///8BT7fZR061
+        2cN+xuD/0e73//b////w/v//y+37/1Ct2v+L1/f/quH5/5XW8v9istv/OZ3OyTaazU3///8B////Af//
+        /wFPt9oFTrbZZUy02NuSz+X/5vj8/+P2/v+v3fL/suT3/3LA4f8/pNHhPaLQbTugzwn///8B////Af//
+        /wH///8B////Af///wFOttkXTbTYhUuy1++c1er/iMzn/0Ws1fNEqtSNQqfTG////wH///8B////Af//
+        /wH///8B////Af///wH///8B////Af///wFNtNgrS7LYr0qw171IrtYx////Af///wH///8B////Af//
+        /wH///8BAAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA
+        //8AAP//AAD//w==
+</value>
   </data>
 </root>

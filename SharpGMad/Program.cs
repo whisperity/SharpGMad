@@ -37,16 +37,20 @@ namespace SharpGMad
             // (This obviously means a small flickering of a console window (for the restart process)
             // but that's expendable for the fact that one compiled binary contains "both" faces.)
 
-            if ((args != null && args.Length > 0) && ( args[0] == "create" || args[0] == "extract" || args[0] == "realtime"))
+            if ((args != null && args.Length > 0) && ( args[0] == "create" || args[0] == "extract" || args[0] == "realtime" ||
+                args[0] == "convert" ))
             {
                 // This is needed because we support "drag and drop" GMA onto the executable
                 // and if a D&D happens, the first parameter (args[0]) is a path.
 
                 // There was a requirement for the console interface. Parse the parameters.
-                if ( args[0] == "create" || args[0] == "extract" )
+                if (args[0] == "create" || args[0] == "extract")
                     // Load the legacy (gmad.exe) interface
                     return Legacy.Main(args);
-                else if ( args[0] == "realtime" )
+                else if (args[0] == "convert")
+                    // Requested to convert an "exported", old style (GMod 12) addon into a GMA
+                    GMod12Pack.Main(args);
+                else if (args[0] == "realtime")
                     // Load the realtime command-line
                     return Realtime.Main(args);
 

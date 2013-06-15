@@ -772,7 +772,7 @@ namespace SharpGMad
         /// </summary>
         /// <param name="addon">The addon which is to be modified</param>
         /// <param name="type">Optional. The new type the addon should have.</param>
-        private static void SetType(Addon addon, string type = null)
+        public static void SetType(Addon addon, string type = null)
         {
             if (type == String.Empty || type == null)
             {
@@ -813,7 +813,7 @@ namespace SharpGMad
         /// </summary>
         /// <param name="addon">The addon which is to be modified</param>
         /// <param name="tagsInput">Optional. The new tags the addon should have.</param>
-        private static void SetTags(Addon addon, string[] tagsInput = null)
+        public static void SetTags(Addon addon, string[] tagsInput = null)
         {
             List<string> tags = new List<string>(2);
             if (tagsInput == null || tagsInput.Length == 0 || tagsInput[0] == String.Empty)

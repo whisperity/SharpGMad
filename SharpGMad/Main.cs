@@ -1007,5 +1007,11 @@ namespace SharpGMad
                 fbdFileExtractMulti.Reset();
             }
         }
+
+        private void tsmiGMod12Pack_Click(object sender, EventArgs e)
+        {
+            LegacyConvert convForm = new LegacyConvert();
+            convForm.ShowDialog(this);
+        }
     }
 }
