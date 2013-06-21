@@ -6,29 +6,6 @@ using System.Linq;
 namespace SharpGMad
 {
     /// <summary>
-    /// Represents a watcher declaration for an exported file.
-    /// </summary>
-    class FileWatch
-    {
-        /// <summary>
-        /// Gets or sets the path of the file on the filesystem.
-        /// </summary>
-        public string FilePath;
-        /// <summary>
-        /// Gets or sets the path of the file in the loaded addon.
-        /// </summary>
-        public string ContentPath;
-        /// <summary>
-        /// Gets or sets whether the file is modified externally.
-        /// </summary>
-        public bool Modified;
-        /// <summary>
-        /// The integrated System.IO.FileSystemWatcher object.
-        /// </summary>
-        public FileSystemWatcher Watcher;
-    }
-
-    /// <summary>
     /// Provides methods and properties of handling realtime access in the commandline.
     /// </summary>
     static class RealtimeCommandline
@@ -636,8 +613,11 @@ namespace SharpGMad
         /// Creates a new addon.
         /// </summary>
         /// <param name="filename">The filename where the addon should be saved to.</param>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void NewAddon(string filename)
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             if (addon is Addon)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -922,8 +902,11 @@ namespace SharpGMad
         /// Loads an addon from the filesystem.
         /// </summary>
         /// <param name="filename">The path of the addon to load.</param>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void LoadAddon(string filename)
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             if (addon is Addon)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -967,8 +950,11 @@ namespace SharpGMad
         /// Adds a file to the open addon.
         /// </summary>
         /// <param name="filename">The path of the file to be added.</param>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void AddFile(string filename)
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             if (addon == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -1064,8 +1050,11 @@ namespace SharpGMad
         /// Removes a file from the addon.
         /// </summary>
         /// <param name="filename">The path of the file to be removed.</param>
+        [Obsolete("Reimplemented by RealtimeCommandline.")]
         static void RemoveFile(string filename)
         {
+            throw new NotImplementedException("Reimplemented by RealtimeCommandline.");
+
             if (addon == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -1095,8 +1084,11 @@ namespace SharpGMad
         /// <param name="filename">The path of the file in the addon to be exported.</param>
         /// <param name="extractPath">Optional. The path on the local file system where the file should be saved.
         /// If omitted, the file will be exported to the current working directory.</param>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void ExtractFile(string filename, string extractPath = null)
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             if (addon == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -1158,8 +1150,11 @@ namespace SharpGMad
         /// <param name="filename">The path of the file in the addon to be exported.</param>
         /// <param name="exportPath">Optional. The path on the local file system where the export should be saved.
         /// If omitted, the file will be exported to the current working directory.</param>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void ExportFile(string filename, string exportPath = null)
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             if (addon == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -1245,8 +1240,11 @@ namespace SharpGMad
         /// The event gets fired whenever a watched exported file gets modified externally.
         /// This event administers the changed state for the application.
         /// </summary>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void fsw_Changed(object sender, FileSystemEventArgs e)
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             Console.WriteLine(e.Name + " changed!");
             
             IEnumerable<FileWatch> search = watchedFiles.Where(f => f.FilePath == e.FullPath);
@@ -1284,8 +1282,11 @@ namespace SharpGMad
         /// </summary>
         /// <param name="filename">The path of the file within the addon to be dropped.
         /// The exported path is known internally.</param>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void DropExport(string filename)
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             if (addon == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -1344,8 +1345,11 @@ namespace SharpGMad
         /// </summary>
         /// <param name="filename">The internal path of the file changes should be pulled into.
         /// The exported path is known automatically.</param>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void PullFile(string filename)
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             if (addon == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -1424,8 +1428,11 @@ namespace SharpGMad
         /// <summary>
         /// Saves the changes of the addon to the disk.
         /// </summary>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void Push()
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             if (addon == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -1454,8 +1461,11 @@ namespace SharpGMad
         /// <summary>
         /// Closes the currently open addon connection.
         /// </summary>
+        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void CloseAddon()
         {
+            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
+
             if (addon == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;

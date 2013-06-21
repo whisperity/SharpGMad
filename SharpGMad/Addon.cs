@@ -150,6 +150,9 @@ namespace SharpGMad
         /// Sets up a new instance of Addon using the data provided by the specified addon reader.
         /// </summary>
         /// <param name="reader">The addon reader which handled reading the addon file.</param>
+        /// <exception cref="ArgumentException">Happens if a file with the same path is already added.</exception>
+        /// <exception cref="WhitelistException">The file is prohibited from storing by the global whitelist.</exception>
+        /// <exception cref="IgnoredException">The file is prohibited from storing by the addon's ignore list.</exception>
         public Addon(Reader reader)
             : this()
         {
@@ -173,7 +176,22 @@ namespace SharpGMad
                 byte[] bytes = new byte[buffer.Length];
                 buffer.Read(bytes, 0, (int)buffer.Length);
 
-                AddFile(file.Path, bytes);
+                try
+                {
+                    AddFile(file.Path, bytes);
+                }
+                catch (WhitelistException e)
+                {
+                    throw e;
+                }
+                catch (IgnoredException e)
+                {
+                    throw e;
+                }
+                catch (ArgumentException e)
+                {
+                    throw e;
+                }
             }
         }
 
@@ -223,6 +241,7 @@ namespace SharpGMad
         /// </summary>
         /// <param name="path">The path of the file.</param>
         /// <param name="content">Array of bytes containing the file content.</param>
+        /// <exception cref="ArgumentException">Happens if a file with the same path is already added.</exception>
         /// <exception cref="WhitelistException">The file is prohibited from storing by the global whitelist.</exception>
         /// <exception cref="IgnoredException">The file is prohibited from storing by the addon's ignore list.</exception>
         public void AddFile(string path, byte[] content)

@@ -55,6 +55,7 @@
       <DependentUpon>LegacyConvert.cs</DependentUpon>
     </Compile>
     <Compile Include="GMod12Pack.cs" />
+    <Compile Include="RealtimeAddon.cs" />
     <Compile Include="UpdateMetadata.cs">
       <SubType>Form</SubType>
     </Compile>
