@@ -73,8 +73,6 @@
             this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmFileExtract = new System.Windows.Forms.ToolStripMenuItem();
             this.fbdFileExtractMulti = new System.Windows.Forms.FolderBrowserDialog();
-            this.tsmiGMod12Pack = new System.Windows.Forms.ToolStripMenuItem();
-            this.tssLegacySeparator = new System.Windows.Forms.ToolStripSeparator();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
             this.pnlFilelist.SuspendLayout();
@@ -384,9 +382,7 @@
             this.tsddbLegacy.AutoToolTip = false;
             this.tsddbLegacy.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiLegacyCreate,
-            this.tsmiLegacyExtract,
-            this.tssLegacySeparator,
-            this.tsmiGMod12Pack});
+            this.tsmiLegacyExtract});
             this.tsddbLegacy.Image = global::SharpGMad.Properties.Resources.legacy;
             this.tsddbLegacy.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsddbLegacy.Name = "tsddbLegacy";
@@ -398,7 +394,7 @@
             // 
             this.tsmiLegacyCreate.Image = global::SharpGMad.Properties.Resources.create;
             this.tsmiLegacyCreate.Name = "tsmiLegacyCreate";
-            this.tsmiLegacyCreate.Size = new System.Drawing.Size(244, 22);
+            this.tsmiLegacyCreate.Size = new System.Drawing.Size(171, 22);
             this.tsmiLegacyCreate.Text = "Create from folder";
             this.tsmiLegacyCreate.ToolTipText = "Use the legacy method to compile a folder into an addon";
             this.tsmiLegacyCreate.Click += new System.EventHandler(this.tsmiLegacyCreate_Click);
@@ -407,7 +403,7 @@
             // 
             this.tsmiLegacyExtract.Image = global::SharpGMad.Properties.Resources.extract;
             this.tsmiLegacyExtract.Name = "tsmiLegacyExtract";
-            this.tsmiLegacyExtract.Size = new System.Drawing.Size(244, 22);
+            this.tsmiLegacyExtract.Size = new System.Drawing.Size(171, 22);
             this.tsmiLegacyExtract.Text = "Extract to folder";
             this.tsmiLegacyExtract.ToolTipText = "Use the legacy method to fully unpack an addon to a folder";
             this.tsmiLegacyExtract.Click += new System.EventHandler(this.tsmiLegacyExtract_Click);
@@ -492,19 +488,6 @@
             this.tsmFileExtract.ToolTipText = "Save the selected file somewhere on your computer";
             this.tsmFileExtract.Click += new System.EventHandler(this.tsmFileExtract_Click);
             // 
-            // tsmiGMod12Pack
-            // 
-            this.tsmiGMod12Pack.Image = global::SharpGMad.Properties.Resources.convert;
-            this.tsmiGMod12Pack.Name = "tsmiGMod12Pack";
-            this.tsmiGMod12Pack.Size = new System.Drawing.Size(244, 22);
-            this.tsmiGMod12Pack.Text = "Convert existing GMod12 addon";
-            this.tsmiGMod12Pack.Click += new System.EventHandler(this.tsmiGMod12Pack_Click);
-            // 
-            // tssLegacySeparator
-            // 
-            this.tssLegacySeparator.Name = "tssLegacySeparator";
-            this.tssLegacySeparator.Size = new System.Drawing.Size(241, 6);
-            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -582,8 +565,6 @@
         private System.Windows.Forms.ContextMenuStrip cmsFileEntry;
         private System.Windows.Forms.ToolStripMenuItem tsmFileExtract;
         private System.Windows.Forms.FolderBrowserDialog fbdFileExtractMulti;
-        private System.Windows.Forms.ToolStripSeparator tssLegacySeparator;
-        private System.Windows.Forms.ToolStripMenuItem tsmiGMod12Pack;
 
 
 

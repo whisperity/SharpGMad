@@ -48,12 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Addon.cs" />
-    <Compile Include="LegacyConvert.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="LegacyConvert.Designer.cs">
-      <DependentUpon>LegacyConvert.cs</DependentUpon>
-    </Compile>
     <Compile Include="RealtimeAddon.cs" />
     <Compile Include="UpdateMetadata.cs">
       <SubType>Form</SubType>
@@ -97,9 +91,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="LegacyConvert.resx">
-      <DependentUpon>LegacyConvert.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="UpdateMetadata.resx">
       <DependentUpon>UpdateMetadata.cs</DependentUpon>
     </EmbeddedResource>
@@ -135,8 +126,6 @@
     <None Include="Resources\export.png" />
     <None Include="Resources\pull.png" />
     <None Include="Resources\pull_all.png" />
-    <None Include="Resources\convert.png" />
-    <None Include="Resources\convert.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

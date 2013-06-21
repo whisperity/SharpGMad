@@ -925,21 +925,21 @@ namespace SharpGMad
                 Console.WriteLine(ex.Message);
                 return;
             }
-            catch (IgnoredException e)
+            catch (IgnoredException)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\t\t[Ignored]");
                 Console.ResetColor();
                 return;
             }
-            catch (WhitelistException e)
+            catch (WhitelistException)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\t\t[Not allowed by whitelist]");
                 Console.ResetColor();
                 return;
             }
-            catch (ArgumentException e)
+            catch (ArgumentException)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("\t\t[A file like this has already been added. Remove it first.]");

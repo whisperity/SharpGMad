@@ -44,13 +44,13 @@ namespace SharpGMad
         /// Gets or sets the title of the addon.
         /// </summary>
         [DataMember(Name = "title")]
-        public string Title;
+        public string Title = null;
 
         /// <summary>
         /// Contains a list of string, the ignore patterns of files that should not be compiled.
         /// </summary>
         [DataMember(Name = "ignore")]
-        public List<string> Ignore;
+        public List<string> Ignore = new List<string>();
     }
 
     /// <summary>
@@ -86,21 +86,13 @@ namespace SharpGMad
         /// </summary>
         public string Type { get; private set; }
         /// <summary>
-        /// Contains a list of strings, the ignore patterns of files that should not be compiled.
+        /// Gets a list of strings, the ignore patterns of files that should not be compiled.
         /// </summary>
-        private List<string> _Ignores;
+        public List<string> Ignores { get; private set; }
         /// <summary>
-        /// Gets a list of ignored file patterns.
+        /// Gets a list of strings, the tags of the addon.
         /// </summary>
-        public List<string> Ignores { get { return new List<string>(_Ignores); } }
-        /// <summary>
-        /// Contains a list of strings, the tags of the addon.
-        /// </summary>
-        private List<string> _Tags;
-        /// <summary>
-        /// Gets a list of addon tags.
-        /// </summary>
-        public List<string> Tags { get { return new List<string>(_Tags); } }
+        public List<string> Tags { get; private set; }
 
         /// <summary>
         /// Initializes a JSON reader instance, reading the specified file.
@@ -109,8 +101,8 @@ namespace SharpGMad
         /// <exception cref="AddonJSONException">Errors regarding reading/parsing the JSON.</exception>
         public Json(string infoFile)
         {
-            _Ignores = new List<string>();
-            _Tags = new List<string>();
+            Ignores = new List<string>();
+            Tags = new List<string>();
             string fileContents;
 
             // Try to open the file
@@ -124,7 +116,7 @@ namespace SharpGMad
             }
 
             // Parse the JSON
-            AddonJSON tree = new AddonJSON();
+            AddonJSON tree;
             using (MemoryStream stream = new MemoryStream(Encoding.ASCII.GetBytes(fileContents)))
             {
                 DataContractJsonSerializer jsonFormatter = new DataContractJsonSerializer(typeof(AddonJSON));
@@ -171,13 +163,13 @@ namespace SharpGMad
                     if (!SharpGMad.Tags.TagExists(tag.ToLowerInvariant()))
                         throw new AddonJSONException("tag isn't a supported word!");
                     else
-                        _Tags.Add(tag.ToLowerInvariant());
+                        Tags.Add(tag.ToLowerInvariant());
                 }
             }
 
             // Parse the ignores
             if (tree.Ignore != null)
-                _Ignores.AddRange(tree.Ignore);
+                Ignores.AddRange(tree.Ignore);
         }
         
         /// <summary>

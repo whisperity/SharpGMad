@@ -55,7 +55,7 @@ namespace SharpGMad
         private void btnAccept_Click(object sender, EventArgs e)
         {
             if (cmbTag1.SelectedItem == cmbTag2.SelectedItem &&
-                !(cmbTag1.SelectedItem == "(empty)" && cmbTag2.SelectedItem == "(empty)"))
+                !(cmbTag1.SelectedItem.ToString() == "(empty)" && cmbTag2.SelectedItem.ToString() == "(empty)"))
             {
                 MessageBox.Show("You selected the same tag twice!", "Update metadata",
                     MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
@@ -77,8 +77,8 @@ namespace SharpGMad
                 return;
             }
 
-            if (((cmbTag1.SelectedItem != "(empty)") && !Tags.TagExists(cmbTag1.SelectedItem.ToString()))
-                || ((cmbTag2.SelectedItem != "(empty)") && !Tags.TagExists(cmbTag2.SelectedItem.ToString())))
+            if (((cmbTag1.SelectedItem.ToString() != "(empty)") && !Tags.TagExists(cmbTag1.SelectedItem.ToString()))
+                || ((cmbTag2.SelectedItem.ToString() != "(empty)") && !Tags.TagExists(cmbTag2.SelectedItem.ToString())))
             {
                 // This should not happen in normal operation
                 // nontheless we check against it
@@ -88,9 +88,9 @@ namespace SharpGMad
             }
 
             addon.Tags = new List<string>(2);
-            if (cmbTag1.SelectedItem != "(empty)")
+            if (cmbTag1.SelectedItem.ToString() != "(empty)")
                 addon.Tags.Add(cmbTag1.SelectedItem.ToString());
-            if (cmbTag2.SelectedItem != "(empty)")
+            if (cmbTag2.SelectedItem.ToString() != "(empty)")
                 addon.Tags.Add(cmbTag2.SelectedItem.ToString());
 
             // Callback to update the metadata panel

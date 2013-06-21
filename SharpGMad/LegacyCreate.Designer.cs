@@ -40,6 +40,14 @@
             this.sfdOutFile = new System.Windows.Forms.SaveFileDialog();
             this.btnCreate = new System.Windows.Forms.Button();
             this.btnAbort = new System.Windows.Forms.Button();
+            this.cmbTag2 = new System.Windows.Forms.ComboBox();
+            this.cmbTag1 = new System.Windows.Forms.ComboBox();
+            this.cmbType = new System.Windows.Forms.ComboBox();
+            this.lblTags = new System.Windows.Forms.Label();
+            this.lblType = new System.Windows.Forms.Label();
+            this.gboConvertMetadata = new System.Windows.Forms.GroupBox();
+            this.chkConvertNeeded = new System.Windows.Forms.CheckBox();
+            this.gboConvertMetadata.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblFolder
@@ -63,7 +71,7 @@
             // chkWarnInvalid
             // 
             this.chkWarnInvalid.AutoSize = true;
-            this.chkWarnInvalid.Location = new System.Drawing.Point(15, 49);
+            this.chkWarnInvalid.Location = new System.Drawing.Point(358, 60);
             this.chkWarnInvalid.Name = "chkWarnInvalid";
             this.chkWarnInvalid.Size = new System.Drawing.Size(204, 17);
             this.chkWarnInvalid.TabIndex = 4;
@@ -118,7 +126,7 @@
             // 
             // btnCreate
             // 
-            this.btnCreate.Location = new System.Drawing.Point(15, 72);
+            this.btnCreate.Location = new System.Drawing.Point(358, 95);
             this.btnCreate.Name = "btnCreate";
             this.btnCreate.Size = new System.Drawing.Size(75, 23);
             this.btnCreate.TabIndex = 5;
@@ -129,7 +137,7 @@
             // btnAbort
             // 
             this.btnAbort.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnAbort.Location = new System.Drawing.Point(96, 72);
+            this.btnAbort.Location = new System.Drawing.Point(439, 95);
             this.btnAbort.Name = "btnAbort";
             this.btnAbort.Size = new System.Drawing.Size(75, 23);
             this.btnAbort.TabIndex = 6;
@@ -137,13 +145,88 @@
             this.btnAbort.UseVisualStyleBackColor = true;
             this.btnAbort.Click += new System.EventHandler(this.btnAbort_Click);
             // 
-            // LegacyCreate
+            // cmbTag2
+            // 
+            this.cmbTag2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbTag2.FormattingEnabled = true;
+            this.cmbTag2.Location = new System.Drawing.Point(204, 46);
+            this.cmbTag2.Name = "cmbTag2";
+            this.cmbTag2.Size = new System.Drawing.Size(121, 21);
+            this.cmbTag2.Sorted = true;
+            this.cmbTag2.TabIndex = 15;
+            // 
+            // cmbTag1
+            // 
+            this.cmbTag1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbTag1.FormattingEnabled = true;
+            this.cmbTag1.Location = new System.Drawing.Point(77, 46);
+            this.cmbTag1.Name = "cmbTag1";
+            this.cmbTag1.Size = new System.Drawing.Size(121, 21);
+            this.cmbTag1.Sorted = true;
+            this.cmbTag1.TabIndex = 14;
+            // 
+            // cmbType
+            // 
+            this.cmbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbType.FormattingEnabled = true;
+            this.cmbType.Location = new System.Drawing.Point(77, 19);
+            this.cmbType.Name = "cmbType";
+            this.cmbType.Size = new System.Drawing.Size(248, 21);
+            this.cmbType.Sorted = true;
+            this.cmbType.TabIndex = 13;
+            // 
+            // lblTags
+            // 
+            this.lblTags.AutoSize = true;
+            this.lblTags.Location = new System.Drawing.Point(8, 49);
+            this.lblTags.Name = "lblTags";
+            this.lblTags.Size = new System.Drawing.Size(34, 13);
+            this.lblTags.TabIndex = 17;
+            this.lblTags.Text = "Tags:";
+            // 
+            // lblType
+            // 
+            this.lblType.AutoSize = true;
+            this.lblType.Location = new System.Drawing.Point(8, 22);
+            this.lblType.Name = "lblType";
+            this.lblType.Size = new System.Drawing.Size(34, 13);
+            this.lblType.TabIndex = 16;
+            this.lblType.Text = "Type:";
+            // 
+            // gboConvertMetadata
+            // 
+            this.gboConvertMetadata.Controls.Add(this.cmbType);
+            this.gboConvertMetadata.Controls.Add(this.cmbTag2);
+            this.gboConvertMetadata.Controls.Add(this.lblType);
+            this.gboConvertMetadata.Controls.Add(this.cmbTag1);
+            this.gboConvertMetadata.Controls.Add(this.lblTags);
+            this.gboConvertMetadata.Location = new System.Drawing.Point(12, 83);
+            this.gboConvertMetadata.Name = "gboConvertMetadata";
+            this.gboConvertMetadata.Size = new System.Drawing.Size(335, 78);
+            this.gboConvertMetadata.TabIndex = 18;
+            this.gboConvertMetadata.TabStop = false;
+            this.gboConvertMetadata.Visible = false;
+            // 
+            // chkConvertNeeded
+            // 
+            this.chkConvertNeeded.AutoSize = true;
+            this.chkConvertNeeded.Location = new System.Drawing.Point(15, 60);
+            this.chkConvertNeeded.Name = "chkConvertNeeded";
+            this.chkConvertNeeded.Size = new System.Drawing.Size(181, 17);
+            this.chkConvertNeeded.TabIndex = 19;
+            this.chkConvertNeeded.Text = "Convert Garry\'s Mod 12 structure";
+            this.chkConvertNeeded.UseVisualStyleBackColor = true;
+            this.chkConvertNeeded.CheckedChanged += new System.EventHandler(this.chkConvertNeeded_CheckedChanged);
+            // 
+            // LegacyConvert
             // 
             this.AcceptButton = this.btnCreate;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnAbort;
-            this.ClientSize = new System.Drawing.Size(618, 107);
+            this.ClientSize = new System.Drawing.Size(617, 166);
+            this.Controls.Add(this.chkConvertNeeded);
+            this.Controls.Add(this.gboConvertMetadata);
             this.Controls.Add(this.btnAbort);
             this.Controls.Add(this.btnCreate);
             this.Controls.Add(this.txtFolder);
@@ -157,11 +240,14 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "LegacyCreate";
+            this.Name = "LegacyConvert";
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Create addon";
+            this.Load += new System.EventHandler(this.LegacyCreate_Load);
+            this.gboConvertMetadata.ResumeLayout(false);
+            this.gboConvertMetadata.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -180,5 +266,12 @@
         private System.Windows.Forms.SaveFileDialog sfdOutFile;
         private System.Windows.Forms.Button btnCreate;
         private System.Windows.Forms.Button btnAbort;
+        private System.Windows.Forms.ComboBox cmbTag2;
+        private System.Windows.Forms.ComboBox cmbTag1;
+        private System.Windows.Forms.ComboBox cmbType;
+        private System.Windows.Forms.Label lblTags;
+        private System.Windows.Forms.Label lblType;
+        private System.Windows.Forms.GroupBox gboConvertMetadata;
+        private System.Windows.Forms.CheckBox chkConvertNeeded;
     }
 }
