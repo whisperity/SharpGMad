@@ -118,9 +118,7 @@ namespace SharpGMad
                 string file = f;
                 file = file.Replace(txtFolder.Text, String.Empty);
                 file = file.Replace('\\', '/');
-
-                Console.WriteLine("\t" + file);
-
+                
                 try
                 {
                     addon.AddFile(file, File.ReadAllBytes(f));
@@ -156,28 +154,13 @@ namespace SharpGMad
             //
             // Create an addon file in a buffer
             //
-            MemoryStream buffer = new MemoryStream();
-            try
-            {
-                Writer.Create(addon, buffer);
-            }
-            catch (Exception be)
-            {
-                MessageBox.Show("An exception happened while compiling the addon.\n\n" + be.Message,
-                    "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                return;
-            }
-
             //
             // Save the buffer to the provided name
             //
-            buffer.Seek(0, SeekOrigin.Begin);
-            byte[] bytes = new byte[buffer.Length];
-            buffer.Read(bytes, 0, (int)buffer.Length);
-
+            FileStream fs;
             try
             {
-                File.WriteAllBytes(txtFile.Text, bytes);
+                fs = new FileStream(txtFile.Text, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             }
             catch (Exception)
             {
@@ -186,17 +169,31 @@ namespace SharpGMad
                 return;
             }
 
+            fs.SetLength(0);
+            try
+            {
+                Writer.Create(addon, fs);
+            }
+            catch (Exception be)
+            {
+                MessageBox.Show("An exception happened while compiling the addon.\n\n" + be.Message,
+                    "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
+            }
+
+            fs.Flush();
+
             //
             // Success!
             //
             if (errors.Count == 0)
             {
-                MessageBox.Show("Successfully saved to " + txtFile.Text + " (" + ((int)buffer.Length).HumanReadableSize() + ")",
+                MessageBox.Show("Successfully saved to " + txtFile.Text + " (" + ((int)fs.Length).HumanReadableSize() + ")",
                     "Created successfully", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
-                string msgboxMessage = "Successfully saved to " + txtFile.Text + " (" + ((int)buffer.Length).HumanReadableSize() +
+                string msgboxMessage = "Successfully saved to " + txtFile.Text + " (" + ((int)fs.Length).HumanReadableSize() +
                     ")\n\nThe following files were not added:\n";
 
                 foreach (CreateError err in errors)
@@ -222,6 +219,7 @@ namespace SharpGMad
                 MessageBox.Show(msgboxMessage, "Created successfully", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
+            fs.Dispose();
             return;
         }
     }

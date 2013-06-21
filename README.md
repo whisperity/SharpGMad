@@ -18,18 +18,24 @@ opportunities.
 Usage
 -----
 
-Currently three operation modes are supported:
+Currently the following operation modes are supported:
 
 ### [`gmad`](http://github.com/garrynewman/gmad) (legacy) mode
-
-This code is a straight mirror-implementation, so the command interface is the
-same.
 
 `SharpGMad.exe <command> <options>`
 
 To create a new .gma file
 
 `SharpGMad.exe create -folder "C:\path\to\addon\folder\" -out
+"C:\where\to\save\file\out.gma"`
+
+Packing Garry's Mod 12 _loose_ addons into GMAs are also supported. (This
+way, SharpGMad will use an existing `addon.txt` or `info.txt` and ask the
+user for missing metadata.)
+
+To create a new .gma file **using GMod 12 addons/ folder structure**
+
+`SharpGMad.exe convert -folder "C:\path\to\addon\folder\" -out
 "C:\where\to\save\file\out.gma"`
 
 To extract an existing .gma file into its parent folder

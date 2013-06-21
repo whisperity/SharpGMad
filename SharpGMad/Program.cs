@@ -23,10 +23,6 @@ namespace SharpGMad
         [STAThread]
         static int Main(string[] args)
         {
-            /*Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Sharp Garry's Addon Creator 1.0");
-            Console.ResetColor();*/
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
@@ -44,21 +40,12 @@ namespace SharpGMad
                 // and if a D&D happens, the first parameter (args[0]) is a path.
 
                 // There was a requirement for the console interface. Parse the parameters.
-                if (args[0] == "create" || args[0] == "extract")
+                if (args[0] == "create" || args[0] == "extract" || args[0] == "convert")
                     // Load the legacy (gmad.exe) interface
                     return Legacy.Main(args);
-                else if (args[0] == "convert")
-                    // Requested to convert an "exported", old style (GMod 12) addon into a GMA
-                    GMod12Pack.Main(args);
                 else if (args[0] == "realtime")
                     // Load the realtime command-line
                     return RealtimeCommandline.Main(args);
-
-                //
-                // Help
-                //
-                Console.WriteLine("Usage:");
-                Console.WriteLine();
             }
             else
             {

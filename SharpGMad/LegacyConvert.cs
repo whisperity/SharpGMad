@@ -181,8 +181,6 @@ namespace SharpGMad
                 file = file.Replace(txtFolder.Text, String.Empty);
                 file = file.Replace('\\', '/');
 
-                Console.WriteLine("\t" + file);
-
                 try
                 {
                     addon.AddFile(file, File.ReadAllBytes(f));
@@ -224,7 +222,7 @@ namespace SharpGMad
             FileStream gmaFS;
             try
             {
-                gmaFS = new FileStream(txtFile.Text, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                gmaFS = new FileStream(txtFile.Text, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
                 gmaFS.SetLength(0); // Truncate the file
 
                 Writer.Create(addon, gmaFS);
@@ -235,6 +233,8 @@ namespace SharpGMad
                     "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
+
+            gmaFS.Flush();
 
             //
             // Success!
@@ -272,9 +272,7 @@ namespace SharpGMad
                 MessageBox.Show(msgboxMessage, "Created successfully", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
-            gmaFS.Flush();
             gmaFS.Dispose();
-
             return;
         }
 
