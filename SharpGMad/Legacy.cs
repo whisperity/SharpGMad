@@ -213,10 +213,10 @@ namespace SharpGMad
             //
             // Create an addon file in a buffer
             //
-            MemoryStream buffer;
+            MemoryStream buffer = new MemoryStream();
             try
             {
-                Writer.Create(addon, out buffer);
+                Writer.Create(addon, buffer);
             }
             catch (Exception)
             {

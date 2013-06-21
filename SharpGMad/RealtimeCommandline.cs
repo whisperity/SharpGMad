@@ -31,7 +31,7 @@ namespace SharpGMad
     /// <summary>
     /// Provides methods and properties of handling realtime access in the commandline.
     /// </summary>
-    static class Realtime
+    static class RealtimeCommandline
     {
         /// <summary>
         /// The current open addon.
@@ -530,7 +530,7 @@ namespace SharpGMad
                             {
                                 Console.WriteLine("The addon will close in the console and will be reopened by the GUI.");
                                 // Save the addon path and close it in the console.
-                                string addonpath = Realtime.filePath;
+                                string addonpath = RealtimeCommandline.filePath;
                                 CloseAddon();
 
                                 // Open the GUI with the path. The addon will automatically reload.
@@ -691,9 +691,9 @@ namespace SharpGMad
                 return;
             }
 
-            MemoryStream ms;
+            MemoryStream ms = new MemoryStream();
             
-            Writer.Create(addon, out ms);
+            Writer.Create(addon, ms);
 
             addonFS.Seek(0, SeekOrigin.Begin);
             ms.Seek(0, SeekOrigin.Begin);
@@ -1436,9 +1436,9 @@ namespace SharpGMad
 
             addon.Sort();
 
-            MemoryStream ms;
+            MemoryStream ms = new MemoryStream();
             
-            Writer.Create(addon, out ms);
+            Writer.Create(addon, ms);
 
             addonFS.Seek(0, SeekOrigin.Begin);
             ms.Seek(0, SeekOrigin.Begin);
@@ -1501,15 +1501,15 @@ namespace SharpGMad
             if (modified)
             {
                 if (addon != null)
-                    CommandlinePrefix = Path.GetFileName(Realtime.filePath) + "*>";
+                    CommandlinePrefix = Path.GetFileName(RealtimeCommandline.filePath) + "*>";
             }
             else
             {
                 if (addon != null)
-                    CommandlinePrefix = Path.GetFileName(Realtime.filePath) + ">";
+                    CommandlinePrefix = Path.GetFileName(RealtimeCommandline.filePath) + ">";
             }
 
-            Realtime.modified = modified;
+            RealtimeCommandline.modified = modified;
         }
 
         /// <summary>
@@ -1517,7 +1517,7 @@ namespace SharpGMad
         /// </summary>
         static void SetPullable(bool pullable)
         {
-            SetModified(Realtime.modified); // Set the modified state so it resets the shell prefix
+            SetModified(RealtimeCommandline.modified); // Set the modified state so it resets the shell prefix
 
             if (pullable)
             {
@@ -1525,7 +1525,7 @@ namespace SharpGMad
                 CommandlinePrefix += "#>";
             }
 
-            Realtime.pullable = pullable;
+            RealtimeCommandline.pullable = pullable;
         }
     }
 }

@@ -152,8 +152,8 @@ namespace SharpGMad
             Console.WriteLine(addon.Title + " by " + addon.Author);
             Console.WriteLine("You need to set the title, and optionally, the tags for this addon!");
 
-            Realtime.SetType(addon);
-            Realtime.SetTags(addon);
+            RealtimeCommandline.SetType(addon);
+            RealtimeCommandline.SetTags(addon);
 
             Console.WriteLine("Adding files...");
 

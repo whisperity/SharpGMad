@@ -515,11 +515,11 @@ namespace SharpGMad
             {
                 addon.Sort();
 
-                MemoryStream ms;
+                MemoryStream ms = new MemoryStream();
 
                 try
                 {
-                    Writer.Create(addon, out ms);
+                    Writer.Create(addon, ms);
                 }
                 catch (AddonJSONException ex)
                 // Writer.Create access addon.DescriptionJSON which calls

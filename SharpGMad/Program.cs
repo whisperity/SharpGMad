@@ -52,7 +52,7 @@ namespace SharpGMad
                     GMod12Pack.Main(args);
                 else if (args[0] == "realtime")
                     // Load the realtime command-line
-                    return Realtime.Main(args);
+                    return RealtimeCommandline.Main(args);
 
                 //
                 // Help
