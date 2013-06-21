@@ -11,7 +11,7 @@ namespace SharpGMad
     static class RealtimeCommandline
     {
         /// <summary>
-        /// The currently open addon
+        /// The currently open addon.
         /// </summary>
         static RealtimeAddon AddonHandle;
 
@@ -48,19 +48,8 @@ namespace SharpGMad
                 }
                 else if (AddonHandle is RealtimeAddon)
                 {
-                    Console.Write(Path.GetFileName(AddonHandle.AddonPath));
-
-                    if (AddonHandle.Modified)
-                    {
-                        Console.Write("*");
-                    }
-
-                    if (AddonHandle.Pullable)
-                    {
-                        Console.Write("#");
-                    }
-
-                    Console.Write("> ");
+                    Console.Write(Path.GetFileName(AddonHandle.AddonPath) + 
+                        (AddonHandle.Modified ? "*" : null) + (AddonHandle.Pullable ? "#" : null) + "> ");
                 }
 
                 string input = Console.ReadLine();
@@ -1145,7 +1134,7 @@ namespace SharpGMad
             {
                 AddonHandle.DropExport(filename);
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("The file is not in an exported state.");

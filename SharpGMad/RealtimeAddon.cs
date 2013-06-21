@@ -437,7 +437,7 @@ namespace SharpGMad
         /// Deletes the export of the specified file from the local filesystem and stops watching the changes.
         /// </summary>
         /// <param name="filename">The path of the file within the addon to be dropped.</param>
-        /// <exception cref="FileNotFoundException">Thrown if the file does not exist within the addon.</exception>
+        /// <exception cref="FileNotFoundException">Thrown if there is no export for the file.</exception>
         /// <exception cref="IOException">Thrown if there was a problem deleting the file from the local filesystem.</exception>
         public void DropExport(string path)
         {

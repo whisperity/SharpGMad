@@ -6,13 +6,14 @@ namespace SharpGMad
 {
     partial class UpdateMetadata : Form
     {
-        Addon addon;
+        RealtimeAddon addonHandle;
+        Addon addon { get { return addonHandle.OpenAddon; } }
 
-        public UpdateMetadata(Addon a)
+        public UpdateMetadata(RealtimeAddon handle)
         {
             InitializeComponent();
 
-            addon = a;
+            addonHandle = handle;
         }
 
         private void UpdateMetadata_Load(object sender, EventArgs e)
@@ -96,7 +97,7 @@ namespace SharpGMad
             if (this.Owner is Main)
             {
                 ((Main)this.Owner).UpdateMetadataPanel();
-                ((Main)this.Owner).SetModified(true);
+                addonHandle.Modified = true;
             }
 
             this.Hide();

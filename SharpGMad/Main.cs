@@ -10,30 +10,13 @@ namespace SharpGMad
     partial class Main : Form
     {
         /// <summary>
-        /// The System.IO.FileStream connection to the current open addon on the disk.
+        /// The currently open addon.
         /// </summary>
-        FileStream addonFS;
-        /// <summary>
-        /// The current open addon.
-        /// </summary>
-        Addon addon;
-        /// <summary>
-        /// Contains a list of externally exported watched files.
-        /// </summary>
-        List<FileWatch> watches;
-        /// <summary>
-        /// Gets or sets the full path of the current open addon.
-        /// </summary>
-        string path;
-        /// <summary>
-        /// Gets or sets whether the current addon is modified.
-        /// </summary>
-        bool modified;
-        
+        RealtimeAddon AddonHandle;
+
         private Main()
         {
             InitializeComponent();
-            watches = new List<FileWatch>();
             UnloadAddon();
         }
 
@@ -63,13 +46,13 @@ namespace SharpGMad
         private void tsbOpenAddon_Click(object sender, EventArgs e)
         {
             DialogResult dropChanges = new DialogResult();
-            if (addon is Addon)
+            if (AddonHandle is RealtimeAddon)
             {
                 dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
                     "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             }
 
-            if (dropChanges == DialogResult.Yes || addon == null)
+            if (dropChanges == DialogResult.Yes || AddonHandle == null)
             {
                 UnloadAddon();
                 DialogResult file = ofdAddon.ShowDialog();
@@ -87,11 +70,25 @@ namespace SharpGMad
         {
             try
             {
-                addonFS = new FileStream(path, FileMode.Open, FileAccess.ReadWrite);
-                addon = new Addon(new Reader(addonFS));
+                AddonHandle = RealtimeAddon.Load(path);
             }
-            catch (IndexOutOfRangeException)
+            catch (FileNotFoundException)
             {
+                return;
+            }
+            catch (IgnoredException e)
+            {
+                MessageBox.Show(e.Message, "Addon is corrupted", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            catch (WhitelistException e)
+            {
+                MessageBox.Show(e.Message, "Addon is corrupted", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
+            }
+            catch (ArgumentException e)
+            {
+                MessageBox.Show(e.Message, "Addon is corrupted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             catch (IOException ex)
@@ -107,17 +104,8 @@ namespace SharpGMad
                 return;
             }
 
-            if (addon is Addon)
+            if (AddonHandle is RealtimeAddon)
             {
-                this.path = path;
-
-                SetModified(false);
-
-                foreach (FileWatch watch in watches)
-                    watch.Watcher.Dispose();
-
-                watches.Clear();
-
                 UpdateMetadataPanel();
                 UpdateFileList();
 
@@ -131,11 +119,33 @@ namespace SharpGMad
         /// </summary>
         public void UpdateMetadataPanel()
         {
-            txtTitle.Text = addon.Title;
-            txtAuthor.Text = addon.Author;
-            txtType.Text = addon.Type;
-            txtTags.Text = String.Join(", ", addon.Tags.ToArray());
-            txtDescription.Text = addon.Description;
+            txtTitle.Text = AddonHandle.OpenAddon.Title;
+            txtAuthor.Text = AddonHandle.OpenAddon.Author;
+            txtType.Text = AddonHandle.OpenAddon.Type;
+            txtTags.Text = String.Join(", ", AddonHandle.OpenAddon.Tags.ToArray());
+            txtDescription.Text = AddonHandle.OpenAddon.Description;
+        }
+
+        private void UpdateModified()
+        {
+            // Invoke the method if it was called from a thread which is not the thread Main was created in.
+            //
+            // (For example when fsw_Changed fires.)
+            //
+            // Prevents the exception:
+            // Cross-thread operation not valid: Control 'Main' accessed from a
+            // thread other than the thread it was created on.
+            if (lstFiles.InvokeRequired)
+            {
+                this.Invoke((MethodInvoker)delegate { UpdateModified(); });
+            }
+            else
+            {
+                this.Text = Path.GetFileName(AddonHandle.AddonPath) +
+                    (AddonHandle.Modified ? "*" : null) + " - SharpGMad";
+
+                tsbSaveAddon.Enabled = AddonHandle.Modified;
+            }
         }
 
         /// <summary>
@@ -166,19 +176,19 @@ namespace SharpGMad
 
                 // Get and add the groups (folders)
                 IEnumerable<IGrouping<string, ContentFile>> folders =
-                    addon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/'));
+                    AddonHandle.OpenAddon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/'));
                 foreach (IGrouping<string, ContentFile> folder in folders)
                 {
                     lstFiles.Groups.Add(folder.Key, folder.Key);
                 }
 
                 // Get and add the files
-                foreach (ContentFile cfile in addon.Files)
+                foreach (ContentFile cfile in AddonHandle.OpenAddon.Files)
                 {
                     ListViewItem item = new ListViewItem(Path.GetFileName(cfile.Path),
                         lstFiles.Groups[Path.GetDirectoryName(cfile.Path).Replace('\\', '/')]);
 
-                    IEnumerable<FileWatch> watch = watches.Where(f => f.ContentPath == cfile.Path);
+                    IEnumerable<FileWatch> watch = AddonHandle.WatchedFiles.Where(f => f.ContentPath == cfile.Path);
                     if (watch.Count() == 1)
                     {
                         tsbDropAll.Enabled = true; // At least one file is exported
@@ -210,50 +220,15 @@ namespace SharpGMad
             lstFiles.Items.Clear();
             lstFiles.Groups.Clear();
 
-            this.path = null;
-
-            SetModified(false);
             this.Text = "SharpGMad";
             tsbSaveAddon.Enabled = false;
 
-            if (addonFS != null)
-            {
-                addonFS.Dispose();
-                addonFS = null;
-            }
-
-            addon = null;
-            if (addonFS != null)
-                addonFS.Dispose();
-
-            foreach (FileWatch watch in watches)
-                watch.Watcher.Dispose();
-
-            watches.Clear();
+            if (AddonHandle != null)
+                AddonHandle.Close();
+            AddonHandle = null;
 
             tsbUpdateMetadata.Enabled = false;
             tsbAddFile.Enabled = false;
-        }
-
-        /// <summary>
-        /// Sets the currently open addon's modified state.
-        /// </summary>
-        public void SetModified(bool modified)
-        {
-            if (modified)
-            {
-                this.modified = true;
-                tsbSaveAddon.Enabled = true;
-
-                this.Text = Path.GetFileName(this.path) + "* - SharpGMad";
-            }
-            else
-            {
-                this.modified = false;
-                tsbSaveAddon.Enabled = false;
-
-                this.Text = Path.GetFileName(this.path) + " - SharpGMad";
-            }
         }
 
         // Dock the txtDescription text box.
@@ -270,6 +245,7 @@ namespace SharpGMad
             txtDescription.Size = new Size(pnlRightSide.Size.Width - txtDescriptionSizeDifference.Width,
                 pnlRightSide.Size.Height - txtDescriptionSizeDifference.Height);
         }
+        // Dock the txtDescription text box.
 
         private void tsmiLegacyCreate_Click(object sender, EventArgs e)
         {
@@ -285,7 +261,7 @@ namespace SharpGMad
 
         private void tsbAddFile_Click(object sender, EventArgs e)
         {
-            if (addon == null)
+            if (AddonHandle == null)
                 return;
 
             // If there is no value for file filtering, load a file list
@@ -325,7 +301,7 @@ namespace SharpGMad
 
                 try
                 {
-                    addon.AddFile(Whitelist.GetMatchingString(filename), bytes);
+                    AddonHandle.AddFile(Whitelist.GetMatchingString(filename), bytes);
                 }
                 catch (IgnoredException)
                 {
@@ -346,7 +322,7 @@ namespace SharpGMad
                     return;
                 }
 
-                SetModified(true);
+                UpdateModified();
                 UpdateFileList();
                 ofdAddFile.Reset();
             }
@@ -367,7 +343,7 @@ namespace SharpGMad
                     tsmFileExtract.Visible = true;
 
                     // Allow export (and related) options
-                    IEnumerable<FileWatch> isExported = watches.Where(f => f.ContentPath ==
+                    IEnumerable<FileWatch> isExported = AddonHandle.WatchedFiles.Where(f => f.ContentPath ==
                         lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
                     if (isExported.Count() == 0)
                     {
@@ -396,7 +372,7 @@ namespace SharpGMad
                 // Multiple files support remove and extract, no export-related stuff
                 tsmFileRemove.Enabled = true;
                 tsmFileRemove.Visible = true;
-                
+
                 tsmFileExtract.Enabled = true;
                 tsmFileExtract.Visible = true;
 
@@ -454,7 +430,7 @@ namespace SharpGMad
                     {
                         try
                         {
-                            addon.RemoveFile(lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+                            AddonHandle.RemoveFile(lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
                         }
                         catch (FileNotFoundException)
                         {
@@ -463,7 +439,7 @@ namespace SharpGMad
                             return;
                         }
 
-                        SetModified(true);
+                        UpdateModified();
                         UpdateFileList();
                     }
                 }
@@ -482,7 +458,7 @@ namespace SharpGMad
                     {
                         try
                         {
-                            addon.RemoveFile(file.Group.Header + "/" + file.Text);
+                            AddonHandle.RemoveFile(file.Group.Header + "/" + file.Text);
                         }
                         catch (FileNotFoundException)
                         {
@@ -496,7 +472,7 @@ namespace SharpGMad
                             "Remove files", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     }
 
-                    SetModified(true);
+                    UpdateModified();
                     UpdateFileList();
                 }
             }
@@ -504,22 +480,18 @@ namespace SharpGMad
 
         private void tsbUpdateMetadata_Click(object sender, EventArgs e)
         {
-            UpdateMetadata mdForm = new UpdateMetadata(addon);
+            UpdateMetadata mdForm = new UpdateMetadata(AddonHandle);
             mdForm.Owner = this;
             mdForm.ShowDialog(this);
         }
 
         private void tsbSaveAddon_Click(object sender, EventArgs e)
         {
-            if (this.modified)
+            if (AddonHandle.Modified)
             {
-                addon.Sort();
-
-                MemoryStream ms = new MemoryStream();
-
                 try
                 {
-                    Writer.Create(addon, ms);
+                    AddonHandle.Save();
                 }
                 catch (AddonJSONException ex)
                 // Writer.Create access addon.DescriptionJSON which calls
@@ -532,71 +504,64 @@ namespace SharpGMad
                     return;
                 }
 
-                addonFS.Seek(0, SeekOrigin.Begin);
-                ms.Seek(0, SeekOrigin.Begin);
-                ms.CopyTo(addonFS);
-
-                addonFS.Flush();
-                ms.Dispose();
-
-                SetModified(false);
-
                 if (!(e is FormClosingEventArgs))
                 {
                     MessageBox.Show("Successfully saved the addon.", "Save addon",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+
+                UpdateModified();
             }
         }
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
-                if (addon is Addon && this.modified)
-                {
-                    DialogResult yesClose = MessageBox.Show("Do you want to save your changes before quiting?",
-                        this.path, MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            if (AddonHandle is RealtimeAddon && AddonHandle.Modified)
+            {
+                DialogResult yesClose = MessageBox.Show("Do you want to save your changes before quiting?",
+                    Path.GetFileName(AddonHandle.AddonPath), MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
 
-                    switch (yesClose)
-                    {
-                        case DialogResult.Cancel:
-                            e.Cancel = true;
-                            break;
-                        case DialogResult.No:
-                            // Noop, we just close.
-                            break;
-                        case DialogResult.Yes:
-                            tsbSaveAddon_Click(sender, e); // Invoke the addon saving mechanism
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                if (addon is Addon)
+                switch (yesClose)
                 {
-                    UnloadAddon();
+                    case DialogResult.Cancel:
+                        e.Cancel = true;
+                        break;
+                    case DialogResult.No:
+                        // Noop, we just close.
+                        break;
+                    case DialogResult.Yes:
+                        tsbSaveAddon_Click(sender, e); // Invoke the addon saving mechanism
+                        break;
+                    default:
+                        break;
                 }
+            }
+
+            if (AddonHandle is RealtimeAddon)
+            {
+                UnloadAddon();
+            }
         }
 
         private void tsbCreateAddon_Click(object sender, EventArgs e)
         {
             DialogResult dropChanges = new DialogResult();
-            if (addon is Addon)
+            if (AddonHandle is RealtimeAddon)
             {
                 dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
                     "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             }
 
-            if (dropChanges == DialogResult.Yes || addon == null)
+            if (dropChanges == DialogResult.Yes || AddonHandle == null)
             {
                 UnloadAddon();
                 DialogResult file = sfdAddon.ShowDialog();
-                
+
                 if (file == DialogResult.OK)
                 {
                     try
                     {
-                        this.addonFS = new FileStream(sfdAddon.FileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                        AddonHandle = RealtimeAddon.New(sfdAddon.FileName);
                     }
                     catch (Exception)
                     {
@@ -605,23 +570,17 @@ namespace SharpGMad
                         return;
                     }
 
-                    this.path = sfdAddon.FileName;
-
-                    addon = new Addon();
-                    addon.Title = Path.GetFileNameWithoutExtension(sfdAddon.FileName);
-                    addon.Author = "Author Name"; // This is currently not changable
-                    addon.Description = String.Empty;
-                    addon.Type = String.Empty;
-                    addon.Tags = new List<string>();
+                    AddonHandle.OpenAddon.Title = Path.GetFileNameWithoutExtension(sfdAddon.FileName);
+                    AddonHandle.OpenAddon.Author = "Author Name"; // This is currently not changable
+                    AddonHandle.OpenAddon.Description = String.Empty;
+                    AddonHandle.OpenAddon.Type = String.Empty;
+                    AddonHandle.OpenAddon.Tags = new List<string>();
                     tsbUpdateMetadata_Click(sender, e); // This will make the metadata form pop up setting the initial value
 
                     // Fire the save event for an initial addon saving
-                    SetModified(true);
                     tsbSaveAddon_Click(sender, e);
 
-                    // (Excerpt from LoadAddon)
-                    SetModified(false);
-
+                    UpdateModified();
                     UpdateMetadataPanel();
                     UpdateFileList();
 
@@ -637,14 +596,6 @@ namespace SharpGMad
             {
                 string contentPath = lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text;
 
-                IEnumerable<FileWatch> isExported = watches.Where(f => f.ContentPath == contentPath);
-                if (isExported.Count() != 0)
-                {
-                    MessageBox.Show("This file is already exported. Drop the extract first!", "Export file",
-                        MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                    return;
-                }
-
                 sfdExportFile.FileName = Path.GetFileName(lstFiles.FocusedItem.Text);
                 sfdExportFile.DefaultExt = Path.GetExtension(lstFiles.FocusedItem.Text);
                 sfdExportFile.Title = "Export " + Path.GetFileName(lstFiles.FocusedItem.Text) + " to...";
@@ -655,44 +606,32 @@ namespace SharpGMad
                 {
                     string exportPath = sfdExportFile.FileName;
 
-                    IEnumerable<FileWatch> checkPathCollision = watches.Where(f => f.FilePath == exportPath);
-                    if (checkPathCollision.Count() != 0)
+                    try
+                    {
+                        AddonHandle.ExportFile(contentPath, exportPath);
+                    }
+                    catch (UnauthorizedAccessException)
                     {
                         MessageBox.Show("Another file is already exported as " + exportPath, "Export file",
                             MessageBoxButtons.OK, MessageBoxIcon.Stop);
                         return;
                     }
-
-                    IEnumerable<ContentFile> file = addon.Files.Where(f => f.Path == contentPath);
-                    
-                    FileStream export;
-                    try
+                    catch (ArgumentException)
                     {
-                        export = new FileStream(exportPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-                    }
-                    catch (Exception)
-                    {
-                        MessageBox.Show("There was a problem opening the file.", "Export file",
+                        MessageBox.Show("This file is already exported. Drop the export first!", "Export file",
                             MessageBoxButtons.OK, MessageBoxIcon.Stop);
                         return;
                     }
-                    export.SetLength(0); // Truncate the file.
-                    export.Write(file.First().Content, 0, (int)file.First().Size);
-                    export.Flush();
-                    export.Dispose();
+                    catch (IOException)
+                    {
+                        MessageBox.Show("There was a problem creating the file.", "Export file",
+                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
 
-                    // Set up a watcher
-                    FileSystemWatcher fsw = new FileSystemWatcher(Path.GetDirectoryName(exportPath), Path.GetFileName(exportPath));
-                    fsw.NotifyFilter = NotifyFilters.LastWrite;
-                    fsw.Changed += new FileSystemEventHandler(fsw_Changed);
-                    fsw.EnableRaisingEvents = true;
-
-                    FileWatch watch = new FileWatch();
-                    watch.FilePath = exportPath;
-                    watch.ContentPath = contentPath;
-                    watch.Watcher = fsw;
-
-                    watches.Add(watch);
+                    // Add a custom event handle so that the form gets updated when a file is pullable.
+                    AddonHandle.WatchedFiles.Where(f => f.ContentPath == contentPath).First().Watcher.Changed += 
+                        new FileSystemEventHandler(fsw_Changed);
                 }
 
                 sfdExportFile.Reset();
@@ -702,29 +641,7 @@ namespace SharpGMad
 
         private void fsw_Changed(object sender, FileSystemEventArgs e)
         {
-            IEnumerable<FileWatch> search = watches.Where(f => f.FilePath == e.FullPath);
-
-            if (search.Count() != 0)
-            {
-                IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
-
-                if (content.Count() == 1)
-                {
-                    search.First().Modified = true;
-
-                }
-                else
-                {
-                    watches.Remove(search.First());
-                    ((FileSystemWatcher)sender).Dispose();
-                }
-            }
-            else
-            {
-                watches.Remove(search.First());
-                ((FileSystemWatcher)sender).Dispose();
-            }
-
+            UpdateModified();
             UpdateFileList();
         }
 
@@ -740,20 +657,17 @@ namespace SharpGMad
         {
             List<string> pathsFailedToDelete = new List<string>();
 
-            foreach (FileWatch watch in watches)
+            foreach (FileWatch watch in AddonHandle.WatchedFiles)
             {
-                watch.Watcher.Dispose();
                 try
                 {
-                    File.Delete(watch.FilePath);
+                    AddonHandle.DropExport(watch.ContentPath);
                 }
-                catch (Exception)
+                catch (IOException)
                 {
                     pathsFailedToDelete.Add(watch.FilePath);
                 }
             }
-
-            watches.Clear();
 
             if (pathsFailedToDelete.Count == 0)
             {
@@ -772,30 +686,25 @@ namespace SharpGMad
 
         private void DropFileExport(string filename)
         {
-            IEnumerable<FileWatch> search = watches.Where(f => f.ContentPath == filename);
+            try
+            {
+                AddonHandle.DropExport(filename);
+            }
+            catch (FileNotFoundException)
+            {
+                MessageBox.Show("This file is not exported!", "Drop extract",
+                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
+            }
+            catch (IOException ex)
+            {
+                MessageBox.Show("Failed to delete the exported file:" +
+                    "\n" + AddonHandle.WatchedFiles.Where(f => f.ContentPath == filename).First().FilePath +
+                    ".\n\n" + ex.Message, "Drop extract",
+                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
 
-                if (search.Count() == 0)
-                {
-                    MessageBox.Show("This file is not exported!", "Drop extract",
-                        MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                    return;
-                }
-
-                search.First().Watcher.Dispose();
-                try
-                {
-
-                    File.Delete(search.First().FilePath);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to delete the exported file:" +
-                        "\n" + search.First().FilePath + ".\n\n" + ex.Message, "Drop extract",
-                        MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                }
-
-                watches.Remove(search.First());
-                UpdateFileList();
+            UpdateFileList();
         }
 
         private void tsmFilePull_Click(object sender, EventArgs e)
@@ -810,36 +719,21 @@ namespace SharpGMad
         {
             List<string> pathsFailedToPull = new List<string>();
 
-            foreach (FileWatch watch in watches)
+            foreach (FileWatch watch in AddonHandle.WatchedFiles)
             {
                 if (watch.Modified)
                 {
-                    IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == watch.ContentPath);
-
-                    FileStream fs;
                     try
                     {
-                        fs = new FileStream(watch.FilePath, FileMode.Open, FileAccess.Read);
+                        AddonHandle.Pull(watch.ContentPath);
                     }
                     catch (IOException)
                     {
                         pathsFailedToPull.Add(watch.ContentPath + " from " + watch.FilePath);
-                        return;
+                        continue;
                     }
-
-                    // Load and write the changes to memory
-                    byte[] contBytes = new byte[fs.Length];
-                    fs.Seek(0, SeekOrigin.Begin);
-                    fs.Read(contBytes, 0, (int)fs.Length);
-                    content.First().Content = contBytes;
-
-                    fs.Dispose();
-
-                    watch.Modified = false;
                 }
             }
-
-            SetModified(true);
 
             if (pathsFailedToPull.Count == 0)
             {
@@ -853,6 +747,7 @@ namespace SharpGMad
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
+            UpdateModified();
             UpdateFileList();
         }
 
@@ -863,54 +758,29 @@ namespace SharpGMad
         /// The exported path is known automatically.</param>
         private void PullFile(string filename)
         {
-            IEnumerable<FileWatch> search = watches.Where(f => f.ContentPath == filename);
-
-            if (search.Count() == 0)
+            try
+            {
+                AddonHandle.Pull(filename);
+            }
+            catch (FileNotFoundException)
             {
                 MessageBox.Show("This file is not exported!", "Pull changes",
                     MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
-
-            if (search.First().Modified == false)
-            {
-                MessageBox.Show("The file is not modified.", "Pull changes",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
-
-            FileStream fs;
-            try
-            {
-                fs = new FileStream(search.First().FilePath, FileMode.Open, FileAccess.Read);
-            }
             catch (IOException ex)
             {
                 MessageBox.Show("Failed to open the exported file on the disk (" +
-                    search.First().FilePath + "). An exception happened:\n\n" + ex.Message, "Pull changes",
+                    AddonHandle.WatchedFiles.Where(f => f.ContentPath == filename).First().FilePath +
+                    "). An exception happened:\n\n" + ex.Message, "Pull changes",
                     MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
 
-            // Load and write the changes to memory
-            byte[] contBytes = new byte[fs.Length];
-            fs.Seek(0, SeekOrigin.Begin);
-            fs.Read(contBytes, 0, (int)fs.Length);
-            content.First().Content = contBytes;
-
-            fs.Dispose();
-
             MessageBox.Show("Successfully pulled the changes.", "Pull changes",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            // Consider the file unmodified
-            search.First().Modified = false;
-
-            // But consider the addon itself modified
-            SetModified(true);
-
+            UpdateModified();
             UpdateFileList();
         }
 
@@ -932,23 +802,22 @@ namespace SharpGMad
                     {
                         string extractPath = sfdExportFile.FileName;
 
-                        IEnumerable<ContentFile> file = addon.Files.Where(f => f.Path == contentPath);
-
-                        FileStream export;
                         try
                         {
-                            export = new FileStream(extractPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+                            AddonHandle.ExtractFile(contentPath, extractPath);
                         }
-                        catch (Exception)
+                        catch (UnauthorizedAccessException)
                         {
-                            MessageBox.Show("There was a problem opening the file.", "Extract file",
+                            MessageBox.Show("This file is already exported at " + extractPath, "Extract file",
                                 MessageBoxButtons.OK, MessageBoxIcon.Stop);
                             return;
                         }
-                        export.SetLength(0); // Truncate the file.
-                        export.Write(file.First().Content, 0, (int)file.First().Size);
-                        export.Flush();
-                        export.Dispose();
+                        catch (IOException)
+                        {
+                            MessageBox.Show("There was a problem creating the file.", "Extract file",
+                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            return;
+                        }
                     }
 
                     sfdExportFile.Reset();
@@ -956,7 +825,7 @@ namespace SharpGMad
             }
             else if (lstFiles.SelectedItems.Count >= 1)
             {
-                fbdFileExtractMulti.Description = "Export the selected " + Convert.ToString(lstFiles.SelectedItems.Count) +
+                fbdFileExtractMulti.Description = "Extract the selected " + Convert.ToString(lstFiles.SelectedItems.Count) +
                     " files to...";
                 fbdFileExtractMulti.SelectedPath = Directory.GetCurrentDirectory();
 
@@ -971,7 +840,7 @@ namespace SharpGMad
 
                     // Get all the ContentFile objects from the open addon which has path
                     // matching to the paths we've selected in the list view.
-                    IEnumerable<ContentFile> files = addon.Files.Join(contentPaths,
+                    IEnumerable<ContentFile> files = AddonHandle.OpenAddon.Files.Join(contentPaths,
                         cfile => cfile.Path, cpath => cpath, (cfile, cpath) => cfile);
 
                     List<string> failed_paths = new List<string>(lstFiles.SelectedItems.Count);
@@ -980,27 +849,21 @@ namespace SharpGMad
                     {
                         string outpath = extractPath + Path.DirectorySeparatorChar + Path.GetFileName(file.Path);
 
-                        FileStream export;
                         try
                         {
-                            export = new FileStream(outpath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+                            AddonHandle.ExtractFile(file.Path, outpath);
                         }
                         catch (Exception)
                         {
                             failed_paths.Add(file.Path);
                             continue;
                         }
-
-                        export.SetLength(0); // Truncate the file.
-                        export.Write(file.Content, 0, (int)file.Size);
-                        export.Flush();
-                        export.Dispose();
                     }
 
                     if (failed_paths.Count != 0)
                     {
-                        MessageBox.Show("The following files failed to remove:\n\n" + String.Join("\n", failed_paths),
-                            "Remove files", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        MessageBox.Show("The following files failed extract:\n\n" + String.Join("\n", failed_paths),
+                            "Extract multiple files", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     }
                 }
 
