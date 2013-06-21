@@ -13,6 +13,7 @@ namespace SharpGMad
         /// </summary>
         /// <param name="addon">The addon to compile.</param>
         /// <param name="stream">The stream which the result should be written to.</param>
+        /// <exception cref="IOExecption">Happens if there is a problem with the specified stream.</exception>
         public static void Create(Addon addon, Stream stream)
         {
             BinaryWriter writer = new BinaryWriter(stream);
@@ -46,15 +47,12 @@ namespace SharpGMad
                 // Remove prefix / from filename
                 string file = f.Path.TrimStart('/');
 
-                uint crc = System.Cryptography.CRC32.ComputeChecksum(f.Content); // unsigned long
-                long size = f.Size; // long long
                 fileNum++;
 
                 writer.Write(fileNum); // File number (4)
                 writer.WriteNullTerminatedString(file.ToLowerInvariant()); // File name (all lower case!) (n)
-                writer.Write(size); // File size (8)
-                writer.Write(crc); // File CRC (4)
-                Console.WriteLine("File index: " + file + " [CRC: " + crc + "] [Size:" + ((int)size).HumanReadableSize() + "]");
+                writer.Write(f.Size); // File size (8) unsigned long
+                writer.Write(f.CRC); // File CRC (4) long long
             }
             writer.Flush();
 
@@ -65,10 +63,6 @@ namespace SharpGMad
             // The files
             foreach (ContentFile f in addon.Files)
             {
-                // Remove prefix / from filename
-                string file = f.Path.TrimStart('/');
-
-                Console.WriteLine("Adding " + file);
                 writer.Write(f.Content);
                 writer.Flush();
             }

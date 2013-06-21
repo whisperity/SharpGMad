@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace SharpGMad
 {
@@ -91,7 +92,6 @@ namespace SharpGMad
         /// <returns>Integer error code: 0 if success, 1 if error.</returns>
         static int ConvertAddonFolder(string strFolder, string strOutfile, bool warnInvalid)
         {
-            //bool bErrors = false;
             //
             // Make sure there's a slash on the end
             //
@@ -103,10 +103,10 @@ namespace SharpGMad
             strOutfile = Path.GetFileNameWithoutExtension(strOutfile);
             strOutfile += ".gma";
             Console.WriteLine("Looking in folder \"" + strFolder + "\"");
-            
+
             // Load the addon metadata from the old file structure: info.txt or addon.txt.
             string legacyInfoFile;
-            if ( File.Exists(strFolder + "\\info.txt") )
+            if (File.Exists(strFolder + "\\info.txt"))
                 legacyInfoFile = "info.txt";
             else if (File.Exists(strFolder + "\\addon.txt"))
                 legacyInfoFile = "addon.txt";
@@ -123,7 +123,7 @@ namespace SharpGMad
             {
                 legacyInfo = File.ReadAllText(strFolder + Path.DirectorySeparatorChar + legacyInfoFile);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Failed to read metadata.");
@@ -146,14 +146,14 @@ namespace SharpGMad
                     addon.Description = keyMatch.NextMatch().Value;
                 else if (keyMatch.Value.ToLowerInvariant() == "\"author_name\"")
                     addon.Author = keyMatch.NextMatch().Value;
-                    // Current GMAD writer only writes "Author Name", not real value
+                // Current GMAD writer only writes "Author Name", not real value
             }
 
             Console.WriteLine(addon.Title + " by " + addon.Author);
             Console.WriteLine("You need to set the title, and optionally, the tags for this addon!");
 
-            RealtimeCommandline.SetType(addon);
-            RealtimeCommandline.SetTags(addon);
+            SetType(addon);
+            SetTags(addon);
 
             Console.WriteLine("Adding files...");
 
@@ -225,7 +225,7 @@ namespace SharpGMad
                 Console.ResetColor();
                 return 1;
             }
-            
+
             //
             // Success!
             //
@@ -236,73 +236,152 @@ namespace SharpGMad
         }
 
         /// <summary>
-        /// Legacy GMAD operation to extract an addon file to a specified folder.
+        /// Sets the type of an addon.
         /// </summary>
-        /// <param name="strFile">The file path of the GMA to extract.</param>
-        /// <param name="strOutPath">The folder where the addon is to be extracted to.</param>
-        /// <returns>Integer error code: 0 if success, 1 if error.</returns>
-        static int ExtractAddonFile(string strFile, string strOutPath = "")
+        /// <param name="addon">The addon to modify.</param>
+        /// <param name="type">Optional. The new type the addon should have.</param>
+        private static void SetType(Addon addon, string type = null)
         {
-            Console.WriteLine("Opening " + strFile);
-
-            //
-            // If an out path hasn't been provided, make our own
-            //
-            if (strOutPath == String.Empty)
+            if (type == String.Empty || type == null)
             {
-                strOutPath = Path.GetFileNameWithoutExtension(strFile);
-            }
-
-            //
-            // Remove slash, add slash (enforces a slash)
-            //
-            strOutPath = strOutPath.TrimEnd('/');
-            strOutPath = strOutPath + '/';
-            Addon addon;
-            try
-            {
-                FileStream fs = new FileStream(strFile, FileMode.Open, FileAccess.ReadWrite);
-                addon = new Addon(new Reader(fs));
-            }
-            catch (Exception ex)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("There was a problem opening or parsing the file");
-                Console.ResetColor();
-                Console.WriteLine(ex.Message);
-                return 1;
-            }
-
-            Console.WriteLine("Extracting Files:");
-            foreach (ContentFile entry in addon.Files)
-            {
-                Console.WriteLine("\t" + entry.Path + " [" + ((int)entry.Size).HumanReadableSize() + "]");
-                // Make sure folder exists
-                try
+                while (!Tags.TypeExists(type))
                 {
-                    Directory.CreateDirectory(strOutPath + Path.GetDirectoryName(entry.Path));
-                }
-                catch (Exception)
-                {
-                    // Noop
-                }
-                // Write the file to the disk
-                try
-                {
-                    using (FileStream file = new FileStream(strOutPath + entry.Path, FileMode.Create, FileAccess.Write))
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Type? ");
+                    Console.ResetColor();
+                    Console.Write("Please choose ONE from the following: ");
+                    Console.WriteLine(String.Join(" ", Tags.Type));
+                    type = Console.ReadLine();
+
+                    if (!Tags.TypeExists(type))
                     {
-                        file.Write(entry.Content, 0, (int)entry.Size);
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("The specified type is not valid.");
+                        Console.ResetColor();
                     }
                 }
-                catch (Exception)
+            }
+            else
+            {
+                if (!Tags.TypeExists(type))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\t\tCouldn't extract!");
+                    Console.WriteLine("The specified type is not valid.");
                     Console.ResetColor();
+                    return;
                 }
             }
-            Console.WriteLine("Done!");
-            return 0;
+
+            addon.Type = type;
+        }
+
+        /// <summary>
+        /// Sets the tags of an addon.
+        /// </summary>
+        /// <param name="addon">The addon to modify.</param>
+        /// <param name="tagsInput">Optional. The new tags the addon should have.</param>
+        private static void SetTags(Addon addon, string[] tagsInput = null)
+        {
+            List<string> tags = new List<string>(2);
+            if (tagsInput == null || tagsInput.Length == 0 || tagsInput[0] == String.Empty)
+            {
+                bool allTagsValid = false;
+                while (!allTagsValid)
+                {
+                    tags.Clear();
+
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Tags? ");
+                    Console.ResetColor();
+                    Console.Write("Please choose ZERO, ONE or TWO from the following: ");
+                    Console.WriteLine(String.Join(" ", Tags.Misc));
+
+                    tagsInput = Console.ReadLine().Split(' ');
+
+                    allTagsValid = true;
+                    if (tagsInput[0] != String.Empty)
+                    {
+                        // More than zero (one or two) elements: add the first one.
+                        if (tagsInput.Length > 0)
+                        {
+                            if (!Tags.TagExists(tagsInput[0]))
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("The specified tag \"" + tagsInput[0] + "\" is not valid.");
+                                Console.ResetColor();
+                                allTagsValid = false;
+                                continue;
+                            }
+                            else
+                                tags.Add(tagsInput[0]);
+                        }
+
+                        // More than one (two) elements: add the second one too.
+                        if (tagsInput.Length > 1)
+                        {
+                            if (!Tags.TagExists(tagsInput[1]))
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("The specified tag \"" + tagsInput[1] + "\" is not valid.");
+                                Console.ResetColor();
+                                allTagsValid = false;
+                                continue;
+                            }
+                            else
+                                tags.Add(tagsInput[1]);
+                        }
+
+                        if (tagsInput.Length > 2)
+                        {
+                            Console.ForegroundColor = ConsoleColor.DarkYellow;
+                            Console.WriteLine("More than two tags specified. Only the first two is saved.");
+                            Console.ResetColor();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (tagsInput[0] != String.Empty)
+                {
+                    // More than zero (one or two) elements: add the first one.
+                    if (tagsInput.Length > 0)
+                    {
+                        if (!Tags.TagExists(tagsInput[0]))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The specified tag \"" + tagsInput[0] + "\" is not valid.");
+                            Console.ResetColor();
+                            return;
+                        }
+                        else
+                            tags.Add(tagsInput[0]);
+                    }
+
+                    // More than one (two) elements: add the second one too.
+                    if (tagsInput.Length > 1)
+                    {
+                        if (!Tags.TagExists(tagsInput[1]))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The specified tag \"" + tagsInput[1] + "\" is not valid.");
+                            Console.ResetColor();
+                            return;
+                        }
+                        else
+                            tags.Add(tagsInput[1]);
+                    }
+
+                    if (tagsInput.Length > 2)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Console.WriteLine("More than two tags specified. Only the first two is saved.");
+                        Console.ResetColor();
+                    }
+                }
+            }
+
+            addon.Tags = tags;
         }
     }
 }

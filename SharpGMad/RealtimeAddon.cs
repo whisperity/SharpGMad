@@ -28,7 +28,7 @@ namespace SharpGMad
         /// </summary>
         public FileSystemWatcher Watcher;
     }
-    
+
     /// <summary>
     /// Encapsulates an Addon and provides the extended "realtime" functionality over it.
     /// </summary>
@@ -47,13 +47,36 @@ namespace SharpGMad
         /// </summary>
         public string AddonPath { get { return AddonStream.Name; } }
         /// <summary>
-        /// Gets whether the current addon is modified (the state in memory differs from the state of the filestream).
+        /// Indicates whether the current addon is modified (the state in memory differs from the state of the filestream).
         /// </summary>
-        public bool Modified { get; private set; }
+        private bool _modified;
+        /// <summary>
+        /// Gets whether the current addon is modified (the state in memory differs from the state of the filestream).
+        /// It can also set the modified state to true.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Thrown if external assembly attempts to set value to false.</exception>
+        public bool Modified
+        {
+            get
+            {
+                return _modified;
+            }
+            set
+            {
+                if (value)
+                {
+                    Modified = value;
+                }
+                else if (!value)
+                {
+                    throw new InvalidOperationException("The modified state cannot be set to false externally.");
+                }
+            }
+        }
         /// <summary>
         /// Gets whether there are changed exported files.
         /// </summary>
-        public bool Pullable { get; private set; }
+        public bool Pullable { get { return WatchedFiles.Any(fw => fw.Modified == true); } }
         /// <summary>
         /// Contains the exported files.
         /// </summary>
@@ -165,8 +188,7 @@ namespace SharpGMad
         private RealtimeAddon()
         {
             WatchedFiles = new List<FileWatch>();
-            Modified = false;
-            Pullable = false;
+            _modified = false;
         }
 
         /// <summary>
@@ -208,7 +230,7 @@ namespace SharpGMad
                     fs.Read(bytes, 0, (int)fs.Length);
                 }
             }
-            catch(IOException e)
+            catch (IOException e)
             {
                 throw e;
             }
@@ -243,7 +265,7 @@ namespace SharpGMad
                 throw e;
             }
 
-            Modified = true;
+            _modified = true;
         }
 
         /// <summary>
@@ -262,7 +284,7 @@ namespace SharpGMad
                 throw e;
             }
 
-            Modified = true;
+            _modified = true;
         }
 
         /// <summary>
@@ -295,7 +317,7 @@ namespace SharpGMad
             {
                 file = OpenAddon.Files.Where(f => f.Path == path).First();
             }
-            catch(InvalidOperationException)
+            catch (InvalidOperationException)
             {
                 throw new FileNotFoundException("The specified file " + path + " does not exist in the addon.");
             }
@@ -327,6 +349,7 @@ namespace SharpGMad
         /// <param name="path">The path of the file within the addon to extract.</param>
         /// <param name="to">The path on the local filesystem where the file should be saved. If omitted,
         /// the file will be extracted to the application's current working directory.</param>
+        /// <exception cref="ArgumentException">Thrown if an export for the current file already exists.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the specified file does not exist within the addon.</exception>
         /// <exception cref="UnauthorizedAccessException">Thrown if a file already exists at the specified extract location.</exception>
         /// <exception cref="IOException">Thrown if there was a problem creating the extracted file.</exception>
@@ -344,6 +367,11 @@ namespace SharpGMad
                 {
                     to = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(to);
                 }
+            }
+
+            if (WatchedFiles.Where(f => f.ContentPath == path).Count() != 0)
+            {
+                throw new ArgumentException("The specified file " + path + " is already exported.");
             }
 
             try
@@ -396,7 +424,6 @@ namespace SharpGMad
             if (OpenAddon.Files.Where(f => f.Path == watch.ContentPath).Count() == 1)
             {
                 watch.Modified = true;
-                Pullable = true;
             }
             else
             {
@@ -423,7 +450,7 @@ namespace SharpGMad
             {
                 throw new FileNotFoundException("There is no export for " + path);
             }
-            
+
             watch.Watcher.Dispose();
             WatchedFiles.Remove(watch);
 
@@ -493,18 +520,26 @@ namespace SharpGMad
             fs.Dispose();
 
             search.Modified = false; // The exported file is no longer modified
-            Modified = true; // But the addon itself is
+            _modified = true; // But the addon itself is
         }
 
         /// <summary>
         /// Saves the changes of the encapsulated addon to its file stream.
         /// </summary>
+        /// <exception cref="IOException">Happens if there is a problem with creating the addon into its stream.</exception>
         public void Save()
         {
             OpenAddon.Sort();
-            Writer.Create(OpenAddon, AddonStream);
+            try
+            {
+                Writer.Create(OpenAddon, AddonStream);
+            }
+            catch (IOException e)
+            {
+                throw e;
+            }
 
-            Modified = false;
+            _modified = false;
         }
 
         /// <summary>
@@ -522,17 +557,16 @@ namespace SharpGMad
             AddonStream.Close();
             AddonStream.Dispose();
 
-            OpenAddon.Files.Clear();
-            OpenAddon = null;
-        }
+            try
+            {
+                OpenAddon.Files.Clear();
+            }
+            catch (NullReferenceException)
+            {
+                // The addon was disposed earlier. Noop.
+            }
 
-        /// <summary>
-        /// Helps the garbage collector free all resources managed by this instance.
-        /// Identical to calling Close();
-        /// </summary>
-        ~RealtimeAddon()
-        {
-            Close();
+            OpenAddon = null;
         }
     }
 }

@@ -6,38 +6,14 @@ using System.Linq;
 namespace SharpGMad
 {
     /// <summary>
-    /// Provides methods and properties of handling realtime access in the commandline.
+    /// Provides an interface for handling realtime functionality from the commandline.
     /// </summary>
     static class RealtimeCommandline
     {
         /// <summary>
-        /// The current open addon.
+        /// The currently open addon
         /// </summary>
-        static Addon addon;
-        /// <summary>
-        /// The System.IO.FileStream connection to the current open addon on the disk.
-        /// </summary>
-        static FileStream addonFS;
-        /// <summary>
-        /// Gets or sets the full path of the current open addon.
-        /// </summary>
-        static string filePath;
-        /// <summary>
-        /// Contains the command-line prefix printed before each command reading.
-        /// </summary>
-        static string CommandlinePrefix = "SharpGMad>";
-        /// <summary>
-        /// Contains a list of externally exported watched files.
-        /// </summary>
-        static List<FileWatch> watchedFiles = new List<FileWatch>();
-        /// <summary>
-        /// Gets or sets whether the current addon is modified.
-        /// </summary>
-        static bool modified;
-        /// <summary>
-        /// Gets or sets whether the current addon has exported files which are pullable.
-        /// </summary>
-        static bool pullable;
+        static RealtimeAddon AddonHandle;
 
         /// <summary>
         /// The main method and entry point for command-line operation.
@@ -66,7 +42,27 @@ namespace SharpGMad
 
             while (true)
             {
-                Console.Write(CommandlinePrefix + " ");
+                if (AddonHandle == null)
+                {
+                    Console.Write("SharpGMad> ");
+                }
+                else if (AddonHandle is RealtimeAddon)
+                {
+                    Console.Write(Path.GetFileName(AddonHandle.AddonPath));
+
+                    if (AddonHandle.Modified)
+                    {
+                        Console.Write("*");
+                    }
+
+                    if (AddonHandle.Pullable)
+                    {
+                        Console.Write("#");
+                    }
+
+                    Console.Write("> ");
+                }
+
                 string input = Console.ReadLine();
                 string[] command = input.Split(' ');
 
@@ -248,16 +244,16 @@ namespace SharpGMad
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            if (watchedFiles.Count == 0)
+                            if (AddonHandle.WatchedFiles.Count == 0)
                             {
                                 Console.WriteLine("No files are exported.");
                             }
                             else
                             {
 
-                                Console.WriteLine(watchedFiles.Count + " files currently exported:");
+                                Console.WriteLine(AddonHandle.WatchedFiles.Count + " files currently exported:");
                                 int i = 0;
-                                foreach (FileWatch watch in watchedFiles)
+                                foreach (FileWatch watch in AddonHandle.WatchedFiles)
                                 {
                                     Console.WriteLine(++i + 
                                         ((watch.Modified) ? "* " : " ") +
@@ -274,24 +270,19 @@ namespace SharpGMad
                         }
                         catch (IndexOutOfRangeException)
                         {
-                            if (watchedFiles.Count == 0)
+                            if (AddonHandle.WatchedFiles.Count == 0)
                             {
                                 Console.WriteLine("No files are exported.");
                             }
                             else
                             {
-
-                                Console.WriteLine("Pulling " + watchedFiles.Count + " files:");
-                                foreach (FileWatch watch in watchedFiles)
+                                Console.WriteLine("Pulling " + AddonHandle.WatchedFiles.Count + " files:");
+                                foreach (FileWatch watch in AddonHandle.WatchedFiles)
                                 {
                                     PullFile(watch.ContentPath);
                                 }
                             }
                         }
-
-                        // Get whether there are files still pullable.
-                        bool stillPullables = watchedFiles.Any(fw => fw.Modified == true);
-                        SetPullable(stillPullables);
 
                         break;
                     case "drop":
@@ -326,19 +317,19 @@ namespace SharpGMad
                         switch (parameter)
                         {
                             case "author":
-                                Console.WriteLine(addon.Author);
+                                Console.WriteLine(AddonHandle.OpenAddon.Author);
                                 break;
                             case "description":
-                                Console.WriteLine(addon.Description);
+                                Console.WriteLine(AddonHandle.OpenAddon.Description);
                                 break;
                             case "tags":
-                                Console.WriteLine(String.Join(" ", addon.Tags.ToArray()));
+                                Console.WriteLine(String.Join(" ", AddonHandle.OpenAddon.Tags.ToArray()));
                                 break;
                             case "title":
-                                Console.WriteLine(addon.Title);
+                                Console.WriteLine(AddonHandle.OpenAddon.Title);
                                 break;
                             case "type":
-                                Console.WriteLine(addon.Type);
+                                Console.WriteLine(AddonHandle.OpenAddon.Type);
                                 break;
                             default:
                                 Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -384,19 +375,19 @@ namespace SharpGMad
                         switch (Sparameter)
                         {
                             case "author":
-                                SetAuthor(addon, value);
+                                SetAuthor(value);
                                 break;
                             case "description":
-                                SetDescription(addon, value);
+                                SetDescription(value);
                                 break;
                             case "tags":
-                                SetTags(addon, value.Split(' '));
+                                SetTags(value.Split(' '));
                                 break;
                             case "title":
-                                SetTitle(addon, value);
+                                SetTitle(value);
                                 break;
                             case "type":
-                                SetType(addon, value);
+                                SetType(value);
                                 break;
                             default:
                                 Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -414,7 +405,16 @@ namespace SharpGMad
                         Push();
                         break;
                     case "path":
-                        FullPath();
+                        if (AddonHandle == null)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("No addon is open.");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        Console.WriteLine(AddonHandle.AddonPath);
+
                         break;
                     case "pwd":
                         Console.WriteLine(Directory.GetCurrentDirectory());
@@ -489,13 +489,13 @@ namespace SharpGMad
 
                         break;
                     case "gui":
-                        if (addon == null)
+                        if (AddonHandle == null)
                         {
                             System.Windows.Forms.Application.Run(new Main(new string[] { }));
                         }
-                        else if (addon is Addon)
+                        else if (AddonHandle is RealtimeAddon)
                         {
-                            if (modified)
+                            if (AddonHandle.Modified)
                             {
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 Console.WriteLine("Your addon is modified.");
@@ -507,7 +507,7 @@ namespace SharpGMad
                             {
                                 Console.WriteLine("The addon will close in the console and will be reopened by the GUI.");
                                 // Save the addon path and close it in the console.
-                                string addonpath = RealtimeCommandline.filePath;
+                                string addonpath = AddonHandle.AddonPath;
                                 CloseAddon();
 
                                 // Open the GUI with the path. The addon will automatically reload.
@@ -525,13 +525,13 @@ namespace SharpGMad
                         Console.WriteLine("Available commands:");
                         Console.ResetColor();
 
-                        if (addon == null)
+                        if (AddonHandle == null)
                         {
                             Console.WriteLine("load <filename>            Loads <filename> addon into the memory");
                             Console.WriteLine("new <filename>             Create a new, empty addon named <filename>");
                         }
 
-                        if (addon is Addon)
+                        if (AddonHandle is RealtimeAddon)
                         {
                             Console.WriteLine("add <filename>             Adds <filename> to the archive");
                             Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
@@ -555,21 +555,21 @@ namespace SharpGMad
                         Console.WriteLine("cd <folder>                Changes the current working directory to <folder>");
                         Console.WriteLine("ls                         List all files in the current directory");
 
-                        if (addon == null | (addon is Addon && !modified))
+                        if (AddonHandle == null || (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
                         {
                             Console.WriteLine("gui                        Load the GUI");
                         }
 
                         Console.WriteLine("help                       Show the list of available commands");
 
-                        if (addon == null)
+                        if (AddonHandle == null)
                         {
                             Console.WriteLine("exit                       Exits");
                         }
 
-                        if (addon is Addon)
+                        if (AddonHandle is RealtimeAddon)
                         {
-                            if (modified)
+                            if (AddonHandle.Modified)
                             {
                                 Console.Write("The addon has been ");
                                 Console.ForegroundColor = ConsoleColor.Green;
@@ -578,7 +578,7 @@ namespace SharpGMad
                                 Console.WriteLine(". Execute `push` to save changes to the disk.");
                             }
 
-                            if (pullable)
+                            if (AddonHandle.Pullable)
                             {
                                 Console.Write("There are exported files which have been changed. ");
                                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -590,7 +590,7 @@ namespace SharpGMad
 
                         break;
                     case "exit":
-                        if (addon is Addon)
+                        if (AddonHandle is RealtimeAddon)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Cannot exit. An addon is open!");
@@ -613,12 +613,9 @@ namespace SharpGMad
         /// Creates a new addon.
         /// </summary>
         /// <param name="filename">The filename where the addon should be saved to.</param>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
         static void NewAddon(string filename)
         {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            if (addon is Addon)
+            if (AddonHandle is RealtimeAddon)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("An addon is already open. Please close it first.");
@@ -626,75 +623,48 @@ namespace SharpGMad
                 return;
             }
 
-            if (File.Exists(filename))
+            try
+            {
+                AddonHandle = RealtimeAddon.New(filename);
+            }
+            catch (UnauthorizedAccessException)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("This file already exists. You might want to load it instead.");
+                Console.WriteLine("The file already exists. You might want to load it instead.");
                 Console.ResetColor();
                 return;
             }
-
-            //
-            // Make sure OutFile ends in .gma
-            //
-            filename = Path.GetFileNameWithoutExtension(filename);
-            filename += ".gma";
-
-            Console.WriteLine("Creating new file...");
-
-            CommandlinePrefix = filename + " (setup)>";
-            addon = new Addon();
-
-            SetTitle(addon);
-            SetDescription(addon);
-            //SetAuthor(addon); // Author name setting is not yet implemented.
-            SetType(addon);
-            SetTags(addon);
-
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Successfully set up initial addon.");
-            Console.ResetColor();
-
-            // Write initial content
-            filePath = Path.GetFullPath(filename);
-            try
-            {
-                addonFS = new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
-            }
-            catch (Exception e)
+            catch (IOException e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("There was a problem opening the file.");
+                Console.WriteLine("There was a problem creating the file.");
                 Console.ResetColor();
                 Console.WriteLine(e.Message);
                 CloseAddon();
                 return;
             }
 
-            MemoryStream ms = new MemoryStream();
-            
-            Writer.Create(addon, ms);
+            Console.WriteLine("Successfully created the new addon...");
 
-            addonFS.Seek(0, SeekOrigin.Begin);
-            ms.Seek(0, SeekOrigin.Begin);
-            ms.CopyTo(addonFS);
-            
-            addonFS.Flush();
-            ms.Dispose();
+            SetTitle();
+            SetDescription();
+            //SetAuthor(); // Author name setting is not yet implemented.
+            SetType();
+            SetTags();
 
-            SetModified(false);
-            SetPullable(false);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Addon metadata setup finished.");
+            Console.ResetColor();
 
-            CommandlinePrefix = Path.GetFileName(filename) + ">";
-            
+            // Write initial content
+            Push();
         }
 
         /// <summary>
-        /// Sets the title of an addon.
+        /// Sets the title of the addon.
         /// </summary>
-        /// <param name="addon">The addon which is to be modified</param>
         /// <param name="title">Optional. The new title the addon should have.</param>
-        private static void SetTitle(Addon addon, string title = null)
+        private static void SetTitle(string title = null)
         {
             if (title == String.Empty || title == null)
             {
@@ -704,15 +674,15 @@ namespace SharpGMad
                 title = Console.ReadLine();
             }
 
-            addon.Title = title;
+            AddonHandle.OpenAddon.Title = title;
+            AddonHandle.Modified = true;
         }
 
         /// <summary>
-        /// Sets the description of an addon.
+        /// Sets the description of the addon.
         /// </summary>
-        /// <param name="addon">The addon which is to be modified</param>
         /// <param name="description">Optional. The new description the addon should have.</param>
-        private static void SetDescription(Addon addon, string description = null)
+        private static void SetDescription(string description = null)
         {
             if (description == String.Empty || description == null)
             {
@@ -722,16 +692,15 @@ namespace SharpGMad
                 description = Console.ReadLine();
             }
 
-            addon.Description = description;
-            SetModified(true);
+            AddonHandle.OpenAddon.Description = description;
+            AddonHandle.Modified = true;
         }
 
         /// <summary>
-        /// Sets the author of an addon.
+        /// Sets the author of the addon.
         /// </summary>
-        /// <param name="addon">The addon which is to be modified</param>
         /// <param name="author">Optional. The new author the addon should have.</param>
-        private static void SetAuthor(Addon addon, string author = null)
+        private static void SetAuthor(string author = null)
         {
             if (author == String.Empty || author == null)
             {
@@ -743,16 +712,15 @@ namespace SharpGMad
                 author = "Author Name";
             }
 
-            addon.Author = author;
-            SetModified(true);
+            AddonHandle.OpenAddon.Author = author;
+            AddonHandle.Modified = true;
         }
 
         /// <summary>
-        /// Sets the type of an addon.
+        /// Sets the type of the addon.
         /// </summary>
-        /// <param name="addon">The addon which is to be modified</param>
         /// <param name="type">Optional. The new type the addon should have.</param>
-        public static void SetType(Addon addon, string type = null)
+        private static void SetType(string type = null)
         {
             if (type == String.Empty || type == null)
             {
@@ -784,16 +752,15 @@ namespace SharpGMad
                 }
             }
 
-            addon.Type = type;
-            SetModified(true);
+            AddonHandle.OpenAddon.Type = type;
+            AddonHandle.Modified = true;
         }
 
         /// <summary>
-        /// Sets the tags of an addon.
+        /// Sets the tags of the addon.
         /// </summary>
-        /// <param name="addon">The addon which is to be modified</param>
         /// <param name="tagsInput">Optional. The new tags the addon should have.</param>
-        public static void SetTags(Addon addon, string[] tagsInput = null)
+        private static void SetTags(string[] tagsInput = null)
         {
             List<string> tags = new List<string>(2);
             if (tagsInput == null || tagsInput.Length == 0 || tagsInput[0] == String.Empty)
@@ -894,20 +861,17 @@ namespace SharpGMad
                 }
             }
 
-            addon.Tags = tags;
-            SetModified(true);
+            AddonHandle.OpenAddon.Tags = tags;
+            AddonHandle.Modified = true;
         }
 
         /// <summary>
         /// Loads an addon from the filesystem.
         /// </summary>
         /// <param name="filename">The path of the addon to load.</param>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
-        static void LoadAddon(string filename)
+        private static void LoadAddon(string filename)
         {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            if (addon is Addon)
+            if (AddonHandle is RealtimeAddon)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("An addon is already open. Please close it first.");
@@ -915,17 +879,10 @@ namespace SharpGMad
                 return;
             }
 
-            foreach (FileWatch watch in watchedFiles)
-            {
-                watch.Watcher.Dispose();
-            }
-            watchedFiles.Clear();
-
             Console.WriteLine("Loading file...");
             try
             {
-                addonFS = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite);
-                addon = new Addon(new Reader(addonFS));
+                AddonHandle = RealtimeAddon.Load(filename);
             }
             catch (Exception e)
             {
@@ -937,25 +894,19 @@ namespace SharpGMad
                 return;
             }
 
-            foreach (ContentFile f in addon.Files)
+            foreach (ContentFile f in AddonHandle.OpenAddon.Files)
+            {
                 Console.WriteLine("\t" + f.Path + " [" + ((int)f.Size).HumanReadableSize() + "]");
-
-            filePath = Path.GetFullPath(filename);
-            CommandlinePrefix = Path.GetFileName(filename) + ">";
-            SetModified(false);
-            SetPullable(false);
+            }
         }
 
         /// <summary>
         /// Adds a file to the open addon.
         /// </summary>
         /// <param name="filename">The path of the file to be added.</param>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
-        static void AddFile(string filename)
+        private static void AddFile(string filename)
         {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            if (addon == null)
+            if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
@@ -963,14 +914,19 @@ namespace SharpGMad
                 return;
             }
 
-            byte[] bytes;
+            Console.WriteLine(filename + " as ");
+            Console.Write("\t" + Whitelist.GetMatchingString(filename));
+
             try
             {
-                using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    bytes = new byte[fs.Length];
-                    fs.Read(bytes, 0, (int)fs.Length);
-                }
+                AddonHandle.AddFile(filename);
+            }
+            catch (FileNotFoundException ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(ex.Message);
+                Console.ResetColor();
+                return;
             }
             catch (IOException ex)
             {
@@ -979,14 +935,6 @@ namespace SharpGMad
                 Console.ResetColor();
                 Console.WriteLine(ex.Message);
                 return;
-            }
-
-            Console.WriteLine(filename + " as");
-            Console.WriteLine("\t" + Whitelist.GetMatchingString(filename));
-            try
-            {
-                addon.AddFile(Whitelist.GetMatchingString(filename), bytes);
-                SetModified(true);
             }
             catch (IgnoredException e)
             {
@@ -1015,7 +963,7 @@ namespace SharpGMad
         /// Adds all files from a specified folder to the addon.
         /// </summary>
         /// <param name="folder">The folder containing the files to be added.</param>
-        static void AddFolder(string folder)
+        private static void AddFolder(string folder)
         {
             foreach (string f in Directory.GetFiles(folder, "*", SearchOption.AllDirectories))
             {
@@ -1029,9 +977,9 @@ namespace SharpGMad
         /// <summary>
         /// Lists the files currently added to the addon.
         /// </summary>
-        static void ListFiles()
+        private static void ListFiles()
         {
-            if (addon == null)
+            if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
@@ -1039,8 +987,8 @@ namespace SharpGMad
                 return;
             }
 
-            Console.WriteLine(addon.Files.Count + " files in archive:");
-            foreach (ContentFile file in addon.Files)
+            Console.WriteLine(AddonHandle.OpenAddon.Files.Count + " files in archive:");
+            foreach (ContentFile file in AddonHandle.OpenAddon.Files)
             {
                 Console.WriteLine(file.Path + " (" + ((int)file.Size).HumanReadableSize() + ")");
             }
@@ -1050,12 +998,9 @@ namespace SharpGMad
         /// Removes a file from the addon.
         /// </summary>
         /// <param name="filename">The path of the file to be removed.</param>
-        [Obsolete("Reimplemented by RealtimeCommandline.")]
-        static void RemoveFile(string filename)
+        private static void RemoveFile(string filename)
         {
-            throw new NotImplementedException("Reimplemented by RealtimeCommandline.");
-
-            if (addon == null)
+            if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
@@ -1065,10 +1010,9 @@ namespace SharpGMad
 
             try
             {
-                addon.RemoveFile(filename);
-                SetModified(true);
+                AddonHandle.RemoveFile(filename);
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("The file was not found in the archive.");
@@ -1084,12 +1028,9 @@ namespace SharpGMad
         /// <param name="filename">The path of the file in the addon to be exported.</param>
         /// <param name="extractPath">Optional. The path on the local file system where the file should be saved.
         /// If omitted, the file will be exported to the current working directory.</param>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
-        static void ExtractFile(string filename, string extractPath = null)
+        private static void ExtractFile(string filename, string extractPath = null)
         {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            if (addon == null)
+            if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
@@ -1097,51 +1038,36 @@ namespace SharpGMad
                 return;
             }
 
-            IEnumerable<ContentFile> file = addon.Files.Where(f => f.Path == filename);
-
-            if (file.Count() == 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("The specified file does not exist in the archive.");
-                Console.ResetColor();
-                return;
-            }
-
-            if (extractPath == null || extractPath == String.Empty)
-            {
-                extractPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(filename);
-            }
-
-            if (File.Exists(extractPath))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("A file at " + extractPath + " already exists. Aborting extraction!");
-                Console.ResetColor();
-                return;
-            }
-
-            FileStream extract;
             try
             {
-                extract = new FileStream(extractPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+                AddonHandle.ExtractFile(filename, extractPath);
             }
-            catch (Exception e)
+            catch (FileNotFoundException e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("There was a problem exporting the file.");
+                Console.WriteLine(e.Message);
+                Console.ResetColor();
+                return;
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message + " Aborting extraction!");
+                Console.ResetColor();
+                return;
+            }
+            catch (IOException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("There was a problem extracting the file.");
                 Console.ResetColor();
                 Console.WriteLine(e.Message);
                 return;
             }
-            extract.SetLength(0); // Truncate the file.
-            extract.Write(file.First().Content, 0, (int)file.First().Size);
-            extract.Flush();
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Written " + ((int)extract.Length).HumanReadableSize() + " to " + extractPath + ".");
+            Console.WriteLine("File extracted successfully.");
             Console.ResetColor();
-
-            extract.Dispose();
         }
 
         /// <summary>
@@ -1150,12 +1076,9 @@ namespace SharpGMad
         /// <param name="filename">The path of the file in the addon to be exported.</param>
         /// <param name="exportPath">Optional. The path on the local file system where the export should be saved.
         /// If omitted, the file will be exported to the current working directory.</param>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
-        static void ExportFile(string filename, string exportPath = null)
+        private static void ExportFile(string filename, string exportPath = null)
         {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            if (addon == null)
+            if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
@@ -1163,48 +1086,32 @@ namespace SharpGMad
                 return;
             }
 
-            IEnumerable<FileWatch> isExported = watchedFiles.Where(f => f.ContentPath == filename);
-            if (isExported.Count() != 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("This file is already exported!");
-                Console.ResetColor();
-                return;
-            }
-
-            IEnumerable<ContentFile> file = addon.Files.Where(f => f.Path == filename);
-
-            if (file.Count() == 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("The specified file does not exist in the archive.");
-                Console.ResetColor();
-                return;
-            }
-
-            if (exportPath == null || exportPath == String.Empty)
-            {
-                exportPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(filename);
-            }
-            else
-            {
-                exportPath = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(exportPath);
-            }
-
-            if (File.Exists(exportPath))
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("A file at " + exportPath + " already exists. Aborting export!");
-                Console.ResetColor();
-                return;
-            }
-
-            FileStream export;
             try
             {
-                export = new FileStream(exportPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+                AddonHandle.ExportFile(filename, exportPath);
             }
-            catch (Exception e)
+            catch (FileNotFoundException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message);
+                Console.ResetColor();
+                return;
+            }
+            catch (ArgumentException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message + " Aborting export!");
+                Console.ResetColor();
+                return;
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e.Message + " Aborting export!");
+                Console.ResetColor();
+                return;
+            }
+            catch (IOException e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("There was a problem exporting the file.");
@@ -1212,82 +1119,21 @@ namespace SharpGMad
                 Console.WriteLine(e.Message);
                 return;
             }
-            export.SetLength(0); // Truncate the file.
-            export.Write(file.First().Content, 0, (int)file.First().Size);
-            export.Flush();
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Written " + ((int)export.Length).HumanReadableSize() + " to " + exportPath + ".");
+            Console.WriteLine("File exported successfully.");
             Console.ResetColor();
-
-            export.Dispose();
-
-            // Set up a watcher
-            FileSystemWatcher fsw = new FileSystemWatcher(Path.GetDirectoryName(exportPath), Path.GetFileName(exportPath));
-            fsw.NotifyFilter = NotifyFilters.LastWrite;
-            fsw.Changed += new FileSystemEventHandler(fsw_Changed);
-            fsw.EnableRaisingEvents = true;
-
-            FileWatch watch = new FileWatch();
-            watch.FilePath = exportPath;
-            watch.ContentPath = filename;
-            watch.Watcher = fsw;
-
-            watchedFiles.Add(watch);
         }
 
-        /// <summary>
-        /// The event gets fired whenever a watched exported file gets modified externally.
-        /// This event administers the changed state for the application.
-        /// </summary>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
-        static void fsw_Changed(object sender, FileSystemEventArgs e)
-        {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            Console.WriteLine(e.Name + " changed!");
-            
-            IEnumerable<FileWatch> search = watchedFiles.Where(f => f.FilePath == e.FullPath);
-
-            if (search.Count() != 0)
-            {
-                //Console.WriteLine("Administering changed state.");
-
-                IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
-
-                if (content.Count() == 1)
-                {
-                    search.First().Modified = true;
-                    SetPullable(true);
-                }
-                else
-                {
-                    //Console.WriteLine("The linked content entry was not found.");
-                    //Console.WriteLine("Disposing watch object.");
-                    watchedFiles.Remove(search.First());
-                    ((FileSystemWatcher)sender).Dispose();
-                }
-            }
-            else
-            {
-                //Console.WriteLine("The file was not watched.");
-                //Console.WriteLine("Disposing watch object.");
-                watchedFiles.Remove(search.First());
-                ((FileSystemWatcher)sender).Dispose();
-            }
-        }
-
+        
         /// <summary>
         /// Removes a file export watcher and optionally deletes the exported file from the local file system.
         /// </summary>
         /// <param name="filename">The path of the file within the addon to be dropped.
         /// The exported path is known internally.</param>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
-        static void DropExport(string filename)
+        private static void DropExport(string filename)
         {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            if (addon == null)
+            if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
@@ -1295,49 +1141,26 @@ namespace SharpGMad
                 return;
             }
 
-            IEnumerable<FileWatch> search = watchedFiles.Where(f => f.ContentPath == filename);
-
-            if (search.Count() == 0)
+            try
+            {
+                AddonHandle.DropExport(filename);
+            }
+            catch (FileNotFoundException e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("The file is not in an exported state.");
                 Console.ResetColor();
                 return;
             }
-
-            IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
-            if (content.Count() == 0)
+            catch (IOException e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Failed to find representing file in addon.");
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Was unable to delete the exported file.");
                 Console.ResetColor();
-                Console.WriteLine("The watch is corrupted. Disposing.");
-                search.First().Watcher.Dispose();
-                return;
+                Console.WriteLine(e.Message);
             }
 
-            search.First().Watcher.Dispose();
             Console.WriteLine("Export dropped.");
-
-            Console.Write("Delete the exported file too? (Y/N) ");
-            string response = Console.ReadLine();
-            if (response.ToUpperInvariant() == "Y")
-            {
-                try
-                {
-
-                    File.Delete(search.First().FilePath);
-                }
-                catch (Exception e)
-                {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("Was unable to delete the file.");
-                    Console.ResetColor();
-                    Console.WriteLine(e.Message);
-                }
-            }
-
-            watchedFiles.Remove(search.First());
         }
 
         /// <summary>
@@ -1345,12 +1168,9 @@ namespace SharpGMad
         /// </summary>
         /// <param name="filename">The internal path of the file changes should be pulled into.
         /// The exported path is known automatically.</param>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
-        static void PullFile(string filename)
+        private static void PullFile(string filename)
         {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            if (addon == null)
+            if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
@@ -1358,40 +1178,16 @@ namespace SharpGMad
                 return;
             }
 
-            IEnumerable<FileWatch> search = watchedFiles.Where(f => f.ContentPath == filename);
-
-            if (search.Count() == 0)
+            try
+            {
+                AddonHandle.Pull(filename);
+            }
+            catch (FileNotFoundException)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("The file is not in an exported state.");
                 Console.ResetColor();
                 return;
-            }
-
-            if (search.First().Modified == false)
-            {
-                Console.WriteLine("The file is not modified.");
-                return;
-            }
-
-            IEnumerable<ContentFile> content = addon.Files.Where(f => f.Path == search.First().ContentPath);
-            if (content.Count() == 0)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Failed to find representing file in addon.");
-                Console.ResetColor();
-                Console.WriteLine("The watch is corrupted. Disposing.");
-                search.First().Watcher.Dispose();
-                return;
-            }
-
-            Console.WriteLine(((int)content.First().Size).HumanReadableSize() + " in memory [CRC: " + content.First().CRC +
-                "]");
-
-            FileStream fs;
-            try
-            {
-                fs = new FileStream(search.First().FilePath, FileMode.Open, FileAccess.Read);
             }
             catch (IOException e)
             {
@@ -1402,38 +1198,15 @@ namespace SharpGMad
                 return;
             }
 
-            Console.WriteLine(((int)fs.Length).HumanReadableSize() + " exported on disk.");
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Pulling in changes...");
-            Console.ResetColor();
-
-            // Load and write the changes to memory
-            byte[] contBytes = new byte[fs.Length];
-            fs.Seek(0, SeekOrigin.Begin);
-            fs.Read(contBytes, 0, (int)fs.Length);
-            content.First().Content = contBytes;
-
-            fs.Dispose();
-
-            Console.WriteLine("Pulled the changes. [New CRC: " +
-                content.First().CRC + "]");
-
-            // Consider the file unmodified
-            search.First().Modified = false;
-
-            // But the addon itself has been modified
-            SetModified(true);
+            Console.WriteLine(filename + ": Successfully pulled the changes.");
         }
 
         /// <summary>
         /// Saves the changes of the addon to the disk.
         /// </summary>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
-        static void Push()
+        private static void Push()
         {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            if (addon == null)
+            if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
@@ -1441,32 +1214,33 @@ namespace SharpGMad
                 return;
             }
 
-            addon.Sort();
+            foreach (ContentFile f in AddonHandle.OpenAddon.Files)
+            {
+                Console.WriteLine("File index: " + f.Path.TrimStart('/') + " [CRC: " + f.CRC + "] [Size:" + ((int)f.Size).HumanReadableSize() + "]");
+            }
 
-            MemoryStream ms = new MemoryStream();
+            try
+            {
+                AddonHandle.Save();
+            }
+            catch (IOException e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("There was an error saving the changes.");
+                Console.ResetColor();
+                Console.WriteLine(e.Message);
+                return;
+            }
             
-            Writer.Create(addon, ms);
-
-            addonFS.Seek(0, SeekOrigin.Begin);
-            ms.Seek(0, SeekOrigin.Begin);
-            ms.CopyTo(addonFS);
-
-            addonFS.Flush();
-            ms.Dispose();
-
-            SetModified(false);
             Console.WriteLine("Successfully saved the addon.");
         }
 
         /// <summary>
         /// Closes the currently open addon connection.
         /// </summary>
-        [Obsolete("Reimplemented by RealtimeAddon.")]
-        static void CloseAddon()
+        private static void CloseAddon()
         {
-            throw new NotImplementedException("Reimplemented by RealtimeAddon.");
-
-            if (addon == null)
+            if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
@@ -1474,68 +1248,8 @@ namespace SharpGMad
                 return;
             }
 
-            addon = null;
-            CommandlinePrefix = "SharpGMad>";
-            addonFS.Dispose();
-            SetModified(false);
-            SetPullable(false);
-
-            foreach (FileWatch watch in watchedFiles)
-            {
-                watch.Watcher.Dispose();
-            }
-            watchedFiles.Clear();
-        }
-
-        /// <summary>
-        /// Prints the full path of the currently open addon to the console.
-        /// </summary>
-        static void FullPath()
-        {
-            if (addon == null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("No addon is open.");
-                Console.ResetColor();
-                return;
-            }
-
-            Console.WriteLine(Path.GetFullPath(filePath));
-        }
-
-        /// <summary>
-        /// Sets the currently open addon's modified state.
-        /// </summary>
-        static void SetModified(bool modified)
-        {
-            if (modified)
-            {
-                if (addon != null)
-                    CommandlinePrefix = Path.GetFileName(RealtimeCommandline.filePath) + "*>";
-            }
-            else
-            {
-                if (addon != null)
-                    CommandlinePrefix = Path.GetFileName(RealtimeCommandline.filePath) + ">";
-            }
-
-            RealtimeCommandline.modified = modified;
-        }
-
-        /// <summary>
-        /// Sets whether there are exported files which can be pulled.
-        /// </summary>
-        static void SetPullable(bool pullable)
-        {
-            SetModified(RealtimeCommandline.modified); // Set the modified state so it resets the shell prefix
-
-            if (pullable)
-            {
-                CommandlinePrefix = CommandlinePrefix.TrimEnd('>');
-                CommandlinePrefix += "#>";
-            }
-
-            RealtimeCommandline.pullable = pullable;
+            AddonHandle.Close();
+            AddonHandle = null;
         }
     }
 }
