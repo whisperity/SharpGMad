@@ -212,13 +212,13 @@
             this.chkConvertNeeded.AutoSize = true;
             this.chkConvertNeeded.Location = new System.Drawing.Point(15, 60);
             this.chkConvertNeeded.Name = "chkConvertNeeded";
-            this.chkConvertNeeded.Size = new System.Drawing.Size(181, 17);
+            this.chkConvertNeeded.Size = new System.Drawing.Size(199, 17);
             this.chkConvertNeeded.TabIndex = 19;
-            this.chkConvertNeeded.Text = "Convert Garry\'s Mod 12 structure";
+            this.chkConvertNeeded.Text = "Convert Garry\'s Mod 12 addon folder";
             this.chkConvertNeeded.UseVisualStyleBackColor = true;
             this.chkConvertNeeded.CheckedChanged += new System.EventHandler(this.chkConvertNeeded_CheckedChanged);
             // 
-            // LegacyConvert
+            // LegacyCreate
             // 
             this.AcceptButton = this.btnCreate;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -240,7 +240,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "LegacyConvert";
+            this.Name = "LegacyCreate";
             this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
