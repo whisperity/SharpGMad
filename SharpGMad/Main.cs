@@ -629,7 +629,7 @@ namespace SharpGMad
                         return;
                     }
 
-                    // Add a custom event handle so that the form gets updated when a file is pullable.
+                    // Add a custom event handler so that the form gets updated when a file is pullable.
                     AddonHandle.WatchedFiles.Where(f => f.ContentPath == contentPath).First().Watcher.Changed += 
                         new FileSystemEventHandler(fsw_Changed);
                 }

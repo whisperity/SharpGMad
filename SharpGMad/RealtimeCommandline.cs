@@ -904,7 +904,7 @@ namespace SharpGMad
             }
 
             Console.WriteLine(filename + " as ");
-            Console.Write("\t" + Whitelist.GetMatchingString(filename));
+            Console.WriteLine("\t" + Whitelist.GetMatchingString(filename));
 
             try
             {
@@ -1109,12 +1109,29 @@ namespace SharpGMad
                 return;
             }
 
+            // Add a custom event handler so that the form gets updated when a file is pullable.
+            AddonHandle.WatchedFiles.Where(f => f.ContentPath == filename).First().Watcher.Changed +=
+                new FileSystemEventHandler(fsw_Changed);
+
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("File exported successfully.");
             Console.ResetColor();
         }
 
-        
+        private static void fsw_Changed(object sender, FileSystemEventArgs e)
+        {
+            try
+            {
+                Console.WriteLine("The exported file " +
+                    AddonHandle.WatchedFiles.Where(f => f.FilePath == e.FullPath).First().ContentPath + " changed!");
+            }
+            catch (InvalidOperationException)
+            {
+                // The export was removed earlier from the list.
+                ((FileSystemWatcher)sender).Dispose();
+            }
+        }
+
         /// <summary>
         /// Removes a file export watcher and optionally deletes the exported file from the local file system.
         /// </summary>
