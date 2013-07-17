@@ -168,17 +168,12 @@ namespace SharpGMad
 
             foreach (Reader.IndexEntry file in reader.Index)
             {
-                MemoryStream buffer = new MemoryStream();
-                reader.GetFile(file.FileNumber, buffer);
-                
-                buffer.Seek(0, SeekOrigin.Begin);
-
-                byte[] bytes = new byte[buffer.Length];
-                buffer.Read(bytes, 0, (int)buffer.Length);
-
                 try
                 {
-                    AddFile(file.Path, bytes);
+                    CheckRestrictions(file.Path);
+
+                    ContentFile contentFile = new ContentFile(reader, file);
+                    Files.Add(contentFile);
                 }
                 catch (WhitelistException e)
                 {
@@ -237,14 +232,15 @@ namespace SharpGMad
         }
 
         /// <summary>
-        /// Adds the specified file into the Addon's internal container.
+        /// Check against whitelist patterns to ensure that the file is allowed in the addon.
         /// </summary>
-        /// <param name="path">The path of the file.</param>
-        /// <param name="content">Array of bytes containing the file content.</param>
+        /// <param name="path">The path of the file to check</param>
+        /// <returns>True if the file matched whitelist. False in extreme cases.
+        /// Rely on handling the thrown exceptions to sort out prohibited files.</returns>
         /// <exception cref="ArgumentException">Happens if a file with the same path is already added.</exception>
         /// <exception cref="WhitelistException">The file is prohibited from storing by the global whitelist.</exception>
         /// <exception cref="IgnoredException">The file is prohibited from storing by the addon's ignore list.</exception>
-        public void AddFile(string path, byte[] content)
+        private bool CheckRestrictions(string path)
         {
             if (path.ToLowerInvariant() != path)
             {
@@ -257,10 +253,6 @@ namespace SharpGMad
             if (Files.Any(entry => entry.Path == path))
                 throw new ArgumentException("A file with the same path is already added.");
 
-            ContentFile file = new ContentFile();
-            file.Content = content;
-            file.Path = path;
-
             // Check if file is allowed to be added
             if (path == "" || path == null || path == String.Empty)
                 // When adding from realtime, path can become "" if it does not match against the whitelist 
@@ -270,14 +262,48 @@ namespace SharpGMad
                 throw new WhitelistException(path + ": contains upwards traversion");
             if (path == "addon.json")
                 // Never allow addon.json to be added
-                return;
+                throw new WhitelistException(path + ": is addon.json");
             if (IsIgnored(path))
                 throw new IgnoredException(path + ": ignored");
             if (!IsWhitelisted(path))
                 throw new WhitelistException(path + ": not allowed by whitelist.");
 
-            if ( !IsIgnored(path) && IsWhitelisted(path) )
-                Files.Add(file);
+            if (!IsIgnored(path) && IsWhitelisted(path))
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Adds the specified file into the Addon's internal container.
+        /// </summary>
+        /// <param name="path">The path of the file.</param>
+        /// <param name="content">Array of bytes containing the file content.</param>
+        /// <exception cref="ArgumentException">Happens if a file with the same path is already added.</exception>
+        /// <exception cref="WhitelistException">The file is prohibited from storing by the global whitelist.</exception>
+        /// <exception cref="IgnoredException">The file is prohibited from storing by the addon's ignore list.</exception>
+        public void AddFile(string path, byte[] content)
+        {
+            try
+            {
+                // This should throw the exception if error happens.
+                CheckRestrictions(path);
+            }
+            catch (WhitelistException e)
+            {
+                throw e;
+            }
+            catch (IgnoredException e)
+            {
+                throw e;
+            }
+            catch (ArgumentException e)
+            {
+                throw e;
+            }
+
+            ContentFile file = new ContentFile(path, content);
+            Files.Add(file);
         }
 
         /// <summary>
@@ -310,21 +336,245 @@ namespace SharpGMad
     class ContentFile
     {
         /// <summary>
+        /// Indicates the types how a file can be stored.
+        /// </summary>
+        enum ContentStorageType
+        {
+            /// <summary>
+            /// Represents a storage in the addon itself. The contents will be read from the addon file.
+            /// ContentFile.AssociatedReader and ContentFile.ReaderFileEntry must be set.
+            /// </summary>
+            AddonInstance,
+            /// <summary>
+            /// Represents a storage on the filesystem. The contents will be read from the disk.
+            /// ContentFile.ExternalPath must be set.
+            /// </summary>
+            Filesystem
+        }
+
+        /// <summary>
         /// Gets or sets the path of the file.
         /// </summary>
         public string Path;
         /// <summary>
         /// Gets or sets an array of bytes containg the file content.
         /// </summary>
-        public byte[] Content;
+        public byte[] Content
+        {
+            get
+            {
+                byte[] returnContent = null;
+
+                switch (Storage)
+                {
+                    case ContentStorageType.AddonInstance:
+                        if (AssociatedReader == null || ReaderFileEntry == 0)
+                            throw new ArgumentException("Invalid setup in reader information");
+
+                        AssociatedReader.GetFile(ReaderFileEntry, ref returnContent);
+                        break;
+                    case ContentStorageType.Filesystem:
+                        try
+                        {
+                            returnContent = File.ReadAllBytes(ExternalPath);
+                        }
+                        catch (Exception e)
+                        {
+                            throw e;
+                        }
+
+                        break;
+                }
+
+                return returnContent;
+            }
+            set
+            {
+                switch (Storage)
+                {
+                    case ContentStorageType.AddonInstance:
+                        // Convert current content file to a filesystem-backed instance.
+                        Console.WriteLine(Path + ": converted to backed file.");
+                        Storage = ContentStorageType.Filesystem;
+                        AssociatedReader = null;
+                        ReaderFileEntry = 0;
+                        ExternalPath = ContentFile.GenerateExternalPath(Path);
+
+                        // Fallthrough to the next statement so we write the contents.
+                        goto case ContentStorageType.Filesystem;
+                    case ContentStorageType.Filesystem:
+                        try
+                        {
+                            File.WriteAllBytes(ExternalPath, value);
+                        }
+                        catch (Exception e)
+                        {
+                            throw e;
+                        }
+                        break;
+                }
+                return;
+            }
+        }
+
+        /// <summary>
+        /// The storage of the addon.
+        /// </summary>
+        private ContentStorageType Storage;
+
+        /// <summary>
+        /// The reader where the contents can be read if Storage is AddonInstance.
+        /// </summary>
+        private Reader AssociatedReader;
+        /// <summary>
+        /// The index FileNumber in the AssociatedReader if Storage is AddonInstance.
+        /// </summary>
+        private uint ReaderFileEntry;
+
+        /// <summary>
+        /// The path of the file on the disk if Storage is Filesystem.
+        /// </summary>
+        private string ExternalPath;
 
         /// <summary>
         /// Gets the size of the content.
         /// </summary>
-        public long Size { get { return Content.LongLength; } }
+        public long Size
+        {
+            get
+            {
+                if (Storage == ContentStorageType.AddonInstance)
+                {
+                    Reader.IndexEntry entry;
+                    AssociatedReader.GetEntry(ReaderFileEntry, out entry);
+
+                    return entry.Size;
+                }
+                else
+                {
+                    return Content.LongLength;
+                }
+            }
+        }
+
         /// <summary>
         /// Gets the CRC32 checksum of the content.
         /// </summary>
-        public ulong CRC { get { return System.Cryptography.CRC32.ComputeChecksum(Content); } }
+        public uint CRC
+        {
+            get
+            {
+                if (Storage == ContentStorageType.AddonInstance)
+                {
+                    Reader.IndexEntry entry;
+                    AssociatedReader.GetEntry(ReaderFileEntry, out entry);
+
+                    return entry.CRC;
+                }
+                else
+                {
+                    return System.Cryptography.CRC32.ComputeChecksum(Content);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Initializes a new content file using an already existing file from an addon as storage.
+        /// </summary>
+        /// <param name="reader">The reader of the addon.</param>
+        /// <param name="index">The index of the file to use.</param>
+        public ContentFile(Reader reader, Reader.IndexEntry index)
+        {
+            Path = index.Path;
+
+            Storage = ContentStorageType.AddonInstance;
+            AssociatedReader = reader;
+            ReaderFileEntry = index.FileNumber;
+        }
+
+        /// <summary>
+        /// Initializes a new content file using pure content as storage.
+        /// </summary>
+        /// <param name="path">The path of the file WITHIN the addon.</param>
+        /// <param name="content">The array of bytes containing the already set content.</param>
+        public ContentFile(string path, byte[] content)
+        {
+            Storage = ContentStorageType.Filesystem;
+            Path = path;
+
+            ExternalPath = ContentFile.GenerateExternalPath(path);
+
+            Content = content;
+        }
+
+        /// <summary>
+        /// Generates a temporary path for the specified file.
+        /// </summary>
+        /// <param name="path">The path of the file WITHIN the addon.</param>
+        /// <returns>The generated temporary path.</returns>
+        private static string GenerateExternalPath(string path)
+        {
+            string tempfile = System.IO.Path.GetTempFileName();
+            File.Delete(tempfile);
+
+            string tempname = System.IO.Path.GetFileNameWithoutExtension(tempfile);
+
+            return System.IO.Path.GetTempPath() + tempname + "_sharpgmad_" + System.IO.Path.GetFileName(path) + ".tmp";
+        }
+
+        /// <summary>
+        /// Switches the current ContentFile to represent a file saved into an addon.
+        /// Used after saving addons so that previous externally-saved entries are dropped in time.
+        /// </summary>
+        /// <param name="reader">The reader of the addon.</param>
+        /// <param name="index">The index of the file to use.</param>
+        public void SwitchToAddonInstance(Reader reader, Reader.IndexEntry index)
+        {
+            if (Storage == ContentStorageType.Filesystem)
+            {
+                AssociatedReader = reader;
+                ReaderFileEntry = index.FileNumber;
+                DisposeExternal();
+                ExternalPath = null;
+                Storage = ContentStorageType.AddonInstance;
+            }
+            else if (Storage == ContentStorageType.AddonInstance)
+            {
+                // Update the entry itself. There is no need to touch files on disk.
+                AssociatedReader = reader;
+                ReaderFileEntry = index.FileNumber;
+            }
+        }
+
+        /// <summary>
+        /// Disposes the externally saved content backer for the current file.
+        /// </summary>
+        public void DisposeExternal()
+        {
+            if (Storage == ContentStorageType.Filesystem)
+            {
+                try
+                {
+                    File.Delete(ExternalPath);
+                }
+                catch (Exception)
+                {
+                    // Noop.
+                }
+            }
+        }
+
+        /// <summary>
+        /// Cleans up the temporary folder from possible stale externally saved content files.
+        /// </summary>
+        public static void DisposeExternals()
+        {
+            throw new NotImplementedException("Not yet.");
+        }
+
+        ~ContentFile()
+        {
+            DisposeExternal();
+        }
     }
 }

@@ -43,7 +43,7 @@ namespace SharpGMad
             /// <summary>
             /// The CRC checksum of file contents.
             /// </summary>
-            public ulong CRC;
+            public uint CRC;
             /// <summary>
             /// The index of the file.
             /// </summary>
@@ -234,6 +234,24 @@ namespace SharpGMad
         }
 
         /// <summary>
+        /// Rereads and parses the addon data from the specified file once more.
+        /// </summary>
+        /// <exception cref="ReaderException">Parsing errors.</exception>
+        public void Reparse()
+        {
+            Index.Clear();
+
+            try
+            {
+                Parse();
+            }
+            catch (ReaderException ex)
+            {
+                throw ex;
+            }
+        }
+
+        /// <summary>
         /// Gets the index entry for the specified file.
         /// </summary>
         /// <param name="fileID">The index of the file.</param>
@@ -254,7 +272,7 @@ namespace SharpGMad
         }
 
         /// <summary>
-        /// Gets the specified file contents from the addon.
+        /// Gets the specified file contents from the addon and write them into a stream.
         /// </summary>
         /// <param name="fileID">The index of the file.</param>
         /// <param name="buffer">The stream the contents should be written to.</param>
@@ -269,6 +287,24 @@ namespace SharpGMad
             Buffer.Read(read_buffer, 0, (int)entry.Size);
 
             buffer.Write(read_buffer, 0, read_buffer.Length);
+            return true;
+        }
+
+        /// <summary>
+        /// Gets the specified file contents from the addon.
+        /// </summary>
+        /// <param name="fileID">The index of the file.</param>
+        /// <param name="buffer">The variable where the all file bytes should be put.</param>
+        /// <returns>True if the file was successfully read, false otherwise.</returns>
+        public bool GetFile(uint fileID, ref byte[] buffer)
+        {
+            IndexEntry entry;
+            if (!GetEntry(fileID, out entry)) return false;
+
+            buffer = new byte[entry.Size];
+            Buffer.Seek((long)Fileblock + (long)entry.Offset, SeekOrigin.Begin);
+            Buffer.Read(buffer, 0, (int)entry.Size);
+
             return true;
         }
     }

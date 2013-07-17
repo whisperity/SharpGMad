@@ -43,6 +43,10 @@ namespace SharpGMad
         /// </summary>
         private FileStream AddonStream;
         /// <summary>
+        /// The reader corresponding to the handling of this addon on the disk.
+        /// </summary>
+        private Reader AddonReader;
+        /// <summary>
         /// Gets the file path of the addon on the local filesystem.
         /// </summary>
         public string AddonPath { get { return AddonStream.Name; } }
@@ -93,7 +97,7 @@ namespace SharpGMad
         /// <exception cref="ArgumentException">Happens if a file with the same path is already added.</exception>
         /// <exception cref="WhitelistException">There is a file prohibited from storing by the global whitelist.</exception>
         /// <exception cref="IgnoredException">There is a file prohibited from storing by the addon's ignore list.</exception>
-        static public RealtimeAddon Load(string filename)
+        public static RealtimeAddon Load(string filename)
         {
             if (!File.Exists(filename))
             {
@@ -143,6 +147,7 @@ namespace SharpGMad
             }
 
             RealtimeAddon realtime = new RealtimeAddon(addon, fs);
+            realtime.AddonReader = r;
             return realtime;
         }
 
@@ -153,7 +158,7 @@ namespace SharpGMad
         /// <returns>A RealtimeAddon instance.</returns>
         /// <exception cref="UnauthorizedAccessException">The specified file already exists on the local filesystem.</exception>
         /// <exception cref="IOException">There was an error creating a specified file.</exception>
-        static public RealtimeAddon New(string filename)
+        public static RealtimeAddon New(string filename)
         {
             if (File.Exists(filename))
             {
@@ -532,14 +537,57 @@ namespace SharpGMad
             OpenAddon.Sort();
             try
             {
-                Writer.Create(OpenAddon, AddonStream);
+                // It is needed to create a new, temporary file where we write the addon first
+                // Without it, we would "undermount" the current file
+                // And end up overwriting the addon from where ContentFile.Content gets the data we would write.
+                using (FileStream newAddon = new FileStream(AddonStream.Name + "_create",
+                    FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+                {
+                    Writer.Create(OpenAddon, newAddon);
+
+                    // Copy the contents to the real file
+                    newAddon.Seek(0, SeekOrigin.Begin);
+                    AddonStream.Seek(0, SeekOrigin.Begin);
+                    AddonStream.SetLength(0);
+                    newAddon.CopyTo(AddonStream);
+                    AddonStream.Flush();
+                }
             }
             catch (IOException e)
             {
                 throw e;
             }
 
+            // If there were no errors creating and copying the temporary file,
+            // I assume it is safe to delete.
+            File.Delete(AddonStream.Name + "_create");
+
             _modified = false;
+
+            // Reload the content database of the open addon
+            if (AddonReader == null)
+            {
+                try
+                {
+                    AddonReader = new Reader(AddonStream);
+                }
+                catch (IOException e)
+                {
+                    throw e;
+                }
+            }
+            else
+            {
+                AddonReader.Reparse();
+            }
+
+            // Convert all files in the open addon to addon-backed content storages
+            // So after save, the application knows the file is now in the addon.
+            // This also updates the fileIDs in case of a file was reordered when Sort() happened.
+            foreach (Reader.IndexEntry entry in AddonReader.Index)
+            {
+                OpenAddon.Files.Where(f => f.Path == entry.Path).First().SwitchToAddonInstance(AddonReader, entry);
+            }
         }
 
         /// <summary>
