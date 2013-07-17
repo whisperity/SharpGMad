@@ -411,7 +411,24 @@ namespace SharpGMad
                     case "cd":
                         try
                         {
-                            Directory.SetCurrentDirectory(command[1]);
+                            string path;
+                            try
+                            {
+                                string[] param = new string[command.Length - 1];
+                                for (int i = 1; i < command.Length; i++)
+                                {
+                                    param[i - 1] = command[i];
+                                }
+
+                                path = String.Join(" ", param);
+                            }
+                            catch (IndexOutOfRangeException)
+                            {
+                                // Noop.
+                                path = String.Empty;
+                            }
+
+                            Directory.SetCurrentDirectory(path);
                         }
                         catch (IndexOutOfRangeException)
                         {
