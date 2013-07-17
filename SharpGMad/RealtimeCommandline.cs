@@ -954,6 +954,11 @@ namespace SharpGMad
         /// <param name="folder">The folder containing the files to be added.</param>
         private static void AddFolder(string folder)
         {
+            if (folder == String.Empty)
+            {
+                folder = Directory.GetCurrentDirectory();
+            }
+
             foreach (string f in Directory.GetFiles(folder, "*", SearchOption.AllDirectories))
             {
                 string file = f;

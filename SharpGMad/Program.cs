@@ -26,6 +26,9 @@ namespace SharpGMad
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            // Clean up mess the previous executions might have left behind.
+            ContentFile.DisposeExternals();
+
             // If there are parameters present, program starts as a CLI application.
             //
             // If there are no paremeters, the program is restarted in its own console

@@ -240,16 +240,8 @@ namespace SharpGMad
         /// <exception cref="ArgumentException">Happens if a file with the same path is already added.</exception>
         /// <exception cref="WhitelistException">The file is prohibited from storing by the global whitelist.</exception>
         /// <exception cref="IgnoredException">The file is prohibited from storing by the addon's ignore list.</exception>
-        private bool CheckRestrictions(string path)
+        public bool CheckRestrictions(string path)
         {
-            if (path.ToLowerInvariant() != path)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("\t\t[Filename contains capital letters]");
-                Console.ResetColor();
-                path = path.ToLowerInvariant();
-            }
-
             if (Files.Any(entry => entry.Path == path))
                 throw new ArgumentException("A file with the same path is already added.");
 
@@ -284,6 +276,14 @@ namespace SharpGMad
         /// <exception cref="IgnoredException">The file is prohibited from storing by the addon's ignore list.</exception>
         public void AddFile(string path, byte[] content)
         {
+            if (path.ToLowerInvariant() != path)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\t\t[Filename contains capital letters]");
+                Console.ResetColor();
+                path = path.ToLowerInvariant();
+            }
+
             try
             {
                 // This should throw the exception if error happens.
@@ -376,7 +376,9 @@ namespace SharpGMad
                     case ContentStorageType.Filesystem:
                         try
                         {
-                            returnContent = File.ReadAllBytes(ExternalPath);
+                            returnContent = new byte[ExternalFile.Length];
+                            ExternalFile.Seek(0, SeekOrigin.Begin);
+                            ExternalFile.Read(returnContent, 0, (int)ExternalFile.Length);
                         }
                         catch (Exception e)
                         {
@@ -398,14 +400,24 @@ namespace SharpGMad
                         Storage = ContentStorageType.Filesystem;
                         AssociatedReader = null;
                         ReaderFileEntry = 0;
-                        ExternalPath = ContentFile.GenerateExternalPath(Path);
+                        try
+                        {
+                            ExternalFile = new FileStream(ContentFile.GenerateExternalPath(Path), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
+                        }
+                        catch (Exception e)
+                        {
+                            throw e;
+                        }
 
                         // Fallthrough to the next statement so we write the contents.
                         goto case ContentStorageType.Filesystem;
                     case ContentStorageType.Filesystem:
                         try
                         {
-                            File.WriteAllBytes(ExternalPath, value);
+                            ExternalFile.Seek(0, SeekOrigin.Begin);
+                            ExternalFile.Write(value, 0, value.Length);
+                            ExternalFile.Flush();
+                            ExternalFile.SetLength(ExternalFile.Position);
                         }
                         catch (Exception e)
                         {
@@ -432,9 +444,9 @@ namespace SharpGMad
         private uint ReaderFileEntry;
 
         /// <summary>
-        /// The path of the file on the disk if Storage is Filesystem.
+        /// The file on the disk if Storage is Filesystem.
         /// </summary>
-        private string ExternalPath;
+        private FileStream ExternalFile;
 
         /// <summary>
         /// Gets the size of the content.
@@ -502,7 +514,14 @@ namespace SharpGMad
             Storage = ContentStorageType.Filesystem;
             Path = path;
 
-            ExternalPath = ContentFile.GenerateExternalPath(path);
+            try
+            {
+                ExternalFile = new FileStream(ContentFile.GenerateExternalPath(path), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
 
             Content = content;
         }
@@ -535,7 +554,7 @@ namespace SharpGMad
                 AssociatedReader = reader;
                 ReaderFileEntry = index.FileNumber;
                 DisposeExternal();
-                ExternalPath = null;
+
                 Storage = ContentStorageType.AddonInstance;
             }
             else if (Storage == ContentStorageType.AddonInstance)
@@ -555,7 +574,9 @@ namespace SharpGMad
             {
                 try
                 {
-                    File.Delete(ExternalPath);
+                    string path = ExternalFile.Name;
+                    ExternalFile.Dispose();
+                    File.Delete(path);
                 }
                 catch (Exception)
                 {
@@ -569,7 +590,18 @@ namespace SharpGMad
         /// </summary>
         public static void DisposeExternals()
         {
-            throw new NotImplementedException("Not yet.");
+            foreach (string file in Directory.GetFiles(System.IO.Path.GetTempPath(),
+                "tmp*_sharpgmad_*.tmp", SearchOption.TopDirectoryOnly))
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception)
+                {
+                    // Noop. It is only a temporary file, it shouldn't be that bad if we don't clean it up.
+                }
+            }
         }
 
         ~ContentFile()

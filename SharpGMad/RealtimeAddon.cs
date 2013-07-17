@@ -225,15 +225,31 @@ namespace SharpGMad
                 throw new FileNotFoundException("The specified file " + filename + " does not exist.");
             }
 
+            // Prevent the need to read the contents of a file if it cannot be added.
+            string path = Whitelist.GetMatchingString(filename);
+
+            try
+            {
+                OpenAddon.CheckRestrictions(path);
+            }
+            catch (IgnoredException e)
+            {
+                throw e;
+            }
+            catch (WhitelistException e)
+            {
+                throw e;
+            }
+            catch (ArgumentException e)
+            {
+                throw e;
+            }
+
             byte[] bytes;
 
             try
             {
-                using (FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    bytes = new byte[fs.Length];
-                    fs.Read(bytes, 0, (int)fs.Length);
-                }
+                bytes = File.ReadAllBytes(filename);
             }
             catch (IOException e)
             {
