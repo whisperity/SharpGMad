@@ -396,7 +396,6 @@ namespace SharpGMad
                 {
                     case ContentStorageType.AddonInstance:
                         // Convert current content file to a filesystem-backed instance.
-                        Console.WriteLine(Path + ": converted to backed file.");
                         Storage = ContentStorageType.Filesystem;
                         AssociatedReader = null;
                         ReaderFileEntry = 0;
