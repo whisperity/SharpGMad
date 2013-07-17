@@ -416,6 +416,13 @@ namespace SharpGMad
                     cmsFileEntry.Show(Cursor.Position);
         }
 
+        private void lstFiles_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete)
+                if (((System.Windows.Forms.ListView)sender).FocusedItem != null)
+                    tsmFileRemove_Click(sender, e);
+        }
+
         private void tsmFileRemove_Click(object sender, EventArgs e)
         {
             if (lstFiles.SelectedItems.Count == 1)
