@@ -69,7 +69,7 @@ namespace SharpGMad
             {
                 if (value)
                 {
-                    Modified = value;
+                    _modified = value;
                 }
                 else if (!value)
                 {
