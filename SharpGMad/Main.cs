@@ -335,12 +335,15 @@ namespace SharpGMad
                 // One file is selected
                 if (((System.Windows.Forms.ListView)sender).FocusedItem != null)
                 {
-                    // Allow remove and export
+                    // Allow remove, export and execution
                     tsmFileRemove.Enabled = true;
                     tsmFileRemove.Visible = true;
 
                     tsmFileExtract.Enabled = true;
                     tsmFileExtract.Visible = true;
+
+                    tsmShellExec.Enabled = true;
+                    tsmShellExec.Visible = true;
 
                     // Allow export (and related) options
                     IEnumerable<FileWatch> isExported = AddonHandle.WatchedFiles.Where(f => f.ContentPath ==
@@ -369,12 +372,15 @@ namespace SharpGMad
             }
             else if (((System.Windows.Forms.ListView)sender).SelectedItems.Count > 1)
             {
-                // Multiple files support remove and extract, no export-related stuff
+                // Multiple files support remove, extract, but no exec and export-related stuff
                 tsmFileRemove.Enabled = true;
                 tsmFileRemove.Visible = true;
 
                 tsmFileExtract.Enabled = true;
                 tsmFileExtract.Visible = true;
+
+                tsmShellExec.Enabled = false;
+                tsmShellExec.Visible = false;
 
                 tssExportSeparator.Visible = false;
 
@@ -396,6 +402,9 @@ namespace SharpGMad
                 tsmFileExtract.Enabled = false;
                 tsmFileExtract.Visible = false;
 
+                tsmShellExec.Enabled = false;
+                tsmShellExec.Visible = false;
+
                 tssExportSeparator.Visible = false;
 
                 tsmFileExportTo.Enabled = false;
@@ -416,11 +425,25 @@ namespace SharpGMad
                     cmsFileEntry.Show(Cursor.Position);
         }
 
+        private void lstFiles_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && e.Clicks == 2)
+                if (((System.Windows.Forms.ListView)sender).FocusedItem.Bounds.Contains(e.Location) == true)
+                    tsmShellExec_Click(sender, e);
+        }
+
         private void lstFiles_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Delete)
+            {
                 if (((System.Windows.Forms.ListView)sender).FocusedItem != null)
                     tsmFileRemove_Click(sender, e);
+            }
+            else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Return)
+            {
+                if (((System.Windows.Forms.ListView)sender).FocusedItem != null)
+                    tsmShellExec_Click(sender, e);
+            }
         }
 
         private void tsmFileRemove_Click(object sender, EventArgs e)
@@ -875,6 +898,51 @@ namespace SharpGMad
                 }
 
                 fbdFileExtractMulti.Reset();
+            }
+        }
+
+        private void tsmShellExec_Click(object sender, EventArgs e)
+        {
+            if (lstFiles.SelectedItems.Count == 1)
+            {
+                if (lstFiles.FocusedItem != null)
+                {
+                    string temppath;
+                    try
+                    {
+                        temppath = Path.GetTempPath() + "/" + Path.GetFileName(lstFiles.FocusedItem.Text);
+
+                        try
+                        {
+                            File.WriteAllBytes(temppath, AddonHandle.GetFile(lstFiles.FocusedItem.Group.Header +
+                                "/" + lstFiles.FocusedItem.Text).Content);
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            MessageBox.Show("The file was not found in the archive!", "Remove file",
+                                MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                            return;
+                        }
+                        catch (Exception)
+                        {
+                            MessageBox.Show("The file couldn't be saved to the disk.", "Shell execute",
+                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            return;
+                        }
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        MessageBox.Show("The file was not found in the archive!", "Remove file",
+                            MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        return;
+                    }
+
+                    // Start the file
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                    {
+                        UseShellExecute = true,
+                    });
+                }
             }
         }
     }

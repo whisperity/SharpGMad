@@ -117,6 +117,7 @@ indicates the path of the file **within** the addon, not the path of the
 exported file)
  * `drop <filename>`: Drop the export and delete the exported file
 (`<filename>` is file path **within** the addon)
+ * `shellexec <path>`: Execute the specified file
 * _Metadata operations_
  * **Console only!** `get` or `set`: List the handled metadata parameters
  * `get <parameter>`: Print the value of `<parameter>`

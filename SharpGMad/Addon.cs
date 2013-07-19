@@ -315,6 +315,28 @@ namespace SharpGMad
         }
 
         /// <summary>
+        /// Gets the ContentFile entry for the specified path.
+        /// </summary>
+        /// <param name="path">The path of the file WITHIN the addon.</param>
+        /// <returns>The ContentFile instance.</returns>
+        /// <exception cref="FileNotFoundException">The specified file is not in the collection.</exception>
+        public ContentFile GetFile(string path)
+        {
+            ContentFile file;
+
+            try
+            {
+                file = Files.Where(e => e.Path == path).First();
+            }
+            catch (InvalidOperationException)
+            {
+                throw new FileNotFoundException("The file is not in the archive.");
+            }
+
+            return file;
+        }
+
+        /// <summary>
         /// Removes the specified file and its contents from the internal storage.
         /// </summary>
         /// <param name="path">The path of the file.</param>
@@ -530,7 +552,7 @@ namespace SharpGMad
         /// </summary>
         /// <param name="path">The path of the file WITHIN the addon.</param>
         /// <returns>The generated temporary path.</returns>
-        private static string GenerateExternalPath(string path)
+        public static string GenerateExternalPath(string path)
         {
             string tempfile = System.IO.Path.GetTempFileName();
             File.Delete(tempfile);

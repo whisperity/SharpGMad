@@ -393,6 +393,27 @@ namespace SharpGMad
                     case "push":
                         Push();
                         break;
+                    case "shellexec":
+                        if (AddonHandle == null)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("No addon is open.");
+                            Console.ResetColor();
+                            break;
+                        }
+
+                        try
+                        {
+                            ShellExecute(command[1]);
+                        }
+                        catch (IndexOutOfRangeException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("The parameter was not specified.");
+                            Console.ResetColor();
+                            break;
+                        }
+                        break;
                     case "path":
                         if (AddonHandle == null)
                         {
@@ -553,6 +574,7 @@ namespace SharpGMad
                             Console.WriteLine("get <parameter>            Prints the value of metadata <parameter>");
                             Console.WriteLine("set <parameter> [value]    Sets metadata <parameter> to the specified [value]");
                             Console.WriteLine("push                       Writes the changes to the disk");
+                            Console.WriteLine("shellexec <path>           Execute the specified file");
                             Console.WriteLine("close                      Closes the addon (dropping all changes)");
                             Console.WriteLine("path                       Prints the full path of the current addon.");
                         }
@@ -1261,6 +1283,51 @@ namespace SharpGMad
             }
             
             Console.WriteLine("Successfully saved the addon.");
+        }
+
+        /// <summary>
+        /// Executes the specified file from the archive.
+        /// </summary>
+        /// <param name="path">The path of the file WITHIN the addon.</param>
+        private static void ShellExecute(string path)
+        {
+            string temppath;
+            try
+            {
+                temppath = Path.GetTempPath() + "/" + Path.GetFileName(path);
+
+                try
+                {
+                    File.WriteAllBytes(temppath, AddonHandle.GetFile(path).Content);
+                }
+                catch (FileNotFoundException)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("The file was not found in the archive!");
+                    Console.ResetColor();
+                    return;
+                }
+                catch (Exception)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("The file couldn't be saved to the disk.");
+                    Console.ResetColor();
+                    return;
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("The file was not found in the archive!");
+                Console.ResetColor();
+                return;
+            }
+
+            // Start the file
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+            {
+                UseShellExecute = true
+            });
         }
 
         /// <summary>

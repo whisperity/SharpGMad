@@ -545,6 +545,24 @@ namespace SharpGMad
         }
 
         /// <summary>
+        /// Gets the ContentFile entry for the specified path.
+        /// </summary>
+        /// <param name="path">The path of the file WITHIN the addon.</param>
+        /// <returns>The ContentFile instance.</returns>
+        /// <exception cref="FileNotFoundException">The specified file is not in the collection.</exception>
+        public ContentFile GetFile(string path)
+        {
+            try
+            {
+                return OpenAddon.GetFile(path);
+            }
+            catch (FileNotFoundException e)
+            {
+                throw e;
+            }
+        }
+
+        /// <summary>
         /// Saves the changes of the encapsulated addon to its file stream.
         /// </summary>
         /// <exception cref="IOException">Happens if there is a problem with creating the addon into its stream.</exception>

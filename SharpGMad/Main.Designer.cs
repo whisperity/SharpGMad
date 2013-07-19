@@ -67,6 +67,7 @@
             this.sfdExportFile = new System.Windows.Forms.SaveFileDialog();
             this.tsmFileRemove = new System.Windows.Forms.ToolStripMenuItem();
             this.tssExportSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.tsmShellExec = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFileExportTo = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFilePull = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFileDropExport = new System.Windows.Forms.ToolStripMenuItem();
@@ -97,6 +98,7 @@
             this.lstFiles.SelectedIndexChanged += new System.EventHandler(this.lstFiles_SelectedIndexChanged);
             this.lstFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstFiles_KeyDown);
             this.lstFiles.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseClick);
+            this.lstFiles.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseDoubleClick);
             // 
             // ofdAddon
             // 
@@ -436,9 +438,17 @@
             this.tssExportSeparator.Name = "tssExportSeparator";
             this.tssExportSeparator.Size = new System.Drawing.Size(135, 6);
             // 
+            // tsmShellExec
+            // 
+            this.tsmShellExec.Image = global::SharpGMad.Properties.Resources.execute;
+            this.tsmShellExec.Name = "tsmShellExec";
+            this.tsmShellExec.Size = new System.Drawing.Size(142, 22);
+            this.tsmShellExec.Text = "Shell execute";
+            this.tsmShellExec.ToolTipText = "Run the selected file like it was opened in Explorer";
+            this.tsmShellExec.Click += new System.EventHandler(this.tsmShellExec_Click);
+            // 
             // tsmFileExportTo
             // 
-            this.tsmFileExportTo.Enabled = false;
             this.tsmFileExportTo.Image = global::SharpGMad.Properties.Resources.export;
             this.tsmFileExportTo.Name = "tsmFileExportTo";
             this.tsmFileExportTo.Size = new System.Drawing.Size(138, 22);
@@ -449,7 +459,6 @@
             // 
             // tsmFilePull
             // 
-            this.tsmFilePull.Enabled = false;
             this.tsmFilePull.Image = global::SharpGMad.Properties.Resources.pull;
             this.tsmFilePull.Name = "tsmFilePull";
             this.tsmFilePull.Size = new System.Drawing.Size(138, 22);
@@ -459,7 +468,6 @@
             // 
             // tsmFileDropExport
             // 
-            this.tsmFileDropExport.Enabled = false;
             this.tsmFileDropExport.Image = global::SharpGMad.Properties.Resources.drop;
             this.tsmFileDropExport.Name = "tsmFileDropExport";
             this.tsmFileDropExport.Size = new System.Drawing.Size(138, 22);
@@ -472,6 +480,7 @@
             this.cmsFileEntry.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmFileRemove,
             this.tsmFileExtract,
+	     this.tsmShellExec,
             this.tssExportSeparator,
             this.tsmFileExportTo,
             this.tsmFilePull,
@@ -566,6 +575,7 @@
         private System.Windows.Forms.ContextMenuStrip cmsFileEntry;
         private System.Windows.Forms.ToolStripMenuItem tsmFileExtract;
         private System.Windows.Forms.FolderBrowserDialog fbdFileExtractMulti;
+        private System.Windows.Forms.ToolStripMenuItem tsmShellExec;
 
 
 
