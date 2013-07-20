@@ -132,18 +132,18 @@ namespace SharpGMad
 
                 Buffer = stream;
             }
-            catch (IOException ex)
+            catch (IOException)
             {
-                throw ex;
+                throw;
             }
 
             try
             {
                 Parse();
             }
-            catch (ReaderException ex)
+            catch (ReaderException)
             {
-                throw ex;
+                throw;
             }
         }
 
@@ -245,9 +245,9 @@ namespace SharpGMad
             {
                 Parse();
             }
-            catch (ReaderException ex)
+            catch (ReaderException)
             {
-                throw ex;
+                throw;
             }
         }
 

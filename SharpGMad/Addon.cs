@@ -175,17 +175,17 @@ namespace SharpGMad
                     ContentFile contentFile = new ContentFile(reader, file);
                     Files.Add(contentFile);
                 }
-                catch (WhitelistException e)
+                catch (WhitelistException)
                 {
-                    throw e;
+                    throw;
                 }
-                catch (IgnoredException e)
+                catch (IgnoredException)
                 {
-                    throw e;
+                    throw;
                 }
-                catch (ArgumentException e)
+                catch (ArgumentException)
                 {
-                    throw e;
+                    throw;
                 }
             }
         }
@@ -289,17 +289,17 @@ namespace SharpGMad
                 // This should throw the exception if error happens.
                 CheckRestrictions(path);
             }
-            catch (WhitelistException e)
+            catch (WhitelistException)
             {
-                throw e;
+                throw;
             }
-            catch (IgnoredException e)
+            catch (IgnoredException)
             {
-                throw e;
+                throw;
             }
-            catch (ArgumentException e)
+            catch (ArgumentException)
             {
-                throw e;
+                throw;
             }
 
             ContentFile file = new ContentFile(path, content);
@@ -394,18 +394,12 @@ namespace SharpGMad
                             throw new ArgumentException("Invalid setup in reader information");
 
                         AssociatedReader.GetFile(ReaderFileEntry, ref returnContent);
+
                         break;
                     case ContentStorageType.Filesystem:
-                        try
-                        {
-                            returnContent = new byte[ExternalFile.Length];
-                            ExternalFile.Seek(0, SeekOrigin.Begin);
-                            ExternalFile.Read(returnContent, 0, (int)ExternalFile.Length);
-                        }
-                        catch (Exception e)
-                        {
-                            throw e;
-                        }
+                        returnContent = new byte[ExternalFile.Length];
+                        ExternalFile.Seek(0, SeekOrigin.Begin);
+                        ExternalFile.Read(returnContent, 0, (int)ExternalFile.Length);
 
                         break;
                 }
@@ -421,29 +415,16 @@ namespace SharpGMad
                         Storage = ContentStorageType.Filesystem;
                         AssociatedReader = null;
                         ReaderFileEntry = 0;
-                        try
-                        {
-                            ExternalFile = new FileStream(ContentFile.GenerateExternalPath(Path), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
-                        }
-                        catch (Exception e)
-                        {
-                            throw e;
-                        }
+                        ExternalFile = new FileStream(ContentFile.GenerateExternalPath(Path), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
 
                         // Fallthrough to the next statement so we write the contents.
                         goto case ContentStorageType.Filesystem;
                     case ContentStorageType.Filesystem:
-                        try
-                        {
-                            ExternalFile.Seek(0, SeekOrigin.Begin);
-                            ExternalFile.Write(value, 0, value.Length);
-                            ExternalFile.Flush();
-                            ExternalFile.SetLength(ExternalFile.Position);
-                        }
-                        catch (Exception e)
-                        {
-                            throw e;
-                        }
+                        ExternalFile.Seek(0, SeekOrigin.Begin);
+                        ExternalFile.Write(value, 0, value.Length);
+                        ExternalFile.Flush();
+                        ExternalFile.SetLength(ExternalFile.Position);
+
                         break;
                 }
                 return;
@@ -535,14 +516,7 @@ namespace SharpGMad
             Storage = ContentStorageType.Filesystem;
             Path = path;
 
-            try
-            {
-                ExternalFile = new FileStream(ContentFile.GenerateExternalPath(path), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            ExternalFile = new FileStream(ContentFile.GenerateExternalPath(path), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None);
 
             Content = content;
         }
@@ -601,7 +575,7 @@ namespace SharpGMad
                 }
                 catch (Exception)
                 {
-                    // Noop.
+                    // We couldn't delete the file. Noop, we just leave it there.
                 }
             }
         }

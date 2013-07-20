@@ -48,7 +48,7 @@ namespace SharpGMad
                 }
                 else if (AddonHandle is RealtimeAddon)
                 {
-                    Console.Write(Path.GetFileName(AddonHandle.AddonPath) + 
+                    Console.Write(Path.GetFileName(AddonHandle.AddonPath) +
                         (AddonHandle.Modified ? "*" : null) + (AddonHandle.Pullable ? "#" : null) + "> ");
                 }
 
@@ -183,7 +183,7 @@ namespace SharpGMad
                             }
                         }
 
-                        if ( command.Length < 3 )
+                        if (command.Length < 3)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("The filename was not specified.");
@@ -244,7 +244,7 @@ namespace SharpGMad
                                 int i = 0;
                                 foreach (FileWatch watch in AddonHandle.WatchedFiles)
                                 {
-                                    Console.WriteLine(++i + 
+                                    Console.WriteLine(++i +
                                         ((watch.Modified) ? "* " : " ") +
                                         watch.ContentPath + " at " + watch.FilePath);
                                 }
@@ -279,7 +279,7 @@ namespace SharpGMad
                         {
                             DropExport(command[1]);
                         }
-                        catch(IndexOutOfRangeException)
+                        catch (IndexOutOfRangeException)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("The filename was not specified.");
@@ -539,7 +539,7 @@ namespace SharpGMad
 
                                 // Open the GUI with the path. The addon will automatically reload.
                                 System.Windows.Forms.Application.Run(new Main(new string[] { addonpath }));
-                                
+
                                 // This thread will hang until the GUI is closed.
                                 Console.WriteLine("GUI was closed. Reopening the addon...");
                                 LoadAddon(addonpath);

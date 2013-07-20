@@ -109,9 +109,9 @@ namespace SharpGMad
             {
                 fs = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                throw e;
+                throw;
             }
 
             Reader r;
@@ -119,13 +119,13 @@ namespace SharpGMad
             {
                 r = new Reader(fs);
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                throw e;
+                throw;
             }
-            catch (ReaderException e)
+            catch (ReaderException)
             {
-                throw e;
+                throw;
             }
 
             Addon addon;
@@ -133,17 +133,17 @@ namespace SharpGMad
             {
                 addon = new Addon(r);
             }
-            catch (ArgumentException e)
+            catch (ArgumentException)
             {
-                throw e;
+                throw;
             }
-            catch (WhitelistException e)
+            catch (WhitelistException)
             {
-                throw e;
+                throw;
             }
-            catch (IgnoredException e)
+            catch (IgnoredException)
             {
-                throw e;
+                throw;
             }
 
             RealtimeAddon realtime = new RealtimeAddon(addon, fs);
@@ -176,9 +176,9 @@ namespace SharpGMad
             {
                 fs = new FileStream(filename, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                throw e;
+                throw;
             }
 
             Addon addon = new Addon();
@@ -232,17 +232,17 @@ namespace SharpGMad
             {
                 OpenAddon.CheckRestrictions(path);
             }
-            catch (IgnoredException e)
+            catch (IgnoredException)
             {
-                throw e;
+                throw;
             }
-            catch (WhitelistException e)
+            catch (WhitelistException)
             {
-                throw e;
+                throw;
             }
-            catch (ArgumentException e)
+            catch (ArgumentException)
             {
-                throw e;
+                throw;
             }
 
             byte[] bytes;
@@ -251,9 +251,9 @@ namespace SharpGMad
             {
                 bytes = File.ReadAllBytes(filename);
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                throw e;
+                throw;
             }
 
             AddFile(Whitelist.GetMatchingString(filename), bytes);
@@ -273,17 +273,17 @@ namespace SharpGMad
             {
                 OpenAddon.AddFile(path, content);
             }
-            catch (IgnoredException e)
+            catch (IgnoredException)
             {
-                throw e;
+                throw;
             }
-            catch (WhitelistException e)
+            catch (WhitelistException)
             {
-                throw e;
+                throw;
             }
-            catch (ArgumentException e)
+            catch (ArgumentException)
             {
-                throw e;
+                throw;
             }
 
             _modified = true;
@@ -300,9 +300,9 @@ namespace SharpGMad
             {
                 OpenAddon.RemoveFile(path);
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
-                throw e;
+                throw;
             }
 
             _modified = true;
@@ -353,9 +353,9 @@ namespace SharpGMad
             {
                 extract = new FileStream(to, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                throw e;
+                throw;
             }
 
             extract.Write(file.Content, 0, (int)file.Size);
@@ -399,17 +399,17 @@ namespace SharpGMad
             {
                 ExtractFile(path, to);
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
-                throw e;
+                throw;
             }
-            catch (UnauthorizedAccessException e)
+            catch (UnauthorizedAccessException)
             {
-                throw e;
+                throw;
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                throw e;
+                throw;
             }
 
             FileSystemWatcher fsw = new FileSystemWatcher(Path.GetDirectoryName(to), Path.GetFileName(to));
@@ -479,9 +479,9 @@ namespace SharpGMad
             {
                 File.Delete(watch.FilePath);
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                throw e;
+                throw;
             }
         }
 
@@ -521,15 +521,14 @@ namespace SharpGMad
                 search.Watcher.Dispose();
             }
 
-
             FileStream fs;
             try
             {
                 fs = new FileStream(search.FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                throw e;
+                throw;
             }
 
             byte[] contBytes = new byte[fs.Length];
@@ -556,9 +555,9 @@ namespace SharpGMad
             {
                 return OpenAddon.GetFile(path);
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
-                throw e;
+                throw;
             }
         }
 
@@ -587,9 +586,9 @@ namespace SharpGMad
                     AddonStream.Flush();
                 }
             }
-            catch (IOException e)
+            catch (IOException)
             {
-                throw e;
+                throw;
             }
 
             // If there were no errors creating and copying the temporary file,
@@ -605,9 +604,9 @@ namespace SharpGMad
                 {
                     AddonReader = new Reader(AddonStream);
                 }
-                catch (IOException e)
+                catch (IOException)
                 {
-                    throw e;
+                    throw;
                 }
             }
             else
