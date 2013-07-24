@@ -49,12 +49,6 @@
   <ItemGroup>
     <Compile Include="Addon.cs" />
     <Compile Include="RealtimeAddon.cs" />
-    <Compile Include="UpdateMetadata.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="UpdateMetadata.Designer.cs">
-      <DependentUpon>UpdateMetadata.cs</DependentUpon>
-    </Compile>
     <Compile Include="LegacyExtract.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -91,9 +85,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="UpdateMetadata.resx">
-      <DependentUpon>UpdateMetadata.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="LegacyExtract.resx">
       <DependentUpon>LegacyExtract.cs</DependentUpon>
     </EmbeddedResource>
@@ -121,12 +112,12 @@
     <None Include="Resources\save.png" />
     <None Include="Resources\create.ico" />
     <None Include="Resources\extract.ico" />
-    <None Include="Resources\metadata.ico" />
     <None Include="Resources\drop.png" />
     <None Include="Resources\export.png" />
     <None Include="Resources\pull.png" />
     <None Include="Resources\pull_all.png" />
     <None Include="Resources\execute.png" />
+    <None Include="Resources\discard.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

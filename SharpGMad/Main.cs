@@ -108,6 +108,7 @@ namespace SharpGMad
             {
                 UpdateMetadataPanel();
                 UpdateFileList();
+                UpdateModified();
 
                 tsbAddFile.Enabled = true;
                 tsbUpdateMetadata.Enabled = true;
@@ -115,17 +116,8 @@ namespace SharpGMad
         }
 
         /// <summary>
-        /// Updates the metadata information printed to the user with the current metadata of the open addon.
+        /// Updates the form so it reflects the modified or not modified state.
         /// </summary>
-        public void UpdateMetadataPanel()
-        {
-            txtTitle.Text = AddonHandle.OpenAddon.Title;
-            txtAuthor.Text = AddonHandle.OpenAddon.Author;
-            txtType.Text = AddonHandle.OpenAddon.Type;
-            txtTags.Text = String.Join(", ", AddonHandle.OpenAddon.Tags.ToArray());
-            txtDescription.Text = AddonHandle.OpenAddon.Description;
-        }
-
         private void UpdateModified()
         {
             // Invoke the method if it was called from a thread which is not the thread Main was created in.
@@ -207,15 +199,56 @@ namespace SharpGMad
         }
 
         /// <summary>
+        /// Updates the metadata panel with the information fetched from the current addon.
+        /// </summary>
+        private void UpdateMetadataPanel()
+        {
+            txtMetadataTitle.Text = AddonHandle.OpenAddon.Title;
+            txtMetadataAuthor.Text = AddonHandle.OpenAddon.Author;
+            txtMetadataDescription.Text = AddonHandle.OpenAddon.Description;
+
+            cmbMetadataType.Items.Clear();
+            cmbMetadataType.Items.AddRange(Tags.Type);
+            cmbMetadataType.SelectedItem = AddonHandle.OpenAddon.Type;
+
+            cmbMetadataTag1.Items.Clear();
+            cmbMetadataTag1.Items.AddRange(Tags.Misc);
+            cmbMetadataTag1.Items.Add("");
+            try
+            {
+                cmbMetadataTag1.SelectedItem = AddonHandle.OpenAddon.Tags[0];
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // No first tag, select the empty one
+                cmbMetadataTag1.SelectedItem = "";
+            }
+
+            cmbMetadataTag2.Items.Clear();
+            cmbMetadataTag2.Items.AddRange(Tags.Misc);
+            cmbMetadataTag2.Items.Add("");
+            try
+            {
+                cmbMetadataTag2.SelectedItem = AddonHandle.OpenAddon.Tags[1];
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // No second tag, select the empty one
+                cmbMetadataTag2.SelectedItem = "";
+            }
+        }
+
+        /// <summary>
         /// Closes the currently open addon connection.
         /// </summary>
         private void UnloadAddon()
         {
-            txtTitle.Text = String.Empty;
-            txtAuthor.Text = String.Empty;
-            txtType.Text = String.Empty;
-            txtTags.Text = String.Empty;
-            txtDescription.Text = String.Empty;
+            txtMetadataTitle.Text = String.Empty;
+            txtMetadataAuthor.Text = String.Empty;
+            cmbMetadataType.Items.Clear();
+            cmbMetadataTag1.Items.Clear();
+            cmbMetadataTag2.Items.Clear();
+            txtMetadataDescription.Text = String.Empty;
 
             lstFiles.Items.Clear();
             lstFiles.Groups.Clear();
@@ -228,6 +261,7 @@ namespace SharpGMad
             AddonHandle = null;
 
             tsbUpdateMetadata.Enabled = false;
+            tsbDiscardMetadataChanges_Click(null, new EventArgs());
             tsbAddFile.Enabled = false;
         }
 
@@ -236,13 +270,13 @@ namespace SharpGMad
         Size txtDescriptionSizeDifference;
         private void Main_Load(object sender, EventArgs e)
         {
-            txtDescriptionSizeDifference = new Size(pnlRightSide.Size.Width - txtDescription.Size.Width,
-                pnlRightSide.Size.Height - txtDescription.Size.Height);
+            txtDescriptionSizeDifference = new Size(pnlRightSide.Size.Width - txtMetadataDescription.Size.Width,
+                pnlRightSide.Size.Height - txtMetadataDescription.Size.Height);
         }
 
         private void Main_Resize(object sender, EventArgs e)
         {
-            txtDescription.Size = new Size(pnlRightSide.Size.Width - txtDescriptionSizeDifference.Width,
+            txtMetadataDescription.Size = new Size(pnlRightSide.Size.Width - txtDescriptionSizeDifference.Width,
                 pnlRightSide.Size.Height - txtDescriptionSizeDifference.Height);
         }
         // Dock the txtDescription text box.
@@ -510,37 +544,149 @@ namespace SharpGMad
 
         private void tsbUpdateMetadata_Click(object sender, EventArgs e)
         {
-            UpdateMetadata mdForm = new UpdateMetadata(AddonHandle);
+            /*UpdateMetadata mdForm = new UpdateMetadata(AddonHandle);
             mdForm.Owner = this;
-            mdForm.ShowDialog(this);
+            mdForm.ShowDialog(this);*/
+
+            // Use a toggle mechanism to enable and disable the changing of metadata
+            if (tsbUpdateMetadata.Checked == false)
+            {
+                txtMetadataTitle.ReadOnly = false;
+                //txtMetadataAuthor.ReadOnly = false;
+                cmbMetadataType.Enabled = true;
+                cmbMetadataTag1.Enabled = true;
+                cmbMetadataTag2.Enabled = true;
+                txtMetadataDescription.ReadOnly = false;
+
+                tsbUpdateMetadata.Checked = true;
+                tsbDiscardMetadataChanges.Enabled = true;
+                tsbDiscardMetadataChanges.Visible = true;
+            }
+            else if (tsbUpdateMetadata.Checked == true)
+            {
+                // Save the metadata changes
+                if (cmbMetadataTag1.SelectedItem != null && cmbMetadataTag2.SelectedItem != null)
+                {
+                    if (cmbMetadataTag1.SelectedItem.ToString() == cmbMetadataTag2.SelectedItem.ToString() &&
+                        !(cmbMetadataTag1.SelectedItem.ToString() == "" || cmbMetadataTag2.SelectedItem.ToString() == ""))
+                    {
+                        MessageBox.Show("You selected the same tag twice!", "Update metadata",
+                            MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                        return;
+                    }
+                }
+
+                if (cmbMetadataType.SelectedItem == null || !Tags.TypeExists(cmbMetadataType.SelectedItem.ToString()))
+                {
+                    MessageBox.Show("The selected type is invalid!", "Update metadata",
+                        MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                    return;
+                }
+
+                if (cmbMetadataTag1.SelectedItem != null)
+                {
+                    if (!Tags.TagExists(cmbMetadataTag1.SelectedItem.ToString()) && cmbMetadataTag1.SelectedItem.ToString() != "")
+                    {
+                        MessageBox.Show("The selected tags are invalid!", "Update metadata",
+                            MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                        return;
+                    }
+                }
+
+                if (cmbMetadataTag2.SelectedItem != null)
+                {
+                    if (!Tags.TagExists(cmbMetadataTag2.SelectedItem.ToString()) && cmbMetadataTag2.SelectedItem.ToString() != "")
+                    {
+                        MessageBox.Show("The selected tags are invalid!", "Update metadata",
+                            MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                        return;
+                    }
+                }
+
+                AddonHandle.OpenAddon.Title = txtMetadataTitle.Text;
+                //AddonHandle.OpenAddon.Author = txtMetadataAuthor.Text;
+                if (cmbMetadataType.SelectedItem != null)
+                    AddonHandle.OpenAddon.Type = cmbMetadataType.SelectedItem.ToString();
+                AddonHandle.OpenAddon.Tags = new List<string>(2);
+                if (cmbMetadataTag1.SelectedItem != null && cmbMetadataTag1.SelectedItem.ToString() != "")
+                    AddonHandle.OpenAddon.Tags.Add(cmbMetadataTag1.SelectedItem.ToString());
+                if (cmbMetadataTag2.SelectedItem != null && cmbMetadataTag2.SelectedItem.ToString() != "")
+                    AddonHandle.OpenAddon.Tags.Add(cmbMetadataTag2.SelectedItem.ToString());
+                AddonHandle.OpenAddon.Description = txtMetadataDescription.Text;
+
+                AddonHandle.Modified = true;
+                UpdateModified();
+                UpdateMetadataPanel(); // Force reload the values in the metadata panel so we're sure the addon is correctly set.
+
+                // Resets the controls
+                txtMetadataTitle.ReadOnly = true;
+                //txtMetadataAuthor.ReadOnly = true;
+                cmbMetadataType.Enabled = false;
+                cmbMetadataTag1.Enabled = false;
+                cmbMetadataTag2.Enabled = false;
+                txtMetadataDescription.ReadOnly = true;
+
+                tsbUpdateMetadata.Checked = false;
+                tsbDiscardMetadataChanges.Enabled = false;
+                tsbDiscardMetadataChanges.Visible = false;
+            }
+        }
+
+        private void tsbDiscardMetadataChanges_Click(object sender, EventArgs e)
+        {
+            if (AddonHandle is RealtimeAddon)
+            {
+                // Reset the metadata information to what is already in memory and lock the controls
+                UpdateMetadataPanel();
+
+                txtMetadataTitle.ReadOnly = true;
+                //txtMetadataAuthor.ReadOnly = true;
+                cmbMetadataType.Enabled = false;
+                cmbMetadataTag1.Enabled = false;
+                cmbMetadataTag2.Enabled = false;
+                txtMetadataDescription.ReadOnly = true;
+
+                tsbUpdateMetadata.Checked = false;
+                tsbDiscardMetadataChanges.Enabled = false;
+                tsbDiscardMetadataChanges.Visible = false;
+            }
         }
 
         private void tsbSaveAddon_Click(object sender, EventArgs e)
         {
-            if (AddonHandle.Modified)
+            if (tsbUpdateMetadata.Checked == false)
             {
-                try
+                if (AddonHandle.Modified)
                 {
-                    AddonHandle.Save();
-                }
-                catch (AddonJSONException ex)
-                // Writer.Create access addon.DescriptionJSON which calls
-                // Json.BuildDescription() which can throw the AddonJSONException
-                {
-                    MessageBox.Show("There was an error saving the addon:\n" + ex.Message + "\n\nThis usually indicates" +
-                         " problems with the addon's metadata containing invalid values.\nPlease use the \"Update metadata\"" +
-                         " panel to set the values properly.", "Save addon",
-                         MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                    return;
-                }
+                    try
+                    {
+                        AddonHandle.Save();
+                    }
+                    catch (AddonJSONException ex)
+                    // Writer.Create access addon.DescriptionJSON which calls
+                    // Json.BuildDescription() which can throw the AddonJSONException
+                    {
+                        MessageBox.Show("There was an error saving the addon:\n" + ex.Message + "\n\nThis usually indicates" +
+                             " problems with the addon's metadata containing invalid values.\nPlease use the \"Update metadata\"" +
+                             " panel to set the values properly.", "Save addon",
+                             MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
 
-                if (!(e is FormClosingEventArgs))
-                {
-                    MessageBox.Show("Successfully saved the addon.", "Save addon",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                    if (!(e is FormClosingEventArgs))
+                    {
+                        MessageBox.Show("Successfully saved the addon.", "Save addon",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
 
-                UpdateModified();
+                    UpdateModified();
+                }
+            }
+            else if (tsbUpdateMetadata.Checked == true)
+            {
+                MessageBox.Show("There might be unsaved changes to the metadata.", "Cannot save the addon",
+                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
             }
         }
 
@@ -605,10 +751,11 @@ namespace SharpGMad
                     AddonHandle.OpenAddon.Description = String.Empty;
                     AddonHandle.OpenAddon.Type = String.Empty;
                     AddonHandle.OpenAddon.Tags = new List<string>();
-                    tsbUpdateMetadata_Click(sender, e); // This will make the metadata form pop up setting the initial value
+                    tsbUpdateMetadata_Click(sender, e); // This will make the metadata change enabled to set the initial values
 
-                    // Fire the save event for an initial addon saving
-                    tsbSaveAddon_Click(sender, e);
+                    // But the "Discard" button must be disabled so that the user cannot leave the metadata blank
+                    tsbDiscardMetadataChanges.Enabled = false;
+                    tsbDiscardMetadataChanges.Visible = false;
 
                     UpdateModified();
                     UpdateMetadataPanel();
