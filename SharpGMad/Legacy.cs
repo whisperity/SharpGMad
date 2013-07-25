@@ -236,32 +236,6 @@ namespace SharpGMad
                 try
                 {
                     addon.CheckRestrictions(file);
-                }
-                catch (IOException)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Unable to read file " + file);
-                    Console.ResetColor();
-                    continue;
-                }
-                catch (IgnoredException)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\t\t[Ignored]");
-                    Console.ResetColor();
-                    continue;
-                }
-                catch (WhitelistException)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\t\t[Not allowed by whitelist]");
-                    Console.ResetColor();
-                    if (!warnInvalid)
-                        return 1;
-                }
-
-                try
-                {
                     addon.AddFile(file, File.ReadAllBytes(f));
                 }
                 catch (IOException)

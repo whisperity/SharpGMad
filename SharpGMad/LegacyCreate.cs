@@ -207,31 +207,6 @@ namespace SharpGMad
                 try
                 {
                     addon.CheckRestrictions(file);
-                }
-                catch (IOException)
-                {
-                    errors.Add(new CreateError() { Path = file, Type = CreateErrorType.FileRead });
-                    continue;
-                }
-                catch (IgnoredException)
-                {
-                    errors.Add(new CreateError() { Path = file, Type = CreateErrorType.Ignored });
-                    continue;
-                }
-                catch (WhitelistException)
-                {
-                    errors.Add(new CreateError() { Path = file, Type = CreateErrorType.WhitelistFailure });
-
-                    if (!chkWarnInvalid.Checked)
-                    {
-                        MessageBox.Show("The following file is not allowed by the whitelist:\n" + file,
-                            "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                        return;
-                    }
-                }
-
-                try
-                {
                     addon.AddFile(file, File.ReadAllBytes(f));
                 }
                 catch (IOException)

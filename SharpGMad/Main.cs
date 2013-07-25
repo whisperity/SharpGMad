@@ -316,27 +316,18 @@ namespace SharpGMad
             DialogResult result = ofdAddFile.ShowDialog();
             if (result != DialogResult.Cancel)
             {
-                byte[] bytes;
+                string filename = ofdAddFile.FileName.Replace("\\", "/");
+
                 try
                 {
-                    using (FileStream fs = new FileStream(ofdAddFile.FileName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    {
-                        bytes = new byte[fs.Length];
-                        fs.Read(bytes, 0, (int)fs.Length);
-                    }
+                    AddonHandle.OpenAddon.CheckRestrictions(Whitelist.GetMatchingString(filename));
+                    AddonHandle.AddFile(Whitelist.GetMatchingString(filename), File.ReadAllBytes(ofdAddFile.FileName));
                 }
                 catch (IOException)
                 {
                     MessageBox.Show(ofdAddFile.FileName + "\n\nThere was an error reading the file.", "Cannot add file",
                         MessageBoxButtons.OK, MessageBoxIcon.Stop);
                     return;
-                }
-
-                string filename = ofdAddFile.FileName.Replace("\\", "/");
-
-                try
-                {
-                    AddonHandle.AddFile(Whitelist.GetMatchingString(filename), bytes);
                 }
                 catch (IgnoredException)
                 {
