@@ -67,8 +67,8 @@ namespace SharpGMad
             }
             catch (Exception ex)
             {
-                MessageBox.Show("There was a problem opening or parsing the selected file: \n" + ex.Message,
-                    "Failed to extract the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                MessageBox.Show("Can't open the selected file.\nError happened: " + ex.Message,
+                    "Failed to extract addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
 
@@ -98,13 +98,43 @@ namespace SharpGMad
             }
 
             if (extractFailures.Count == 0)
-                MessageBox.Show("Successfully extracted the addon.", "Extract addon", 
+                MessageBox.Show("Successfully extracted the addon.", "Extract addon",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
-            else
-                MessageBox.Show("Successfully extracted the addon.\n\nThe following files failed to extract:\n" +
-                    String.Join("\n", extractFailures), "Extract addon",
+            else if (extractFailures.Count == 1)
+                MessageBox.Show("Failed to extract " + extractFailures[0], "Extract addon",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            else if (extractFailures.Count > 1)
+            {
+                DialogResult showFailedFiles = MessageBox.Show(extractFailures.Count + " files failed to extract." +
+                    "\n\nShow a list of failures?", "Extract addon", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
+                if (showFailedFiles == DialogResult.Yes)
+                {
+                    string temppath = ContentFile.GenerateExternalPath(
+                            new Random().Next() + "_failedExtracts") + ".txt";
+
+                    try
+                    {
+                        File.WriteAllText(temppath,
+                            "These files failed to extract:\r\n\r\n" +
+                            String.Join("\r\n", extractFailures.ToArray()));
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Can't show the list, an error happened generating it.", "Extract addon",
+                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
+
+                    // The file will be opened by the user's default text file handler (Notepad?)
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                    {
+                        UseShellExecute = true,
+                    });
+                }
+            }
+
+            btnAbort_Click(sender, e); // Close the form
             return;
         }
     }

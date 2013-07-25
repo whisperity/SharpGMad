@@ -586,7 +586,7 @@ namespace SharpGMad
         public static void DisposeExternals()
         {
             foreach (string file in Directory.GetFiles(System.IO.Path.GetTempPath(),
-                "tmp*_sharpgmad_*.tmp", SearchOption.TopDirectoryOnly))
+                "tmp*_sharpgmad_*.tmp*", SearchOption.TopDirectoryOnly))
             {
                 try
                 {

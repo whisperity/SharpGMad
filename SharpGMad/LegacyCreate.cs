@@ -264,39 +264,63 @@ namespace SharpGMad
             // Success!
             //
             if (errors.Count == 0)
+                MessageBox.Show("Successfully extracted the addon.", "Create addon",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            else if (errors.Count == 1)
+                MessageBox.Show("Successfully created the addon.\nThe file " + errors[0] + " was not added.", "Create addon",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            else if (errors.Count > 1)
             {
-                MessageBox.Show("Successfully saved to " + txtFile.Text + " (" + ((int)gmaFS.Length).HumanReadableSize() + ")",
-                    "Created successfully", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                string msgboxMessage = "Successfully saved to " + txtFile.Text + " (" + ((int)gmaFS.Length).HumanReadableSize() +
-                    ")\n\nThe following files were not added:\n";
+                DialogResult showFailedFiles = MessageBox.Show(errors.Count + " files failed to add." +
+                    "\n\nShow a list of failures?", "Create addon", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
-                foreach (CreateError err in errors)
+                if (showFailedFiles == DialogResult.Yes)
                 {
-                    msgboxMessage += err.Path + ", ";
-                    switch (err.Type)
+                    string temppath = ContentFile.GenerateExternalPath(
+                            new Random().Next() + "_failedCreations") + ".txt";
+
+                    string msgboxMessage = String.Empty;
+
+                    foreach (CreateError err in errors)
                     {
-                        case CreateErrorType.FileRead:
-                            msgboxMessage += "the program failed to read the file";
-                            break;
-                        case CreateErrorType.Ignored:
-                            msgboxMessage += "the file is ignored by the addon's configuration";
-                            break;
-                        case CreateErrorType.WhitelistFailure:
-                            msgboxMessage += "the file is not allowed by the global whitelist";
-                            break;
+                        msgboxMessage += err.Path + ", ";
+                        switch (err.Type)
+                        {
+                            case CreateErrorType.FileRead:
+                                msgboxMessage += "failed to read the file";
+                                break;
+                            case CreateErrorType.Ignored:
+                                msgboxMessage += "the file is ignored by the addon's configuration";
+                                break;
+                            case CreateErrorType.WhitelistFailure:
+                                msgboxMessage += "the file is not allowed by the global whitelist";
+                                break;
+                        }
+                        msgboxMessage += "\r\n";
                     }
-                    msgboxMessage += ".\n";
+                    msgboxMessage = msgboxMessage.TrimEnd('\r', '\n');
+
+                    try
+                    {
+                        File.WriteAllText(temppath, "These files failed to add:\r\n\r\n" + msgboxMessage);
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Can't show the list, an error happened generating it.", "Extract addon",
+                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
+
+                    // The file will be opened by the user's default text file handler (Notepad?)
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                    {
+                        UseShellExecute = true,
+                    });
                 }
-
-                msgboxMessage = msgboxMessage.TrimEnd('\n');
-
-                MessageBox.Show(msgboxMessage, "Created successfully", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
             gmaFS.Dispose();
+            btnAbort_Click(sender, e); // Close the form
             return;
         }
 

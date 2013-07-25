@@ -46,14 +46,14 @@ namespace SharpGMad
         private void tsbOpenAddon_Click(object sender, EventArgs e)
         {
             DialogResult dropChanges = new DialogResult();
-            if (AddonHandle is RealtimeAddon && (AddonHandle.Pullable == true || AddonHandle.Modified == true))
+            if (AddonHandle is RealtimeAddon && AddonHandle.Modified)
             {
                 dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
                     "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             }
 
             if (dropChanges == DialogResult.Yes || 
-                AddonHandle == null || (AddonHandle.Modified == false && AddonHandle.Pullable == false))
+                AddonHandle == null || (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
             {
                 UnloadAddon();
                 DialogResult file = ofdAddon.ShowDialog();
@@ -110,6 +110,7 @@ namespace SharpGMad
                 UpdateMetadataPanel();
                 UpdateFileList();
                 UpdateModified();
+                UpdateStatus("Loaded the addon");
 
                 tsbAddFile.Enabled = true;
                 tsbUpdateMetadata.Enabled = true;
@@ -122,8 +123,6 @@ namespace SharpGMad
         private void UpdateModified()
         {
             // Invoke the method if it was called from a thread which is not the thread Main was created in.
-            //
-            // (For example when fsw_Changed fires.)
             //
             // Prevents the exception:
             // Cross-thread operation not valid: Control 'Main' accessed from a
@@ -200,6 +199,20 @@ namespace SharpGMad
         }
 
         /// <summary>
+        /// Update the status label on the bottom of the form.
+        /// </summary>
+        /// <param name="text">The text to write.</param>
+        /// <param name="foreColor">The color the text should have.</param>
+        private void UpdateStatus(string text, Color foreColor = default(Color))
+        {
+            if (foreColor == default(Color))
+                foreColor = System.Drawing.SystemColors.ControlText;
+
+            tsslStatus.ForeColor = foreColor;
+            tsslStatus.Text = "[" + DateTime.Now.ToString() + "] " + text;
+        }
+
+        /// <summary>
         /// Updates the metadata panel with the information fetched from the current addon.
         /// </summary>
         private void UpdateMetadataPanel()
@@ -273,6 +286,8 @@ namespace SharpGMad
         {
             txtDescriptionSizeDifference = new Size(pnlRightSide.Size.Width - txtMetadataDescription.Size.Width,
                 pnlRightSide.Size.Height - txtMetadataDescription.Size.Height);
+
+            UpdateStatus("SharpGMad welcomes you!");
         }
 
         private void Main_Resize(object sender, EventArgs e)
@@ -325,26 +340,26 @@ namespace SharpGMad
                 }
                 catch (IOException)
                 {
-                    MessageBox.Show(ofdAddFile.FileName + "\n\nThere was an error reading the file.", "Cannot add file",
+                    MessageBox.Show("Error happened while reading " + ofdAddFile.FileName, "Add file",
                         MessageBoxButtons.OK, MessageBoxIcon.Stop);
                     return;
                 }
                 catch (IgnoredException)
                 {
-                    MessageBox.Show(ofdAddFile.FileName + "\n\nThis file is ignored by the addon.", "Cannot add file",
+                    MessageBox.Show("File is ignored (" + ofdAddFile.FileName + ")", "Add file",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
                 catch (WhitelistException)
                 {
-                    MessageBox.Show(ofdAddFile.FileName + "\n\nThis file is not allowed by the whitelist!", "Cannot add file",
+                    MessageBox.Show("File is not whitelisted (" + ofdAddFile.FileName + ")", "Add file",
                         MessageBoxButtons.OK, MessageBoxIcon.Stop);
                     return;
                 }
                 catch (ArgumentException)
                 {
-                    MessageBox.Show(ofdAddFile.FileName + "\n\nA file like this has already been added. Please remove it first.",
-                        "Cannot add file", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Similar file has already been added (" + ofdAddFile.FileName + ")",
+                        "Add file", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -478,7 +493,7 @@ namespace SharpGMad
             {
                 if (lstFiles.FocusedItem != null)
                 {
-                    DialogResult remove = MessageBox.Show("Do you really wish to remove " +
+                    DialogResult remove = MessageBox.Show("Really remove " +
                         lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text + "?", "Remove file",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
@@ -490,11 +505,13 @@ namespace SharpGMad
                         }
                         catch (FileNotFoundException)
                         {
-                            MessageBox.Show("The file was not found in the archive!", "Remove file",
+                            MessageBox.Show("File not in archive (" + lstFiles.FocusedItem.Group.Header +
+                                "/" + lstFiles.FocusedItem.Text + ")", "Remove file",
                                 MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             return;
                         }
 
+                        UpdateStatus("Removed file " + lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
                         UpdateModified();
                         UpdateFileList();
                     }
@@ -502,7 +519,7 @@ namespace SharpGMad
             }
             else if (lstFiles.SelectedItems.Count >= 1)
             {
-                DialogResult remove = MessageBox.Show("Do you really wish to remove " +
+                DialogResult remove = MessageBox.Show("Remove " +
                     Convert.ToString(lstFiles.SelectedItems.Count) + " files?", "Remove files",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
@@ -522,10 +539,41 @@ namespace SharpGMad
                         }
                     }
 
-                    if (failed_paths.Count != 0)
+                    if (failed_paths.Count == 0)
+                        UpdateStatus("Removed " + lstFiles.SelectedItems.Count + " files");
+                    else if (failed_paths.Count == 1)
+                        MessageBox.Show("Failed to remove " + failed_paths[0], "Remove files",
+                            MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    else if (failed_paths.Count > 1)
                     {
-                        MessageBox.Show("The following files failed to remove:\n\n" + String.Join("\n", failed_paths),
-                            "Remove files", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        DialogResult showFailedFiles = MessageBox.Show(Convert.ToString(failed_paths.Count) +
+                            " files failed to remove.\n\nShow a list of failures?", "Remove files",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
+
+                        if (showFailedFiles == DialogResult.Yes)
+                        {
+                            string temppath = ContentFile.GenerateExternalPath(
+                                    new Random().Next() + "_failedRemovals") + ".txt";
+
+                            try
+                            {
+                                File.WriteAllText(temppath,
+                                    "These files failed to get removed:\r\n\r\n" +
+                                    String.Join("\r\n", failed_paths.ToArray()));
+                            }
+                            catch (Exception)
+                            {
+                                MessageBox.Show("Can't show the list, an error happened generating it.", "Remove files",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                return;
+                            }
+
+                            // The file will be opened by the user's default text file handler (Notepad?)
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                            {
+                                UseShellExecute = true,
+                            });
+                        }
                     }
 
                     UpdateModified();
@@ -536,12 +584,8 @@ namespace SharpGMad
 
         private void tsbUpdateMetadata_Click(object sender, EventArgs e)
         {
-            /*UpdateMetadata mdForm = new UpdateMetadata(AddonHandle);
-            mdForm.Owner = this;
-            mdForm.ShowDialog(this);*/
-
             // Use a toggle mechanism to enable and disable the changing of metadata
-            if (tsbUpdateMetadata.Checked == false)
+            if (!tsbUpdateMetadata.Checked)
             {
                 txtMetadataTitle.ReadOnly = false;
                 //txtMetadataAuthor.ReadOnly = false;
@@ -554,7 +598,7 @@ namespace SharpGMad
                 tsbDiscardMetadataChanges.Enabled = true;
                 tsbDiscardMetadataChanges.Visible = true;
             }
-            else if (tsbUpdateMetadata.Checked == true)
+            else if (tsbUpdateMetadata.Checked)
             {
                 // Save the metadata changes
                 if (cmbMetadataTag1.SelectedItem != null && cmbMetadataTag2.SelectedItem != null)
@@ -562,7 +606,7 @@ namespace SharpGMad
                     if (cmbMetadataTag1.SelectedItem.ToString() == cmbMetadataTag2.SelectedItem.ToString() &&
                         !(cmbMetadataTag1.SelectedItem.ToString() == "" || cmbMetadataTag2.SelectedItem.ToString() == ""))
                     {
-                        MessageBox.Show("You selected the same tag twice!", "Update metadata",
+                        MessageBox.Show("The same tag is selected twice", "Update metadata",
                             MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                         return;
                     }
@@ -570,7 +614,7 @@ namespace SharpGMad
 
                 if (cmbMetadataType.SelectedItem == null || !Tags.TypeExists(cmbMetadataType.SelectedItem.ToString()))
                 {
-                    MessageBox.Show("The selected type is invalid!", "Update metadata",
+                    MessageBox.Show("Invalid type selected", "Update metadata",
                         MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                     return;
                 }
@@ -579,7 +623,7 @@ namespace SharpGMad
                 {
                     if (!Tags.TagExists(cmbMetadataTag1.SelectedItem.ToString()) && cmbMetadataTag1.SelectedItem.ToString() != "")
                     {
-                        MessageBox.Show("The selected tags are invalid!", "Update metadata",
+                        MessageBox.Show("Invalid tag selected", "Update metadata",
                             MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                         return;
                     }
@@ -589,7 +633,7 @@ namespace SharpGMad
                 {
                     if (!Tags.TagExists(cmbMetadataTag2.SelectedItem.ToString()) && cmbMetadataTag2.SelectedItem.ToString() != "")
                     {
-                        MessageBox.Show("The selected tags are invalid!", "Update metadata",
+                        MessageBox.Show("Invalid tag selected", "Update metadata",
                             MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
                         return;
                     }
@@ -646,7 +690,7 @@ namespace SharpGMad
 
         private void tsbSaveAddon_Click(object sender, EventArgs e)
         {
-            if (tsbUpdateMetadata.Checked == false)
+            if (!tsbUpdateMetadata.Checked)
             {
                 if (AddonHandle.Modified)
                 {
@@ -658,25 +702,21 @@ namespace SharpGMad
                     // Writer.Create access addon.DescriptionJSON which calls
                     // Json.BuildDescription() which can throw the AddonJSONException
                     {
-                        MessageBox.Show("There was an error saving the addon:\n" + ex.Message + "\n\nThis usually indicates" +
-                             " problems with the addon's metadata containing invalid values.\nPlease use the \"Update metadata\"" +
-                             " panel to set the values properly.", "Save addon",
+                        MessageBox.Show("Error happened: " + ex.Message + "\n\n" +
+                            "This is usually caused by invalid metadata values.", "Save addon",
                              MessageBoxButtons.OK, MessageBoxIcon.Stop);
                         return;
                     }
 
                     if (!(e is FormClosingEventArgs))
-                    {
-                        MessageBox.Show("Successfully saved the addon.", "Save addon",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
+                        UpdateStatus("Addon saved successfully");
 
                     UpdateModified();
                 }
             }
             else if (tsbUpdateMetadata.Checked == true)
             {
-                MessageBox.Show("There might be unsaved changes to the metadata.", "Cannot save the addon",
+                MessageBox.Show("There might be unsaved changes to the metadata.", "Save addon",
                     MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
@@ -686,7 +726,7 @@ namespace SharpGMad
         {
             if (AddonHandle is RealtimeAddon && AddonHandle.Modified)
             {
-                DialogResult yesClose = MessageBox.Show("Do you want to save your changes before quiting?",
+                DialogResult yesClose = MessageBox.Show("Save the addon before quitting?",
                     Path.GetFileName(AddonHandle.AddonPath), MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
 
                 switch (yesClose)
@@ -714,13 +754,14 @@ namespace SharpGMad
         private void tsbCreateAddon_Click(object sender, EventArgs e)
         {
             DialogResult dropChanges = new DialogResult();
-            if (AddonHandle is RealtimeAddon)
+            if (AddonHandle is RealtimeAddon && AddonHandle.Modified)
             {
-                dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
-                    "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                dropChanges = MessageBox.Show("Open an another addon without saving the current one?\nYou'll lose the changes.",
+                    "Addon already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             }
 
-            if (dropChanges == DialogResult.Yes || AddonHandle == null)
+            if (dropChanges == DialogResult.Yes || AddonHandle == null ||
+                (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
             {
                 UnloadAddon();
                 DialogResult file = sfdAddon.ShowDialog();
@@ -733,7 +774,7 @@ namespace SharpGMad
                     }
                     catch (Exception)
                     {
-                        MessageBox.Show("There was a problem creating the addon.", "New addon",
+                        MessageBox.Show("There was a problem creating the addon.", "Create new addon",
                             MessageBoxButtons.OK, MessageBoxIcon.Stop);
                         return;
                     }
@@ -774,26 +815,26 @@ namespace SharpGMad
                 if (save == DialogResult.OK)
                 {
                     string exportPath = sfdExportFile.FileName;
-
+                    
                     try
                     {
                         AddonHandle.ExportFile(contentPath, exportPath);
                     }
                     catch (UnauthorizedAccessException)
                     {
-                        MessageBox.Show("Another file is already exported as " + exportPath, "Export file",
+                        MessageBox.Show("Another file is already exported at " + exportPath, "Export file",
                             MessageBoxButtons.OK, MessageBoxIcon.Stop);
                         return;
                     }
                     catch (ArgumentException)
                     {
-                        MessageBox.Show("This file is already exported. Drop the export first!", "Export file",
+                        MessageBox.Show("The file is already exported elsewhere.", "Export file",
                             MessageBoxButtons.OK, MessageBoxIcon.Stop);
                         return;
                     }
                     catch (IOException)
                     {
-                        MessageBox.Show("There was a problem creating the file.", "Export file",
+                        MessageBox.Show("The file cannot be created on the disk.", "Export file",
                             MessageBoxButtons.OK, MessageBoxIcon.Stop);
                         return;
                     }
@@ -839,15 +880,39 @@ namespace SharpGMad
             }
 
             if (pathsFailedToDelete.Count == 0)
-            {
-                MessageBox.Show("Successfully removed all currently exported files.", "Drop all exports",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show("Removed all currently exported files.\n\nThe following files failed to remove:" +
-                    "\n\n" + String.Join("\n", pathsFailedToDelete), "Drop all exports",
+                UpdateStatus("Removed all current exported files");
+            else if (pathsFailedToDelete.Count == 1)
+                MessageBox.Show("Failed to remove " + pathsFailedToDelete[0], "Drop all exports",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            else if (pathsFailedToDelete.Count > 1)
+            {
+                DialogResult showFailedFiles = MessageBox.Show(pathsFailedToDelete.Count + " files failed to get removed." +
+                    "\n\nShow a list of failures?", "Drop all exports", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                if (showFailedFiles == DialogResult.Yes)
+                {
+                    string temppath = ContentFile.GenerateExternalPath(
+                            new Random().Next() + "_failedRemovals") + ".txt";
+
+                    try
+                    {
+                        File.WriteAllText(temppath,
+                            "These files failed to get removed:\r\n\r\n" +
+                            String.Join("\r\n", pathsFailedToDelete.ToArray()));
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Can't show the list, an error happened generating it.", "Drop all exports",
+                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
+
+                    // The file will be opened by the user's default text file handler (Notepad?)
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                    {
+                        UseShellExecute = true,
+                    });
+                }
             }
 
             UpdateFileList();
@@ -869,7 +934,7 @@ namespace SharpGMad
             {
                 MessageBox.Show("Failed to delete the exported file:" +
                     "\n" + AddonHandle.WatchedFiles.Where(f => f.ContentPath == filename).First().FilePath +
-                    ".\n\n" + ex.Message, "Drop extract",
+                    ".\n\nBecause error happened: " + ex.Message, "Drop extract",
                     MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
 
@@ -879,9 +944,7 @@ namespace SharpGMad
         private void tsmFilePull_Click(object sender, EventArgs e)
         {
             if (lstFiles.FocusedItem != null)
-            {
                 PullFile(lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
-            }
         }
 
         private void tsbPullAll_Click(object sender, EventArgs e)
@@ -905,15 +968,39 @@ namespace SharpGMad
             }
 
             if (pathsFailedToPull.Count == 0)
-            {
-                MessageBox.Show("Successfully updated changes from all exported files.", "Update exported files",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                MessageBox.Show("Successfully updated changes from all exported files.\n\nThe following files failed to update:" +
-                    "\n\n" + String.Join("\n", pathsFailedToPull), "Update exported files",
+                UpdateStatus("Successfully pulled all changes");
+            else if (pathsFailedToPull.Count == 1)
+                MessageBox.Show("Failed to pull " + pathsFailedToPull[0], "Pull all changes",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            else if (pathsFailedToPull.Count > 1)
+            {
+                DialogResult showFailedFiles = MessageBox.Show(pathsFailedToPull.Count + " files failed to get pulled." +
+                    "\n\nShow a list of failures?", "Pull all changes", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                if (showFailedFiles == DialogResult.Yes)
+                {
+                    string temppath = ContentFile.GenerateExternalPath(
+                            new Random().Next() + "_failedPulls") + ".txt";
+
+                    try
+                    {
+                        File.WriteAllText(temppath,
+                            "These files failed to get pulled:\r\n\r\n" +
+                            String.Join("\r\n", pathsFailedToPull.ToArray()));
+                    }
+                    catch (Exception)
+                    {
+                        MessageBox.Show("Can't show the list, an error happened generating it.", "Pull all changes",
+                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        return;
+                    }
+
+                    // The file will be opened by the user's default text file handler (Notepad?)
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                    {
+                        UseShellExecute = true,
+                    });
+                }
             }
 
             UpdateModified();
@@ -939,16 +1026,14 @@ namespace SharpGMad
             }
             catch (IOException ex)
             {
-                MessageBox.Show("Failed to open the exported file on the disk (" +
+                MessageBox.Show("Failed to open the exported file (" +
                     AddonHandle.WatchedFiles.Where(f => f.ContentPath == filename).First().FilePath +
-                    "). An exception happened:\n\n" + ex.Message, "Pull changes",
+                    ").\n\nAn error happened: " + ex.Message, "Pull changes",
                     MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
 
-            MessageBox.Show("Successfully pulled the changes.", "Pull changes",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-
+            UpdateStatus("Successfully pulled changes for " + filename);
             UpdateModified();
             UpdateFileList();
         }
@@ -1029,10 +1114,41 @@ namespace SharpGMad
                         }
                     }
 
-                    if (failed_paths.Count != 0)
+                    if (failed_paths.Count == 0)
+                        UpdateStatus("Extracted " + files.Count() + " files successfully");
+                    else if (failed_paths.Count == 1)
+                        MessageBox.Show("Failed to extract " + failed_paths[0], "Extract files",
+                            MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    else if (failed_paths.Count > 1)
                     {
-                        MessageBox.Show("The following files failed extract:\n\n" + String.Join("\n", failed_paths),
-                            "Extract multiple files", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        DialogResult showFailedFiles = MessageBox.Show(Convert.ToString(failed_paths.Count) +
+                            " files failed to export.\n\nShow a list of failures?", "Extract files",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
+
+                        if (showFailedFiles == DialogResult.Yes)
+                        {
+                            string temppath = ContentFile.GenerateExternalPath(
+                                    new Random().Next() + "_failedExtracts") + ".txt";
+
+                            try
+                            {
+                                File.WriteAllText(temppath,
+                                    "These files failed to get removed:\r\n\r\n" +
+                                    String.Join("\r\n", failed_paths.ToArray()));
+                            }
+                            catch (Exception)
+                            {
+                                MessageBox.Show("Can't show the list, an error happened generating it.", "Extract files",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                return;
+                            }
+
+                            // The file will be opened by the user's default text file handler (Notepad?)
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                            {
+                                UseShellExecute = true,
+                            });
+                        }
                     }
                 }
 
@@ -1058,20 +1174,20 @@ namespace SharpGMad
                         }
                         catch (FileNotFoundException)
                         {
-                            MessageBox.Show("The file was not found in the archive!", "Remove file",
+                            MessageBox.Show("The file is not in the archive.", "Shell execute",
                                 MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             return;
                         }
                         catch (Exception)
                         {
-                            MessageBox.Show("The file couldn't be saved to the disk.", "Shell execute",
+                            MessageBox.Show("Failed to extract file to disk.", "Shell execute",
                                 MessageBoxButtons.OK, MessageBoxIcon.Stop);
                             return;
                         }
                     }
                     catch (FileNotFoundException)
                     {
-                        MessageBox.Show("The file was not found in the archive!", "Remove file",
+                        MessageBox.Show("The file is not in the archive.", "Shell execute",
                             MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         return;
                     }

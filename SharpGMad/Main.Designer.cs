@@ -40,6 +40,8 @@
             this.pnlLeftSide = new System.Windows.Forms.Panel();
             this.pnlFilelist = new System.Windows.Forms.Panel();
             this.pnlFileOpsToolbar = new System.Windows.Forms.Panel();
+            this.ssStatus = new System.Windows.Forms.StatusStrip();
+            this.tsslStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.pnlForm = new System.Windows.Forms.Panel();
             this.pnlRightSide = new System.Windows.Forms.Panel();
             this.txtMetadataDescription = new System.Windows.Forms.TextBox();
@@ -80,6 +82,7 @@
             this.pnlLeftSide.SuspendLayout();
             this.pnlFilelist.SuspendLayout();
             this.pnlFileOpsToolbar.SuspendLayout();
+            this.ssStatus.SuspendLayout();
             this.pnlForm.SuspendLayout();
             this.pnlRightSide.SuspendLayout();
             this.tsMetadata.SuspendLayout();
@@ -93,7 +96,7 @@
             this.lstFiles.HideSelection = false;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
-            this.lstFiles.Size = new System.Drawing.Size(530, 300);
+            this.lstFiles.Size = new System.Drawing.Size(527, 313);
             this.lstFiles.TabIndex = 0;
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.View = System.Windows.Forms.View.Tile;
@@ -118,7 +121,7 @@
             this.tsbDropAll});
             this.tsFileOperations.Location = new System.Drawing.Point(0, 0);
             this.tsFileOperations.Name = "tsFileOperations";
-            this.tsFileOperations.Size = new System.Drawing.Size(530, 26);
+            this.tsFileOperations.Size = new System.Drawing.Size(527, 26);
             this.tsFileOperations.TabIndex = 0;
             // 
             // tsbAddFile
@@ -165,10 +168,11 @@
             // 
             this.pnlLeftSide.Controls.Add(this.pnlFilelist);
             this.pnlLeftSide.Controls.Add(this.pnlFileOpsToolbar);
+            this.pnlLeftSide.Controls.Add(this.ssStatus);
             this.pnlLeftSide.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlLeftSide.Location = new System.Drawing.Point(0, 0);
             this.pnlLeftSide.Name = "pnlLeftSide";
-            this.pnlLeftSide.Size = new System.Drawing.Size(530, 326);
+            this.pnlLeftSide.Size = new System.Drawing.Size(527, 359);
             this.pnlLeftSide.TabIndex = 11;
             // 
             // pnlFilelist
@@ -177,7 +181,7 @@
             this.pnlFilelist.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlFilelist.Location = new System.Drawing.Point(0, 26);
             this.pnlFilelist.Name = "pnlFilelist";
-            this.pnlFilelist.Size = new System.Drawing.Size(530, 300);
+            this.pnlFilelist.Size = new System.Drawing.Size(527, 313);
             this.pnlFilelist.TabIndex = 2;
             // 
             // pnlFileOpsToolbar
@@ -186,8 +190,24 @@
             this.pnlFileOpsToolbar.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlFileOpsToolbar.Location = new System.Drawing.Point(0, 0);
             this.pnlFileOpsToolbar.Name = "pnlFileOpsToolbar";
-            this.pnlFileOpsToolbar.Size = new System.Drawing.Size(530, 26);
+            this.pnlFileOpsToolbar.Size = new System.Drawing.Size(527, 26);
             this.pnlFileOpsToolbar.TabIndex = 0;
+            // 
+            // ssStatus
+            // 
+            this.ssStatus.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsslStatus});
+            this.ssStatus.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
+            this.ssStatus.Location = new System.Drawing.Point(0, 339);
+            this.ssStatus.Name = "ssStatus";
+            this.ssStatus.Size = new System.Drawing.Size(527, 20);
+            this.ssStatus.SizingGrip = false;
+            this.ssStatus.TabIndex = 3;
+            // 
+            // tsslStatus
+            // 
+            this.tsslStatus.Name = "tsslStatus";
+            this.tsslStatus.Size = new System.Drawing.Size(246, 15);
             // 
             // pnlForm
             // 
@@ -196,7 +216,7 @@
             this.pnlForm.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlForm.Location = new System.Drawing.Point(0, 25);
             this.pnlForm.Name = "pnlForm";
-            this.pnlForm.Size = new System.Drawing.Size(737, 326);
+            this.pnlForm.Size = new System.Drawing.Size(734, 359);
             this.pnlForm.TabIndex = 12;
             // 
             // pnlRightSide
@@ -214,9 +234,9 @@
             this.pnlRightSide.Controls.Add(this.txtMetadataTitle);
             this.pnlRightSide.Controls.Add(this.lblTitle);
             this.pnlRightSide.Dock = System.Windows.Forms.DockStyle.Right;
-            this.pnlRightSide.Location = new System.Drawing.Point(530, 0);
+            this.pnlRightSide.Location = new System.Drawing.Point(527, 0);
             this.pnlRightSide.Name = "pnlRightSide";
-            this.pnlRightSide.Size = new System.Drawing.Size(207, 326);
+            this.pnlRightSide.Size = new System.Drawing.Size(207, 359);
             this.pnlRightSide.TabIndex = 12;
             // 
             // txtMetadataDescription
@@ -227,7 +247,7 @@
             this.txtMetadataDescription.Name = "txtMetadataDescription";
             this.txtMetadataDescription.ReadOnly = true;
             this.txtMetadataDescription.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtMetadataDescription.Size = new System.Drawing.Size(184, 116);
+            this.txtMetadataDescription.Size = new System.Drawing.Size(184, 162);
             this.txtMetadataDescription.TabIndex = 7;
             // 
             // tsMetadata
@@ -370,7 +390,7 @@
             this.tsddbLegacy});
             this.tsToolbar.Location = new System.Drawing.Point(0, 0);
             this.tsToolbar.Name = "tsToolbar";
-            this.tsToolbar.Size = new System.Drawing.Size(737, 25);
+            this.tsToolbar.Size = new System.Drawing.Size(734, 25);
             this.tsToolbar.TabIndex = 13;
             // 
             // tsbCreateAddon
@@ -458,14 +478,14 @@
             // 
             this.tsmFileRemove.Image = global::SharpGMad.Properties.Resources.remove;
             this.tsmFileRemove.Name = "tsmFileRemove";
-            this.tsmFileRemove.Size = new System.Drawing.Size(138, 22);
+            this.tsmFileRemove.Size = new System.Drawing.Size(142, 22);
             this.tsmFileRemove.Text = "Remove";
             this.tsmFileRemove.Click += new System.EventHandler(this.tsmFileRemove_Click);
             // 
             // tssExportSeparator
             // 
             this.tssExportSeparator.Name = "tssExportSeparator";
-            this.tssExportSeparator.Size = new System.Drawing.Size(135, 6);
+            this.tssExportSeparator.Size = new System.Drawing.Size(139, 6);
             // 
             // tsmShellExec
             // 
@@ -480,7 +500,7 @@
             // 
             this.tsmFileExportTo.Image = global::SharpGMad.Properties.Resources.export;
             this.tsmFileExportTo.Name = "tsmFileExportTo";
-            this.tsmFileExportTo.Size = new System.Drawing.Size(138, 22);
+            this.tsmFileExportTo.Size = new System.Drawing.Size(142, 22);
             this.tsmFileExportTo.Text = "Export to...";
             this.tsmFileExportTo.ToolTipText = "Export the selected file to somewhere on your computer and set up a realtime chan" +
     "ge-watch. Changed files will be purple.";
@@ -490,7 +510,7 @@
             // 
             this.tsmFilePull.Image = global::SharpGMad.Properties.Resources.pull;
             this.tsmFilePull.Name = "tsmFilePull";
-            this.tsmFilePull.Size = new System.Drawing.Size(138, 22);
+            this.tsmFilePull.Size = new System.Drawing.Size(142, 22);
             this.tsmFilePull.Text = "Update";
             this.tsmFilePull.ToolTipText = "Update this file with the changes from the exported file on your computer";
             this.tsmFilePull.Click += new System.EventHandler(this.tsmFilePull_Click);
@@ -499,7 +519,7 @@
             // 
             this.tsmFileDropExport.Image = global::SharpGMad.Properties.Resources.drop;
             this.tsmFileDropExport.Name = "tsmFileDropExport";
-            this.tsmFileDropExport.Size = new System.Drawing.Size(138, 22);
+            this.tsmFileDropExport.Size = new System.Drawing.Size(142, 22);
             this.tsmFileDropExport.Text = "Drop extract";
             this.tsmFileDropExport.ToolTipText = "Delete the exported file from your computer";
             this.tsmFileDropExport.Click += new System.EventHandler(this.tsmFileDropExport_Click);
@@ -509,20 +529,20 @@
             this.cmsFileEntry.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmFileRemove,
             this.tsmFileExtract,
-	     this.tsmShellExec,
+            this.tsmShellExec,
             this.tssExportSeparator,
             this.tsmFileExportTo,
             this.tsmFilePull,
             this.tsmFileDropExport});
             this.cmsFileEntry.Name = "cmsFileEntry";
-            this.cmsFileEntry.Size = new System.Drawing.Size(139, 120);
+            this.cmsFileEntry.Size = new System.Drawing.Size(143, 142);
             // 
             // tsmFileExtract
             // 
             this.tsmFileExtract.Enabled = false;
             this.tsmFileExtract.Image = global::SharpGMad.Properties.Resources.extract;
             this.tsmFileExtract.Name = "tsmFileExtract";
-            this.tsmFileExtract.Size = new System.Drawing.Size(138, 22);
+            this.tsmFileExtract.Size = new System.Drawing.Size(142, 22);
             this.tsmFileExtract.Text = "Extract";
             this.tsmFileExtract.ToolTipText = "Save the selected file somewhere on your computer";
             this.tsmFileExtract.Click += new System.EventHandler(this.tsmFileExtract_Click);
@@ -531,7 +551,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(737, 351);
+            this.ClientSize = new System.Drawing.Size(734, 384);
             this.Controls.Add(this.pnlForm);
             this.Controls.Add(this.tsToolbar);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -543,9 +563,12 @@
             this.tsFileOperations.ResumeLayout(false);
             this.tsFileOperations.PerformLayout();
             this.pnlLeftSide.ResumeLayout(false);
+            this.pnlLeftSide.PerformLayout();
             this.pnlFilelist.ResumeLayout(false);
             this.pnlFileOpsToolbar.ResumeLayout(false);
             this.pnlFileOpsToolbar.PerformLayout();
+            this.ssStatus.ResumeLayout(false);
+            this.ssStatus.PerformLayout();
             this.pnlForm.ResumeLayout(false);
             this.pnlRightSide.ResumeLayout(false);
             this.pnlRightSide.PerformLayout();
@@ -607,6 +630,8 @@
         private System.Windows.Forms.FolderBrowserDialog fbdFileExtractMulti;
         private System.Windows.Forms.ToolStripMenuItem tsmShellExec;
         private System.Windows.Forms.ToolStripButton tsbDiscardMetadataChanges;
+        private System.Windows.Forms.StatusStrip ssStatus;
+        private System.Windows.Forms.ToolStripStatusLabel tsslStatus;
 
 
 
