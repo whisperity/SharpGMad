@@ -1,75 +1,72 @@
 SharpGMad
 =========
 
-SharpGMad is a reimplementation of Garry Newman's 
-[GMad](http://github.com/garrynewman/gmad) application.
+SharpGMad is a graphical tool used to manipulate [Garry's
+Mod](http://en.wikipedia.org/wiki/Garry%27s_Mod)'s workshop addon packages
+(aka: _gma_ files).
 
-_GMad_ is used to manipulate Garry's Mod (his game) addon files and is
-written in C++. SharpGMod takes it to be in C#, originally written directly
-from the code available by garry.
+The program had been originally created as a straight reimplementation in
+C# of Garry Newman's [GMad](http://github.com/garrynewman/gmad) tool, but
+ever since it has been given more functionality.
 
-(The current version of SharpGMad implements and complies with
+(The current version implements and complies with
 [`f2a0de4`](http://github.com/garrynewman/gmad/tree/f2a0de42f5d124221ea080f18f338cf8fc23c15f).)
-
-Ever since, SharpGMad's code has been refurbished to match more with
-development style used in C# applications, and to, of course, support new
-opportunities.
 
 Usage
 -----
 
-Currently the following operation modes are supported:
+### `gmad` mode
 
-### [`gmad`](http://github.com/garrynewman/gmad) (legacy) mode
+Because SharpGMad provides the legacy interface of gmad, all of its
+operations are supported.
 
-`SharpGMad.exe <command> <options>`
-
-To create a new .gma file
+#### Create new GMA file from a folder
 
 `SharpGMad.exe create -folder "C:\path\to\addon\folder\" -out
 "C:\where\to\save\file\out.gma"`
+
+#### Extract an existing file
+
+`SharpGMad.exe extract -file
+"C:\steam\etc\garrysmod\addons\my_addon_12345.gma" -out "C:\this\folder"`
+
+### Conversion mode
 
 Packing Garry's Mod 12 _loose_ addons into GMAs are also supported. (This
 way, SharpGMad will use an existing `addon.txt` or `info.txt` and ask the
 user for missing metadata.)
 
-To create a new .gma file **using GMod 12 addons/ folder structure**
-
 `SharpGMad.exe convert -folder "C:\path\to\addon\folder\" -out
 "C:\where\to\save\file\out.gma"`
 
-To extract an existing .gma file into its parent folder
+The `gmad` and conversion modes are available in the GUI too, under
+_Legacy operations_.
 
-`SharpGMad.exe extract -file
-"C:\steam\etc\garrysmod\addons\my_addon_12345.gma"`
+### Realtime mode
 
-To extract an existing .gma file into another folder
+The main feature of SharpGMad is the realtime wrapper. With it, you can
+load a GMA file like how you load an archive (zip, rar, tar) and
+access/update the contents of the addon without having to do a full
+extract and create run.
 
-`SharpGMad.exe extract -file "C:\steam\etc\garrysmod\addons\my_addon_12345.gma"
--out "C:\this\folder"`
+The realtime mode also supports _exporting_ a single file to a specific
+location on the hard drive where you can edit it with an appropriate
+editor. If a file is exported and then changed, it only takes two clicks
+to _pull_ these changes and update the addon with them.
 
-### Realtime access
+Exported files are shown with a blue filename, while changed (so-called
+_pullable_) expors are written with purple.
 
-What is the main feature of SharpGMad, however, is the so-called realtime
-wrapper. With it, you can load a GMA file like any other archive (zip,
-rar, tar, ...) and update the contents of the files in it without having
-to fully extract and then repack the file.
-
-In realtime, you can also _export_ a single file to a specific location in
-your system and see/run/edit. If a file is exported and then edited
-"outside", SharpGMad offers the possibility to _pull_ the changes and
-instantly update the addon with it. Exported files are indicated with
-blue file name, whilst changed files are purple. 
-
-The realtime wrapper comes in two flavours.
+Both a graphical and a command-line interface is available for realtime
+mode.
 
 #### GUI
 
 `SharpGMad.exe [path]`
 
 If the program is started with no command-line arguments (or the only
-argument is a file path), a GUI will load. (Because of this, dragging and
-dropping a file onto SharpGMad in Explorer is supported.)
+argument is a file path), a GUI will load. So you can **drag & drop** a
+file in Explorer onto SharpGMad and it will be opened automatically.
 
 ![Screenshot of GUI mode](Screenshot.png)
 
@@ -77,58 +74,25 @@ dropping a file onto SharpGMad in Explorer is supported.)
 
 `SharpGMad.exe realtime`
 
-Optionally, you can specify a .gma file to be loaded initially
+Optionally, you can specify a file to be loaded initially
 
 `SharpGMad.exe realtime -file "C:\steam\etc\garrysmod\addons\my_addon_12345.gma"`
 
-#### Realtime functionality
-
-The following operations are supported in realtime mode.
-(The `command` is applicable in CLI-mode. Most features have a corresponding, 
-easy operation in GUI.)
-
-* _Addon operations_
- * `new <filename>`: Create new addon and save it as `<filename>`
- * `load <filename>`: Load an existing addon saved as `<filename>`
- * `push`: Save changes to the disk
- * **Console only!** `close`: Drop all changes and close the addon without
-saving
-* **Console only!** _Filesystem operations_
- * `path`: Print the full file path of the currently opened addon
- * `pwd`: Print current working directory
- * `cd <folder>`: Change working directory to `<folder>`
- * `ls`: List all files in the current folder
-* _Addon file contents_
- * `add <filename>`: Add `<filename>`
- * **Console only!** `addfolder <folder>`: Add all files from `<folder>`
- * `list`: List the files currently added
- * `remove <filename>`: Remove `<filename>`
- * `extract <filename> [path]`: Extract `<filename>` to the current folder
-(or to `[path]` if specified). Unlike `export`, a plain `extract` does not
-set up a realtime change watch.
- * `mget <folder> <f1> [f2...]`: Extract all specified files to `<folder>`
-* _Exporting and pulling changes_
- * **Console only!** `export`: List all currently handled exports
- * `export <filename> [path]`: Export `<filename>` for editing to the
-current folder (or to `[path]` if specified)
- * `pull`: Pull all changes from all exported files
- * `pull <filename>`: Pull changes of `<filename>` (the parameter
-indicates the path of the file **within** the addon, not the path of the
-exported file)
- * `drop <filename>`: Drop the export and delete the exported file
-(`<filename>` is file path **within** the addon)
- * `shellexec <path>`: Execute the specified file
-* _Metadata operations_
- * **Console only!** `get` or `set`: List the handled metadata parameters
- * `get <parameter>`: Print the value of `<parameter>`
- * `set <parameter> <value>`: Sets the value of `<parameter>` to `<value>`
-* **Console only!** `gui`: Load a GUI window
-* **Console only!** `help`: Show the list of available commands
-* `exit`: Exit the application
+You can execute the command `help` in the internal shell to get a list of
+all supported commands. Every operation of the GUI is represented by a
+corresponding command-line variant.
 
 Compiling and requirements
 --------------------------
 
-SharpGMad is written for the .NET 4.0 framework. This is the only
+SharpGMad is written using the .NET 4.0 framework. This is the only
 requirement, you can compile the solution with any development environment
 on any computer compatible with .NET 4.0.
+
+Disclaimer
+----------
+
+The program _SharpGMad_ is provided "AS IS" without any expressed or
+implied warranties. A general rule of thumb is that you should **NEVER**
+meddle with files you hadn't made backup of beforehand. The creators
+refuse liability to any damage caused by the software.
