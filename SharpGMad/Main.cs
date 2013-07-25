@@ -46,13 +46,14 @@ namespace SharpGMad
         private void tsbOpenAddon_Click(object sender, EventArgs e)
         {
             DialogResult dropChanges = new DialogResult();
-            if (AddonHandle is RealtimeAddon)
+            if (AddonHandle is RealtimeAddon && (AddonHandle.Pullable == true || AddonHandle.Modified == true))
             {
                 dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
                     "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             }
 
-            if (dropChanges == DialogResult.Yes || AddonHandle == null)
+            if (dropChanges == DialogResult.Yes || 
+                AddonHandle == null || (AddonHandle.Modified == false && AddonHandle.Pullable == false))
             {
                 UnloadAddon();
                 DialogResult file = ofdAddon.ShowDialog();
