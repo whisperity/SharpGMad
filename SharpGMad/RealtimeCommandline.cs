@@ -299,15 +299,15 @@ namespace SharpGMad
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("The parameter was not specified.");
                             Console.ResetColor();
-                            Console.WriteLine("The valid paramteres are: author description tags title type");
+                            Console.WriteLine("The valid paramteres are: description tags title type");
                             break;
                         }
 
                         switch (parameter)
                         {
-                            case "author":
+                            /*case "author":
                                 Console.WriteLine(AddonHandle.OpenAddon.Author);
-                                break;
+                                break;*/
                             case "description":
                                 Console.WriteLine(AddonHandle.OpenAddon.Description);
                                 break;
@@ -324,7 +324,7 @@ namespace SharpGMad
                                 Console.ForegroundColor = ConsoleColor.DarkYellow;
                                 Console.WriteLine("The specified parameter is not valid.");
                                 Console.ResetColor();
-                                Console.WriteLine("The valid paramteres are: author description tags title type");
+                                Console.WriteLine("The valid paramteres are: description tags title type");
                                 break;
                         }
 
@@ -340,7 +340,7 @@ namespace SharpGMad
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("The parameter was not specified.");
                             Console.ResetColor();
-                            Console.WriteLine("The valid paramteres are: author description tags title type");
+                            Console.WriteLine("The valid paramteres are: description tags title type");
                             break;
                         }
 
@@ -363,9 +363,9 @@ namespace SharpGMad
 
                         switch (Sparameter)
                         {
-                            case "author":
+                            /*case "author":
                                 SetAuthor(value);
-                                break;
+                                break;*/
                             case "description":
                                 SetDescription(value);
                                 break;
@@ -724,7 +724,7 @@ namespace SharpGMad
             AddonHandle.Modified = true;
         }
 
-        /// <summary>
+        /*/// <summary>
         /// Sets the author of the addon.
         /// </summary>
         /// <param name="author">Optional. The new author the addon should have.</param>
@@ -742,7 +742,7 @@ namespace SharpGMad
 
             AddonHandle.OpenAddon.Author = author;
             AddonHandle.Modified = true;
-        }
+        }*/
 
         /// <summary>
         /// Sets the type of the addon.

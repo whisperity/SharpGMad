@@ -47,8 +47,7 @@
             this.txtMetadataDescription = new System.Windows.Forms.TextBox();
             this.tsMetadata = new System.Windows.Forms.ToolStrip();
             this.tsbUpdateMetadata = new System.Windows.Forms.ToolStripButton();
-            this.txtMetadataAuthor = new System.Windows.Forms.TextBox();
-            this.lblAuthor = new System.Windows.Forms.Label();
+            this.tsbDiscardMetadataChanges = new System.Windows.Forms.ToolStripButton();
             this.lblDescription = new System.Windows.Forms.Label();
             this.cmbMetadataTag1 = new System.Windows.Forms.ComboBox();
             this.cmbMetadataTag2 = new System.Windows.Forms.ComboBox();
@@ -57,7 +56,6 @@
             this.lblType = new System.Windows.Forms.Label();
             this.txtMetadataTitle = new System.Windows.Forms.TextBox();
             this.lblTitle = new System.Windows.Forms.Label();
-            this.tsbDiscardMetadataChanges = new System.Windows.Forms.ToolStripButton();
             this.tsToolbar = new System.Windows.Forms.ToolStrip();
             this.tsbCreateAddon = new System.Windows.Forms.ToolStripButton();
             this.tsbOpenAddon = new System.Windows.Forms.ToolStripButton();
@@ -96,7 +94,7 @@
             this.lstFiles.HideSelection = false;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
-            this.lstFiles.Size = new System.Drawing.Size(527, 313);
+            this.lstFiles.Size = new System.Drawing.Size(527, 328);
             this.lstFiles.TabIndex = 0;
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.View = System.Windows.Forms.View.Tile;
@@ -181,7 +179,7 @@
             this.pnlFilelist.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlFilelist.Location = new System.Drawing.Point(0, 26);
             this.pnlFilelist.Name = "pnlFilelist";
-            this.pnlFilelist.Size = new System.Drawing.Size(527, 313);
+            this.pnlFilelist.Size = new System.Drawing.Size(527, 328);
             this.pnlFilelist.TabIndex = 2;
             // 
             // pnlFileOpsToolbar
@@ -198,16 +196,16 @@
             this.ssStatus.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsslStatus});
             this.ssStatus.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
-            this.ssStatus.Location = new System.Drawing.Point(0, 339);
+            this.ssStatus.Location = new System.Drawing.Point(0, 354);
             this.ssStatus.Name = "ssStatus";
-            this.ssStatus.Size = new System.Drawing.Size(527, 20);
+            this.ssStatus.Size = new System.Drawing.Size(527, 5);
             this.ssStatus.SizingGrip = false;
             this.ssStatus.TabIndex = 3;
             // 
             // tsslStatus
             // 
             this.tsslStatus.Name = "tsslStatus";
-            this.tsslStatus.Size = new System.Drawing.Size(246, 15);
+            this.tsslStatus.Size = new System.Drawing.Size(0, 0);
             // 
             // pnlForm
             // 
@@ -223,8 +221,6 @@
             // 
             this.pnlRightSide.Controls.Add(this.txtMetadataDescription);
             this.pnlRightSide.Controls.Add(this.tsMetadata);
-            this.pnlRightSide.Controls.Add(this.txtMetadataAuthor);
-            this.pnlRightSide.Controls.Add(this.lblAuthor);
             this.pnlRightSide.Controls.Add(this.lblDescription);
             this.pnlRightSide.Controls.Add(this.cmbMetadataTag1);
             this.pnlRightSide.Controls.Add(this.cmbMetadataTag2);
@@ -242,12 +238,12 @@
             // txtMetadataDescription
             // 
             this.txtMetadataDescription.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.txtMetadataDescription.Location = new System.Drawing.Point(20, 185);
+            this.txtMetadataDescription.Location = new System.Drawing.Point(20, 153);
             this.txtMetadataDescription.Multiline = true;
             this.txtMetadataDescription.Name = "txtMetadataDescription";
             this.txtMetadataDescription.ReadOnly = true;
             this.txtMetadataDescription.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtMetadataDescription.Size = new System.Drawing.Size(184, 162);
+            this.txtMetadataDescription.Size = new System.Drawing.Size(184, 194);
             this.txtMetadataDescription.TabIndex = 7;
             // 
             // tsMetadata
@@ -272,28 +268,21 @@
             this.tsbUpdateMetadata.Text = "Update metadata";
             this.tsbUpdateMetadata.Click += new System.EventHandler(this.tsbUpdateMetadata_Click);
             // 
-            // txtMetadataAuthor
+            // tsbDiscardMetadataChanges
             // 
-            this.txtMetadataAuthor.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.txtMetadataAuthor.Location = new System.Drawing.Point(20, 74);
-            this.txtMetadataAuthor.Name = "txtMetadataAuthor";
-            this.txtMetadataAuthor.ReadOnly = true;
-            this.txtMetadataAuthor.Size = new System.Drawing.Size(184, 13);
-            this.txtMetadataAuthor.TabIndex = 9;
-            // 
-            // lblAuthor
-            // 
-            this.lblAuthor.AutoSize = true;
-            this.lblAuthor.Location = new System.Drawing.Point(6, 58);
-            this.lblAuthor.Name = "lblAuthor";
-            this.lblAuthor.Size = new System.Drawing.Size(41, 13);
-            this.lblAuthor.TabIndex = 8;
-            this.lblAuthor.Text = "Author:";
+            this.tsbDiscardMetadataChanges.Enabled = false;
+            this.tsbDiscardMetadataChanges.Image = global::SharpGMad.Properties.Resources.discard;
+            this.tsbDiscardMetadataChanges.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbDiscardMetadataChanges.Name = "tsbDiscardMetadataChanges";
+            this.tsbDiscardMetadataChanges.Size = new System.Drawing.Size(66, 22);
+            this.tsbDiscardMetadataChanges.Text = "Discard";
+            this.tsbDiscardMetadataChanges.Visible = false;
+            this.tsbDiscardMetadataChanges.Click += new System.EventHandler(this.tsbDiscardMetadataChanges_Click);
             // 
             // lblDescription
             // 
             this.lblDescription.AutoSize = true;
-            this.lblDescription.Location = new System.Drawing.Point(6, 168);
+            this.lblDescription.Location = new System.Drawing.Point(6, 136);
             this.lblDescription.Name = "lblDescription";
             this.lblDescription.Size = new System.Drawing.Size(63, 13);
             this.lblDescription.TabIndex = 6;
@@ -304,18 +293,18 @@
             this.cmbMetadataTag1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbMetadataTag1.Enabled = false;
             this.cmbMetadataTag1.FormattingEnabled = true;
-            this.cmbMetadataTag1.Location = new System.Drawing.Point(20, 145);
+            this.cmbMetadataTag1.Location = new System.Drawing.Point(20, 113);
             this.cmbMetadataTag1.Name = "cmbMetadataTag1";
             this.cmbMetadataTag1.Size = new System.Drawing.Size(92, 21);
             this.cmbMetadataTag1.Sorted = true;
             this.cmbMetadataTag1.TabIndex = 12;
-            //
+            // 
             // cmbMetadataTag2
             // 
             this.cmbMetadataTag2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbMetadataTag2.Enabled = false;
             this.cmbMetadataTag2.FormattingEnabled = true;
-            this.cmbMetadataTag2.Location = new System.Drawing.Point(112, 145);
+            this.cmbMetadataTag2.Location = new System.Drawing.Point(112, 113);
             this.cmbMetadataTag2.Name = "cmbMetadataTag2";
             this.cmbMetadataTag2.Size = new System.Drawing.Size(92, 21);
             this.cmbMetadataTag2.Sorted = true;
@@ -324,7 +313,7 @@
             // lblTags
             // 
             this.lblTags.AutoSize = true;
-            this.lblTags.Location = new System.Drawing.Point(6, 129);
+            this.lblTags.Location = new System.Drawing.Point(6, 97);
             this.lblTags.Name = "lblTags";
             this.lblTags.Size = new System.Drawing.Size(34, 13);
             this.lblTags.TabIndex = 4;
@@ -335,7 +324,7 @@
             this.cmbMetadataType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbMetadataType.Enabled = false;
             this.cmbMetadataType.FormattingEnabled = true;
-            this.cmbMetadataType.Location = new System.Drawing.Point(20, 105);
+            this.cmbMetadataType.Location = new System.Drawing.Point(20, 73);
             this.cmbMetadataType.Name = "cmbMetadataType";
             this.cmbMetadataType.Size = new System.Drawing.Size(184, 21);
             this.cmbMetadataType.Sorted = true;
@@ -344,7 +333,7 @@
             // lblType
             // 
             this.lblType.AutoSize = true;
-            this.lblType.Location = new System.Drawing.Point(6, 90);
+            this.lblType.Location = new System.Drawing.Point(6, 58);
             this.lblType.Name = "lblType";
             this.lblType.Size = new System.Drawing.Size(34, 13);
             this.lblType.TabIndex = 2;
@@ -367,17 +356,6 @@
             this.lblTitle.Size = new System.Drawing.Size(30, 13);
             this.lblTitle.TabIndex = 0;
             this.lblTitle.Text = "Title:";
-            //
-            // tsbDiscardMetadataChanges
-            // 
-            this.tsbDiscardMetadataChanges.Enabled = false;
-            this.tsbDiscardMetadataChanges.Image = global::SharpGMad.Properties.Resources.discard;
-            this.tsbDiscardMetadataChanges.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbDiscardMetadataChanges.Name = "tsbDiscardMetadataChanges";
-            this.tsbDiscardMetadataChanges.Size = new System.Drawing.Size(66, 22);
-            this.tsbDiscardMetadataChanges.Text = "Discard";
-            this.tsbDiscardMetadataChanges.Visible = false;
-            this.tsbDiscardMetadataChanges.Click += new System.EventHandler(this.tsbDiscardMetadataChanges_Click);
             // 
             // tsToolbar
             // 
@@ -610,8 +588,6 @@
         private System.Windows.Forms.Label lblTags;
         private System.Windows.Forms.ComboBox cmbMetadataType;
         private System.Windows.Forms.Label lblType;
-        private System.Windows.Forms.TextBox txtMetadataAuthor;
-        private System.Windows.Forms.Label lblAuthor;
         private System.Windows.Forms.ToolStrip tsMetadata;
         private System.Windows.Forms.ToolStripButton tsbUpdateMetadata;
         private System.Windows.Forms.OpenFileDialog ofdAddFile;

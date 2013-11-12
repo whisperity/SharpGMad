@@ -87,11 +87,11 @@ namespace SharpGMad
         /// Gets the format version byte of the addon (from header).
         /// </summary>
         public char FormatVersion { get; private set; }
-        /// <summary>
+        /*/// <summary>
         /// Gets or sets the author of the addon.
         /// Currently it has no use, as the author is always written as "Author Name".
         /// </summary>
-        public string Author; // Not used. Current writer only writes "Author Name"
+        public string Author; // Not used. Current writer only writes "Author Name"*/
         /// <summary>
         /// Gets or sets the description of the addon.
         /// </summary>
@@ -135,7 +135,7 @@ namespace SharpGMad
         /// </summary>
         public Addon()
         {
-            Author = "Author Name";
+            //Author = "Author Name";
             Title = String.Empty;
             Type = String.Empty;
             Description = String.Empty;
@@ -156,7 +156,7 @@ namespace SharpGMad
         public Addon(Reader reader)
             : this()
         {
-            Author = reader.Author;
+            //Author = reader.Author;
             Title = reader.Name;
             Description = reader.Description;
             Type = reader.Type;

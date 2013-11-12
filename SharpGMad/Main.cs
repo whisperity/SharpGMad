@@ -218,7 +218,7 @@ namespace SharpGMad
         private void UpdateMetadataPanel()
         {
             txtMetadataTitle.Text = AddonHandle.OpenAddon.Title;
-            txtMetadataAuthor.Text = AddonHandle.OpenAddon.Author;
+            /*txtMetadataAuthor.Text = AddonHandle.OpenAddon.Author;*/
             txtMetadataDescription.Text = AddonHandle.OpenAddon.Description;
 
             cmbMetadataType.Items.Clear();
@@ -258,7 +258,7 @@ namespace SharpGMad
         private void UnloadAddon()
         {
             txtMetadataTitle.Text = String.Empty;
-            txtMetadataAuthor.Text = String.Empty;
+            /*txtMetadataAuthor.Text = String.Empty;*/
             cmbMetadataType.Items.Clear();
             cmbMetadataTag1.Items.Clear();
             cmbMetadataTag2.Items.Clear();
@@ -780,7 +780,7 @@ namespace SharpGMad
                     }
 
                     AddonHandle.OpenAddon.Title = Path.GetFileNameWithoutExtension(sfdAddon.FileName);
-                    AddonHandle.OpenAddon.Author = "Author Name"; // This is currently not changable
+                    /*AddonHandle.OpenAddon.Author = "Author Name"; // This is currently not changable*/
                     AddonHandle.OpenAddon.Description = String.Empty;
                     AddonHandle.OpenAddon.Type = String.Empty;
                     AddonHandle.OpenAddon.Tags = new List<string>();

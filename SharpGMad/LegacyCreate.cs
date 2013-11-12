@@ -162,8 +162,8 @@ namespace SharpGMad
                         addon.Title = keyMatch.NextMatch().Value;
                     else if (keyMatch.Value.ToLowerInvariant() == "\"info\"")
                         addon.Description = keyMatch.NextMatch().Value;
-                    else if (keyMatch.Value.ToLowerInvariant() == "\"author_name\"")
-                        addon.Author = keyMatch.NextMatch().Value;
+                    /*else if (keyMatch.Value.ToLowerInvariant() == "\"author_name\"")
+                        addon.Author = keyMatch.NextMatch().Value;*/
                     // Current GMAD writer only writes "Author Name", not real value
                 }
 

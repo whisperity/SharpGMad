@@ -66,10 +66,10 @@ namespace SharpGMad
         /// Gets the name of the addon.
         /// </summary>
         public string Name { get; private set; }
-        /// <summary>
+        /*/// <summary>
         /// Gets the author of the addon. (Currently unused, will always return "Author Name.")
         /// </summary>
-        public string Author { get; private set; }
+        public string Author { get; private set; }*/
         /// <summary>
         /// Gets the description of the addon.
         /// </summary>
@@ -188,7 +188,7 @@ namespace SharpGMad
 
             Name = reader.ReadNullTerminatedString();
             Description = reader.ReadNullTerminatedString();
-            Author = reader.ReadNullTerminatedString();
+            reader.ReadNullTerminatedString(); // This would be the author... currently not implemented
             Version = reader.ReadInt32(); // Addon version (unused)
 
             // File index
