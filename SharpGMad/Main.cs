@@ -1200,5 +1200,36 @@ namespace SharpGMad
                 }
             }
         }
+
+        private void lstFiles_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop)) 
+                e.Effect = DragDropEffects.Copy;
+        }
+
+        private void lstFiles_DragDrop(object sender, DragEventArgs e)
+        {
+            DialogResult dropChanges = new DialogResult();
+            if (AddonHandle is RealtimeAddon && AddonHandle.Modified)
+            {
+                dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?", "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            }
+            if (dropChanges == DialogResult.Yes || AddonHandle == null || (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
+            {
+                UnloadAddon();
+                String[] files = (String[])e.Data.GetData(DataFormats.FileDrop);
+                if (files.Length != 1)
+                {
+                    MessageBox.Show("You can only choose one file at a time", "Too many files", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                if (!files[0].EndsWith(".gma"))
+                {
+                    MessageBox.Show("This file is not a '.gma' file", "Wrong file", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                LoadAddon(files[0]);
+            }            
+        }
     }
 }
