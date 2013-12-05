@@ -47,6 +47,7 @@
             this.txtMetadataDescription = new System.Windows.Forms.TextBox();
             this.tsMetadata = new System.Windows.Forms.ToolStrip();
             this.tsbUpdateMetadata = new System.Windows.Forms.ToolStripButton();
+            this.tsbDiscardMetadataChanges = new System.Windows.Forms.ToolStripButton();
             this.txtMetadataAuthor = new System.Windows.Forms.TextBox();
             this.lblAuthor = new System.Windows.Forms.Label();
             this.lblDescription = new System.Windows.Forms.Label();
@@ -57,7 +58,6 @@
             this.lblType = new System.Windows.Forms.Label();
             this.txtMetadataTitle = new System.Windows.Forms.TextBox();
             this.lblTitle = new System.Windows.Forms.Label();
-            this.tsbDiscardMetadataChanges = new System.Windows.Forms.ToolStripButton();
             this.tsToolbar = new System.Windows.Forms.ToolStrip();
             this.tsbCreateAddon = new System.Windows.Forms.ToolStripButton();
             this.tsbOpenAddon = new System.Windows.Forms.ToolStripButton();
@@ -92,15 +92,18 @@
             // 
             // lstFiles
             // 
+            this.lstFiles.AllowDrop = true;
             this.lstFiles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lstFiles.HideSelection = false;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
-            this.lstFiles.Size = new System.Drawing.Size(527, 313);
+            this.lstFiles.Size = new System.Drawing.Size(527, 328);
             this.lstFiles.TabIndex = 0;
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.View = System.Windows.Forms.View.Tile;
             this.lstFiles.SelectedIndexChanged += new System.EventHandler(this.lstFiles_SelectedIndexChanged);
+            this.lstFiles.DragDrop += new System.Windows.Forms.DragEventHandler(this.lstFiles_DragDrop);
+            this.lstFiles.DragEnter += new System.Windows.Forms.DragEventHandler(this.lstFiles_DragEnter);
             this.lstFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstFiles_KeyDown);
             this.lstFiles.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseClick);
             this.lstFiles.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseDoubleClick);
@@ -181,7 +184,7 @@
             this.pnlFilelist.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlFilelist.Location = new System.Drawing.Point(0, 26);
             this.pnlFilelist.Name = "pnlFilelist";
-            this.pnlFilelist.Size = new System.Drawing.Size(527, 313);
+            this.pnlFilelist.Size = new System.Drawing.Size(527, 328);
             this.pnlFilelist.TabIndex = 2;
             // 
             // pnlFileOpsToolbar
@@ -198,16 +201,16 @@
             this.ssStatus.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsslStatus});
             this.ssStatus.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
-            this.ssStatus.Location = new System.Drawing.Point(0, 339);
+            this.ssStatus.Location = new System.Drawing.Point(0, 354);
             this.ssStatus.Name = "ssStatus";
-            this.ssStatus.Size = new System.Drawing.Size(527, 20);
+            this.ssStatus.Size = new System.Drawing.Size(527, 5);
             this.ssStatus.SizingGrip = false;
             this.ssStatus.TabIndex = 3;
             // 
             // tsslStatus
             // 
             this.tsslStatus.Name = "tsslStatus";
-            this.tsslStatus.Size = new System.Drawing.Size(246, 15);
+            this.tsslStatus.Size = new System.Drawing.Size(0, 0);
             // 
             // pnlForm
             // 
@@ -272,6 +275,17 @@
             this.tsbUpdateMetadata.Text = "Update metadata";
             this.tsbUpdateMetadata.Click += new System.EventHandler(this.tsbUpdateMetadata_Click);
             // 
+            // tsbDiscardMetadataChanges
+            // 
+            this.tsbDiscardMetadataChanges.Enabled = false;
+            this.tsbDiscardMetadataChanges.Image = global::SharpGMad.Properties.Resources.discard;
+            this.tsbDiscardMetadataChanges.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tsbDiscardMetadataChanges.Name = "tsbDiscardMetadataChanges";
+            this.tsbDiscardMetadataChanges.Size = new System.Drawing.Size(66, 22);
+            this.tsbDiscardMetadataChanges.Text = "Discard";
+            this.tsbDiscardMetadataChanges.Visible = false;
+            this.tsbDiscardMetadataChanges.Click += new System.EventHandler(this.tsbDiscardMetadataChanges_Click);
+            // 
             // txtMetadataAuthor
             // 
             this.txtMetadataAuthor.BorderStyle = System.Windows.Forms.BorderStyle.None;
@@ -309,7 +323,7 @@
             this.cmbMetadataTag1.Size = new System.Drawing.Size(92, 21);
             this.cmbMetadataTag1.Sorted = true;
             this.cmbMetadataTag1.TabIndex = 12;
-            //
+            // 
             // cmbMetadataTag2
             // 
             this.cmbMetadataTag2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -367,17 +381,6 @@
             this.lblTitle.Size = new System.Drawing.Size(30, 13);
             this.lblTitle.TabIndex = 0;
             this.lblTitle.Text = "Title:";
-            //
-            // tsbDiscardMetadataChanges
-            // 
-            this.tsbDiscardMetadataChanges.Enabled = false;
-            this.tsbDiscardMetadataChanges.Image = global::SharpGMad.Properties.Resources.discard;
-            this.tsbDiscardMetadataChanges.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbDiscardMetadataChanges.Name = "tsbDiscardMetadataChanges";
-            this.tsbDiscardMetadataChanges.Size = new System.Drawing.Size(66, 22);
-            this.tsbDiscardMetadataChanges.Text = "Discard";
-            this.tsbDiscardMetadataChanges.Visible = false;
-            this.tsbDiscardMetadataChanges.Click += new System.EventHandler(this.tsbDiscardMetadataChanges_Click);
             // 
             // tsToolbar
             // 
