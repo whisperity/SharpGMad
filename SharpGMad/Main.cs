@@ -1203,33 +1203,118 @@ namespace SharpGMad
 
         private void lstFiles_DragEnter(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop)) 
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effect = DragDropEffects.Copy;
         }
 
         private void lstFiles_DragDrop(object sender, DragEventArgs e)
         {
-            DialogResult dropChanges = new DialogResult();
-            if (AddonHandle is RealtimeAddon && AddonHandle.Modified)
+            List<string> files = ((String[])e.Data.GetData(DataFormats.FileDrop)).ToList();
+
+            if (files.Count == 0)
             {
-                dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?", "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                return;
             }
-            if (dropChanges == DialogResult.Yes || AddonHandle == null || (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
+            else if (files.Count == 1 && files[0].EndsWith(".gma"))
             {
-                UnloadAddon();
-                String[] files = (String[])e.Data.GetData(DataFormats.FileDrop);
-                if (files.Length != 1)
+                if (files[0].EndsWith(".gma"))
                 {
-                    MessageBox.Show("You can only choose one file at a time", "Too many files", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    DialogResult dropChanges = new DialogResult();
+                    if (AddonHandle is RealtimeAddon && AddonHandle.Modified)
+                    {
+                        dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
+                            "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    }
+
+                    if (dropChanges == DialogResult.Yes || AddonHandle == null ||
+                        (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
+                    {
+                        UnloadAddon();
+                        LoadAddon(files[0]);
+                    }
+                }
+            }
+            else
+            {
+                if (files.Any(f => f.EndsWith(".gma")))
+                {
+                    MessageBox.Show("You can only choose one file at a time!", "Too many files",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
-                if (!files[0].EndsWith(".gma"))
+
+                List<string> addFailures = new List<string>(files.Count);
+
+                foreach (string f in files)
                 {
-                    MessageBox.Show("This file is not a '.gma' file", "Wrong file", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
+                    string filename = f.Replace("\\", "/");
+
+                    try
+                    {
+                        AddonHandle.OpenAddon.CheckRestrictions(Whitelist.GetMatchingString(filename));
+                        AddonHandle.AddFile(Whitelist.GetMatchingString(filename), File.ReadAllBytes(f));
+                    }
+                    catch (IOException)
+                    {
+                        addFailures.Add("Error happened while reading " + f);
+                        continue;
+                    }
+                    catch (IgnoredException)
+                    {
+                        addFailures.Add("File is ignored (" + f + ")");
+                        continue;
+                    }
+                    catch (WhitelistException)
+                    {
+                        addFailures.Add("File is not whitelisted (" + f + ")");
+                        continue;
+                    }
+                    catch (ArgumentException)
+                    {
+                        addFailures.Add("Similar file has already been added (" + f + ")");
+                        continue;
+                    }
                 }
-                LoadAddon(files[0]);
-            }            
+
+                UpdateModified();
+                UpdateFileList();
+
+                if (addFailures.Count == 0)
+                    UpdateStatus("Successfully added " + (files.Count - addFailures.Count) + " files");
+                else if (addFailures.Count == 1)
+                    UpdateStatus(addFailures[0]);
+                else if (addFailures.Count > 1)
+                {
+                    UpdateStatus(addFailures.Count + " files failed to add out of " + files.Count);
+                    DialogResult showFailedFiles = MessageBox.Show(addFailures.Count + " files failed to add." +
+                        "\n\nShow a list of failures?", "Add files", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                    if (showFailedFiles == DialogResult.Yes)
+                    {
+                        string temppath = ContentFile.GenerateExternalPath(
+                                new Random().Next() + "_failedAdds") + ".txt";
+
+                        try
+                        {
+                            File.WriteAllText(temppath,
+                                "These files failed to add:\r\n\r\n" +
+                                String.Join("\r\n", addFailures.ToArray()));
+                        }
+                        catch (Exception)
+                        {
+                            MessageBox.Show("Can't show the list, an error happened generating it.", "Add files",
+                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            return;
+                        }
+
+                        // The file will be opened by the user's default text file handler (Notepad?)
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                        {
+                            UseShellExecute = true,
+                        });
+                    }
+                }
+            }
         }
     }
 }
