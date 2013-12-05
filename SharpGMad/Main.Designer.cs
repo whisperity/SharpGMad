@@ -1,4 +1,4 @@
-﻿namespace SharpGMad
+namespace SharpGMad
 {
     partial class Main
     {
@@ -90,6 +90,7 @@
             // 
             // lstFiles
             // 
+            this.lstFiles.AllowDrop = true;
             this.lstFiles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lstFiles.HideSelection = false;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
@@ -99,6 +100,8 @@
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.View = System.Windows.Forms.View.Tile;
             this.lstFiles.SelectedIndexChanged += new System.EventHandler(this.lstFiles_SelectedIndexChanged);
+            this.lstFiles.DragDrop += new System.Windows.Forms.DragEventHandler(this.lstFiles_DragDrop);
+            this.lstFiles.DragEnter += new System.Windows.Forms.DragEventHandler(this.lstFiles_DragEnter);
             this.lstFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstFiles_KeyDown);
             this.lstFiles.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseClick);
             this.lstFiles.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseDoubleClick);

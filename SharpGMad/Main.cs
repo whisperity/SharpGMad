@@ -1200,5 +1200,137 @@ namespace SharpGMad
                 }
             }
         }
+
+        private void lstFiles_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                e.Effect = DragDropEffects.Copy;
+        }
+
+        private void lstFiles_DragDrop(object sender, DragEventArgs e)
+        {
+            List<string> files = ((String[])e.Data.GetData(DataFormats.FileDrop)).ToList();
+
+            if (files.Count == 0)
+            {
+                return;
+            }
+            else if (files.Count == 1 && files[0].EndsWith(".gma"))
+            {
+                if (files[0].EndsWith(".gma"))
+                {
+                    DialogResult dropChanges = new DialogResult();
+                    if (AddonHandle is RealtimeAddon && AddonHandle.Modified)
+                    {
+                        dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
+                            "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    }
+
+                    if (dropChanges == DialogResult.Yes || AddonHandle == null ||
+                        (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
+                    {
+                        UnloadAddon();
+                        LoadAddon(files[0]);
+                    }
+                }
+            }
+            else
+            {
+                if (files.Any(f => f.EndsWith(".gma")))
+                {
+                    MessageBox.Show("One or more drag-and-dropped files are GMAs.\nTo load a GMA, only drop one file " +
+                        "into SharpGMad.", "Add files",
+                        MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
+
+                List<string> addFailures = new List<string>(files.Count);
+                List<string> filesToParse = new List<string>(files); // Create a new list so we can run the foreach below
+
+                foreach (string f in files)
+                {
+                    if ((File.GetAttributes(f) & FileAttributes.Directory) == FileAttributes.Directory)
+                    {
+                        // The file is in fact a directory, parse the files within and add them
+                        foreach (string subfile in Directory.GetFiles(f, "*", SearchOption.AllDirectories))
+                        {
+                            filesToParse.Add(subfile);
+                        }
+
+                        filesToParse.Remove(f);
+                    }
+                }
+
+                foreach (string f in filesToParse)
+                {
+                    string filename = f.Replace("\\", "/");
+
+                    try
+                    {
+                        AddonHandle.OpenAddon.CheckRestrictions(Whitelist.GetMatchingString(filename));
+                        AddonHandle.AddFile(Whitelist.GetMatchingString(filename), File.ReadAllBytes(f));
+                    }
+                    catch (IOException)
+                    {
+                        addFailures.Add("Error happened while reading " + f);
+                        continue;
+                    }
+                    catch (IgnoredException)
+                    {
+                        addFailures.Add("File is ignored (" + f + ")");
+                        continue;
+                    }
+                    catch (WhitelistException)
+                    {
+                        addFailures.Add("File is not whitelisted (" + f + ")");
+                        continue;
+                    }
+                    catch (ArgumentException)
+                    {
+                        addFailures.Add("Similar file has already been added (" + f + ")");
+                        continue;
+                    }
+                }
+
+                UpdateModified();
+                UpdateFileList();
+
+                if (addFailures.Count == 0)
+                    UpdateStatus("Successfully added " + (filesToParse.Count - addFailures.Count) + " files");
+                else if (addFailures.Count == 1)
+                    UpdateStatus(addFailures[0]);
+                else if (addFailures.Count > 1)
+                {
+                    UpdateStatus(addFailures.Count + " files failed to add out of " + filesToParse.Count);
+                    DialogResult showFailedFiles = MessageBox.Show(addFailures.Count + " files failed to add." +
+                        "\n\nShow a list of failures?", "Add files", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                    if (showFailedFiles == DialogResult.Yes)
+                    {
+                        string temppath = ContentFile.GenerateExternalPath(
+                                new Random().Next() + "_failedAdds") + ".txt";
+
+                        try
+                        {
+                            File.WriteAllText(temppath,
+                                "These files failed to add:\r\n\r\n" +
+                                String.Join("\r\n", addFailures.ToArray()));
+                        }
+                        catch (Exception)
+                        {
+                            MessageBox.Show("Can't show the list, an error happened generating it.", "Add files",
+                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            return;
+                        }
+
+                        // The file will be opened by the user's default text file handler (Notepad?)
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                        {
+                            UseShellExecute = true,
+                        });
+                    }
+                }
+            }
+        }
     }
 }
