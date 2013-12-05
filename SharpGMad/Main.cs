@@ -1238,14 +1238,30 @@ namespace SharpGMad
             {
                 if (files.Any(f => f.EndsWith(".gma")))
                 {
-                    MessageBox.Show("You can only choose one file at a time!", "Too many files",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("One or more drag-and-dropped files are GMAs.\nTo load a GMA, only drop one file " +
+                        "into SharpGMad.", "Add files",
+                        MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return;
                 }
 
                 List<string> addFailures = new List<string>(files.Count);
+                List<string> filesToParse = new List<string>(files); // Create a new list so we can run the foreach below
 
                 foreach (string f in files)
+                {
+                    if ((File.GetAttributes(f) & FileAttributes.Directory) == FileAttributes.Directory)
+                    {
+                        // The file is in fact a directory, parse the files within and add them
+                        foreach (string subfile in Directory.GetFiles(f, "*", SearchOption.AllDirectories))
+                        {
+                            filesToParse.Add(subfile);
+                        }
+
+                        filesToParse.Remove(f);
+                    }
+                }
+
+                foreach (string f in filesToParse)
                 {
                     string filename = f.Replace("\\", "/");
 
@@ -1280,12 +1296,12 @@ namespace SharpGMad
                 UpdateFileList();
 
                 if (addFailures.Count == 0)
-                    UpdateStatus("Successfully added " + (files.Count - addFailures.Count) + " files");
+                    UpdateStatus("Successfully added " + (filesToParse.Count - addFailures.Count) + " files");
                 else if (addFailures.Count == 1)
                     UpdateStatus(addFailures[0]);
                 else if (addFailures.Count > 1)
                 {
-                    UpdateStatus(addFailures.Count + " files failed to add out of " + files.Count);
+                    UpdateStatus(addFailures.Count + " files failed to add out of " + filesToParse.Count);
                     DialogResult showFailedFiles = MessageBox.Show(addFailures.Count + " files failed to add." +
                         "\n\nShow a list of failures?", "Add files", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
