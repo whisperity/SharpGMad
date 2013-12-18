@@ -86,6 +86,46 @@ namespace SharpGMad
         /// </summary>
         public List<FileWatch> WatchedFiles { get; private set; }
 
+        public static Boolean CanWrite(string filename)
+        {
+            if (!File.Exists(filename))
+            {
+                throw new FileNotFoundException("The specified file " + filename + " does not exist.");
+            }
+            try
+            {
+                using (Stream stream = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) //Check if it's possible to write to the file
+                {
+                }
+                return true; //file is available for write
+            }
+            catch { }
+            return false; //File is locked
+        }
+
+        public static void MakeCopy(string filename)
+        {
+            try
+            {
+                File.Copy(filename, filename.Remove(filename.Length - 4) + "_copy.gma",true);
+            }
+            catch (IOException)
+            {
+                throw;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                throw;
+            }
+            catch (NotSupportedException)
+            {
+                throw;
+            }
+            catch (ArgumentException)
+            {
+                throw;
+            }
+        }
         /// <summary>
         /// Loads the specified addon from the local filesystem and encapsulates it within a realtime instance.
         /// </summary>
@@ -97,7 +137,7 @@ namespace SharpGMad
         /// <exception cref="ArgumentException">Happens if a file with the same path is already added.</exception>
         /// <exception cref="WhitelistException">There is a file prohibited from storing by the global whitelist.</exception>
         /// <exception cref="IgnoredException">There is a file prohibited from storing by the addon's ignore list.</exception>
-        public static RealtimeAddon Load(string filename)
+        public static RealtimeAddon Load(string filename,Boolean canWrite)
         {
             if (!File.Exists(filename))
             {
@@ -107,7 +147,10 @@ namespace SharpGMad
             FileStream fs;
             try
             {
-                fs = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                if (canWrite)
+                    fs = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                else
+                    fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
             }
             catch (IOException)
             {
