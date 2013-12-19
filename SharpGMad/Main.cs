@@ -75,36 +75,20 @@ namespace SharpGMad
             {
                 if (RealtimeAddon.CanWrite(path))
                 {
-                    Console.WriteLine("CanWrite");
                     AddonHandle = RealtimeAddon.Load(path, true);
                     canWrite = true;
                 }
                 else
                 {
-                    Console.WriteLine("Nope");
-                    DialogResult dr = MessageBox.Show("The addon file is currently in use by an other process\nDo you want to make an copy of the file?\n\n(If 'No' is selected, the File will be opened in Read-Only mode)",
-                    "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    if(dr == DialogResult.Yes)
-                    {
-                        RealtimeAddon.MakeCopy(path);
-                        AddonHandle = RealtimeAddon.Load(path.Remove(path.Length - 4) + "_copy.gma", true);
-                        canWrite = true;
-                    }
-                    else
+                    DialogResult dr = MessageBox.Show("This addon is locked by another process\n\nWould you like to open it in Read-Only mode?",
+                    "Addon locked", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (dr == DialogResult.Yes)
                     {
                         AddonHandle = RealtimeAddon.Load(path, false);
                         canWrite = false;
-                        tsbAddFile.Enabled = false;
-                        tsbAddFile.Visible = false;
-
-                        tsbPullAll.Enabled = false;
-                        tsbPullAll.Visible = false;
-
-                        tsbDropAll.Enabled = false;
-                        tsbDropAll.Visible = false;
-
-                        tssExportHeaderSeparator.Visible = false;
                     }
+                    else
+                        return;
                 }
             }
             catch (FileNotFoundException)
@@ -224,7 +208,6 @@ namespace SharpGMad
                         if (watch.First().Modified)
                         {
                             tsbPullAll.Enabled = canWrite; // At least one file is modified externally
-                            tsbPullAll.Visible = canWrite; 
                             item.ForeColor = Color.Indigo;
                         }
                     }
@@ -414,7 +397,6 @@ namespace SharpGMad
                 {
                     // Allow remove, export and execution
                     tsmFileRemove.Enabled = canWrite;
-                    tsmFileRemove.Visible = canWrite;
 
                     tsmFileExtract.Enabled = true;
                     tsmFileExtract.Visible = true;
@@ -446,8 +428,8 @@ namespace SharpGMad
                     // But the buttons should be visible
                     tssExportSeparator.Visible = true;
                     tsmFileExportTo.Visible = true;
-                    tsmFilePull.Visible = canWrite;
-                    tsmFileDropExport.Visible = canWrite;
+                    tsmFilePull.Enabled = canWrite;
+                    tsmFileDropExport.Enabled = canWrite;
                 }
             }
             else if (((System.Windows.Forms.ListView)sender).SelectedItems.Count > 1)
