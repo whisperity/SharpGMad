@@ -86,10 +86,36 @@ namespace SharpGMad
         /// </summary>
         public List<FileWatch> WatchedFiles { get; private set; }
 
+
+        /// <summary>
+        /// Checks, if you can write to a specific file.
+        /// </summary>
+        /// <param name="filename">The path to the file on the local filesystem.</param>
+        /// <returns>A Boolean, saying wether the file is writable.</returns>
+        public static Boolean CanWrite(string filename)
+        {
+            //Check if the file exists
+            if (!File.Exists(filename))
+            {
+                throw new FileNotFoundException("The specified file " + filename + " does not exist.");
+            }
+            try
+            {   
+                //Open a new FileStream and test, if it's writeable
+                using (Stream stream = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) //Check if it's possible to write to the file
+                {
+                }
+                return true; //file isn't locked
+            }
+            catch { }
+            return false; //File is locked
+        }
+
         /// <summary>
         /// Loads the specified addon from the local filesystem and encapsulates it within a realtime instance.
         /// </summary>
         /// <param name="filename">The path to the file on the local filesystem.</param>
+        /// <param name="canWrite">The Boolean, saying wether you can write to the file.</param>
         /// <returns>A RealtimeAddon instance.</returns>
         /// <exception cref="FileNotFoundException">Happens if the specified file does not exist.</exception>
         /// <exception cref="IOException">Thrown if there is a problem opening the specified file.</exception>
@@ -97,7 +123,7 @@ namespace SharpGMad
         /// <exception cref="ArgumentException">Happens if a file with the same path is already added.</exception>
         /// <exception cref="WhitelistException">There is a file prohibited from storing by the global whitelist.</exception>
         /// <exception cref="IgnoredException">There is a file prohibited from storing by the addon's ignore list.</exception>
-        public static RealtimeAddon Load(string filename)
+        public static RealtimeAddon Load(string filename,Boolean canWrite)
         {
             if (!File.Exists(filename))
             {
@@ -107,7 +133,10 @@ namespace SharpGMad
             FileStream fs;
             try
             {
-                fs = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                if (canWrite)
+                    fs = new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                else
+                    fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
             }
             catch (IOException)
             {

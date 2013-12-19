@@ -910,7 +910,14 @@ namespace SharpGMad
             Console.WriteLine("Loading file...");
             try
             {
-                AddonHandle = RealtimeAddon.Load(filename);
+                if (RealtimeAddon.CanWrite(filename))
+                {
+                    AddonHandle = RealtimeAddon.Load(filename, true);
+                }
+                else
+                {
+                    AddonHandle = RealtimeAddon.Load(filename, false);
+                }
             }
             catch (Exception e)
             {
