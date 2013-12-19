@@ -88,10 +88,10 @@ namespace SharpGMad
 
 
         /// <summary>
-        /// Checkws, if you can write to a specific file.
+        /// Checks, if you can write to a specific file.
         /// </summary>
         /// <param name="filename">The path to the file on the local filesystem.</param>
-        /// <returns>A Boolean, wether if the file is writable.</returns>
+        /// <returns>A Boolean, saying wether the file is writable.</returns>
         public static Boolean CanWrite(string filename)
         {
             //Check if the file exists
@@ -115,7 +115,7 @@ namespace SharpGMad
         /// Loads the specified addon from the local filesystem and encapsulates it within a realtime instance.
         /// </summary>
         /// <param name="filename">The path to the file on the local filesystem.</param>
-        /// <param name="canWrite">The Boolean, saying if you can write to the file.</param>
+        /// <param name="canWrite">The Boolean, saying wether you can write to the file.</param>
         /// <returns>A RealtimeAddon instance.</returns>
         /// <exception cref="FileNotFoundException">Happens if the specified file does not exist.</exception>
         /// <exception cref="IOException">Thrown if there is a problem opening the specified file.</exception>

@@ -912,12 +912,10 @@ namespace SharpGMad
             {
                 if (RealtimeAddon.CanWrite(filename))
                 {
-                    Console.WriteLine("CanWrite");
                     AddonHandle = RealtimeAddon.Load(filename, true);
                 }
                 else
                 {
-                    Console.WriteLine("Nope");
                     AddonHandle = RealtimeAddon.Load(filename, false);
                 }
             }
