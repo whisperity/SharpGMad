@@ -72,9 +72,10 @@ namespace SharpGMad
 
                 if (!AddonHandle.CanWrite)
                 {
-                    DialogResult openReadOnly = MessageBox.Show("This addon is locked by another process.\n\n" +
-                        "Would you like to open it in read-only mode?", "Addon locked",
-                        MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    DialogResult openReadOnly = MessageBox.Show("This addon is locked by another process, " +
+                        "and cannot be written.\n\n" +
+                        "Would you like to open it in read-only mode?\nAll modification options will be disabled.",
+                        "Addon locked", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                     if (openReadOnly != DialogResult.Yes)
                     {
@@ -120,7 +121,7 @@ namespace SharpGMad
                 UpdateMetadataPanel();
                 UpdateFileList();
                 UpdateModified();
-                UpdateStatus("Loaded the addon");
+                UpdateStatus("Loaded the addon" + (AddonHandle.CanWrite ? null : " (read-only mode)"));
 
                 tsbAddFile.Enabled = AddonHandle.CanWrite;
                 tsbUpdateMetadata.Enabled = AddonHandle.CanWrite;
@@ -143,7 +144,7 @@ namespace SharpGMad
             }
             else
             {
-                this.Text = Path.GetFileName(AddonHandle.AddonPath) + (AddonHandle.CanWrite ? null : " (readonly)") +
+                this.Text = Path.GetFileName(AddonHandle.AddonPath) + (AddonHandle.CanWrite ? null : " (read-only)") +
                     (AddonHandle.Modified ? "*" : null) + " - SharpGMad";
 
                 tsbSaveAddon.Enabled = AddonHandle.CanWrite && AddonHandle.Modified;

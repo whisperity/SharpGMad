@@ -48,7 +48,7 @@ namespace SharpGMad
                 }
                 else if (AddonHandle is RealtimeAddon)
                 {
-                    Console.Write(Path.GetFileName(AddonHandle.AddonPath) +
+                    Console.Write(Path.GetFileName(AddonHandle.AddonPath) + (AddonHandle.CanWrite ? null : " (read-only)") +
                         (AddonHandle.Modified ? "*" : null) + (AddonHandle.Pullable ? "#" : null) + "> ");
                 }
 
@@ -217,6 +217,14 @@ namespace SharpGMad
 
                         break;
                     case "export":
+                        if (!AddonHandle.CanWrite)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("Addon read-only. Use `extract` to unpack files from it.");
+                            Console.ResetColor();
+                            break;
+                        }
+
                         string exportPath = String.Empty;
                         try
                         {
@@ -253,6 +261,14 @@ namespace SharpGMad
 
                         break;
                     case "pull":
+                        if (!AddonHandle.CanWrite)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Cannot modify a read-only addon.");
+                            Console.ResetColor();
+                            break;
+                        }
+
                         try
                         {
                             PullFile(command[1]);
@@ -330,6 +346,14 @@ namespace SharpGMad
 
                         break;
                     case "set":
+                        if (!AddonHandle.CanWrite)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Cannot modify a read-only addon.");
+                            Console.ResetColor();
+                            break;
+                        }
+
                         string Sparameter;
                         try
                         {
@@ -560,20 +584,32 @@ namespace SharpGMad
 
                         if (AddonHandle is RealtimeAddon)
                         {
-                            Console.WriteLine("add <filename>             Adds <filename> to the archive");
-                            Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
+                            if (AddonHandle.CanWrite)
+                            {
+                                Console.WriteLine("add <filename>             Adds <filename> to the archive");
+                                Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
+                            }
                             Console.WriteLine("list                       Lists the files in the memory");
-                            Console.WriteLine("remove <filename>          Removes <filename> from the archive");
+                            if (AddonHandle.CanWrite)
+                            {
+                                Console.WriteLine("remove <filename>          Removes <filename> from the archive");
+                            }
                             Console.WriteLine("extract <filename> [path]  Extract <filename> (to [path] if specified)");
                             Console.WriteLine("mget <folder> <f1> [f2...] Extract all specified files to <folder>");
-                            Console.WriteLine("export                     View the list of exported files");
-                            Console.WriteLine("export <filename> [path]   Export <filename> for editing (to [path] if specified)");
-                            Console.WriteLine("pull                       Pull changes from all exported files");
-                            Console.WriteLine("pull <filename>            Pull the changes of exported <filename>");
-                            Console.WriteLine("drop <filename>            Drops the export for <filename>");
+                            if (AddonHandle.CanWrite)
+                            {
+                                Console.WriteLine("export                     View the list of exported files");
+                                Console.WriteLine("export <filename> [path]   Export <filename> for editing (to [path] if specified)");
+                                Console.WriteLine("pull                       Pull changes from all exported files");
+                                Console.WriteLine("pull <filename>            Pull the changes of exported <filename>");
+                                Console.WriteLine("drop <filename>            Drops the export for <filename>");
+                            }
                             Console.WriteLine("get <parameter>            Prints the value of metadata <parameter>");
-                            Console.WriteLine("set <parameter> [value]    Sets metadata <parameter> to the specified [value]");
-                            Console.WriteLine("push                       Writes the changes to the disk");
+                            if (AddonHandle.CanWrite)
+                            {
+                                Console.WriteLine("set <parameter> [value]    Sets metadata <parameter> to the specified [value]");
+                                Console.WriteLine("push                       Writes the changes to the disk");
+                            }
                             Console.WriteLine("shellexec <path>           Execute the specified file");
                             Console.WriteLine("close                      Closes the addon (dropping all changes)");
                             Console.WriteLine("path                       Prints the full path of the current addon.");
@@ -629,9 +665,13 @@ namespace SharpGMad
                         return 0;
                         //break;
                     default:
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Unknown operation.");
-                        Console.ResetColor();
+                        if (!String.IsNullOrWhiteSpace(command[0]))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Unknown operation.");
+                            Console.ResetColor();
+                        }
+
                         break;
                 }
             }
@@ -694,6 +734,14 @@ namespace SharpGMad
         /// <param name="title">Optional. The new title the addon should have.</param>
         private static void SetTitle(string title = null)
         {
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
+                Console.ResetColor();
+                return;
+            }
+
             if (title == String.Empty || title == null)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -712,6 +760,14 @@ namespace SharpGMad
         /// <param name="description">Optional. The new description the addon should have.</param>
         private static void SetDescription(string description = null)
         {
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
+                Console.ResetColor();
+                return;
+            }
+
             if (description == String.Empty || description == null)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -730,6 +786,14 @@ namespace SharpGMad
         /// <param name="author">Optional. The new author the addon should have.</param>
         private static void SetAuthor(string author = null)
         {
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
+                Console.ResetColor();
+                return;
+            }
+
             if (author == String.Empty || author == null)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -750,6 +814,14 @@ namespace SharpGMad
         /// <param name="type">Optional. The new type the addon should have.</param>
         private static void SetType(string type = null)
         {
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
+                Console.ResetColor();
+                return;
+            }
+
             if (type == String.Empty || type == null)
             {
                 while (!Tags.TypeExists(type))
@@ -790,6 +862,14 @@ namespace SharpGMad
         /// <param name="tagsInput">Optional. The new tags the addon should have.</param>
         private static void SetTags(string[] tagsInput = null)
         {
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
+                Console.ResetColor();
+                return;
+            }
+
             List<string> tags = new List<string>(2);
             if (tagsInput == null || tagsInput.Length == 0 || tagsInput[0] == String.Empty)
             {
@@ -926,6 +1006,13 @@ namespace SharpGMad
             {
                 Console.WriteLine("\t" + f.Path + " [" + ((int)f.Size).HumanReadableSize() + "]");
             }
+
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("File can not be written. Addon opened read-only.");
+                Console.ResetColor();
+            }
         }
 
         /// <summary>
@@ -938,6 +1025,14 @@ namespace SharpGMad
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
                 Console.ResetColor();
                 return;
             }
@@ -993,6 +1088,14 @@ namespace SharpGMad
         /// <param name="folder">The folder containing the files to be added.</param>
         private static void AddFolder(string folder)
         {
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
+                Console.ResetColor();
+                return;
+            }
+
             if (folder == String.Empty)
             {
                 folder = Directory.GetCurrentDirectory();
@@ -1037,6 +1140,14 @@ namespace SharpGMad
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
                 Console.ResetColor();
                 return;
             }
@@ -1115,6 +1226,14 @@ namespace SharpGMad
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
                 Console.ResetColor();
                 return;
             }
@@ -1228,6 +1347,14 @@ namespace SharpGMad
                 return;
             }
 
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
+                Console.ResetColor();
+                return;
+            }
+
             try
             {
                 AddonHandle.Pull(filename);
@@ -1260,6 +1387,14 @@ namespace SharpGMad
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+
+            if (!AddonHandle.CanWrite)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Cannot modify a read-only addon.");
                 Console.ResetColor();
                 return;
             }
