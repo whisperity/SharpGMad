@@ -13,7 +13,6 @@ namespace SharpGMad
         /// The currently open addon.
         /// </summary>
         RealtimeAddon AddonHandle;
-        Boolean canWrite;
 
         private Main()
         {
@@ -32,9 +31,6 @@ namespace SharpGMad
             {
                 try
                 {
-                    FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read);
-                    fs.Dispose();
-
                     LoadAddon(path);
                 }
                 catch (IOException)
@@ -70,25 +66,21 @@ namespace SharpGMad
         /// <param name="filename">The path of the addon to load.</param>
         private void LoadAddon(string path)
         {
-            canWrite = false;
             try
             {
-                if (RealtimeAddon.CanWrite(path))
+                AddonHandle = RealtimeAddon.Load(path, !FileExtensions.CanWrite(path));
+
+                if (!AddonHandle.CanWrite)
                 {
-                    AddonHandle = RealtimeAddon.Load(path, true);
-                    canWrite = true;
-                }
-                else
-                {
-                    DialogResult dr = MessageBox.Show("This addon is locked by another process\n\nWould you like to open it in Read-Only mode?",
-                    "Addon locked", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    if (dr == DialogResult.Yes)
+                    DialogResult openReadOnly = MessageBox.Show("This addon is locked by another process.\n\n" +
+                        "Would you like to open it in read-only mode?", "Addon locked",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (openReadOnly != DialogResult.Yes)
                     {
-                        AddonHandle = RealtimeAddon.Load(path, false);
-                        canWrite = false;
-                    }
-                    else
+                        AddonHandle.Close();
                         return;
+                    }
                 }
             }
             catch (FileNotFoundException)
@@ -130,8 +122,8 @@ namespace SharpGMad
                 UpdateModified();
                 UpdateStatus("Loaded the addon");
 
-                tsbAddFile.Enabled = canWrite;
-                tsbUpdateMetadata.Enabled = canWrite;
+                tsbAddFile.Enabled = AddonHandle.CanWrite;
+                tsbUpdateMetadata.Enabled = AddonHandle.CanWrite;
             }
         }
 
@@ -151,10 +143,10 @@ namespace SharpGMad
             }
             else
             {
-                this.Text = Path.GetFileName(AddonHandle.AddonPath) +
+                this.Text = Path.GetFileName(AddonHandle.AddonPath) + (AddonHandle.CanWrite ? null : " (readonly)") +
                     (AddonHandle.Modified ? "*" : null) + " - SharpGMad";
 
-                tsbSaveAddon.Enabled = AddonHandle.Modified;
+                tsbSaveAddon.Enabled = AddonHandle.CanWrite && AddonHandle.Modified;
             }
         }
 
@@ -207,7 +199,7 @@ namespace SharpGMad
 
                         if (watch.First().Modified)
                         {
-                            tsbPullAll.Enabled = canWrite; // At least one file is modified externally
+                            tsbPullAll.Enabled = AddonHandle.CanWrite; // At least one file is modified externally
                             item.ForeColor = Color.Indigo;
                         }
                     }
@@ -396,7 +388,8 @@ namespace SharpGMad
                 if (((System.Windows.Forms.ListView)sender).FocusedItem != null)
                 {
                     // Allow remove, export and execution
-                    tsmFileRemove.Enabled = canWrite;
+                    tsmFileRemove.Visible = true;
+                    tsmFileRemove.Enabled = AddonHandle.CanWrite;
 
                     tsmFileExtract.Enabled = true;
                     tsmFileExtract.Visible = true;
@@ -410,7 +403,7 @@ namespace SharpGMad
                     if (isExported.Count() == 0)
                     {
                         // Export is the file is not exported
-                        tsmFileExportTo.Enabled = true;
+                        tsmFileExportTo.Enabled = AddonHandle.CanWrite;
                         tsmFilePull.Enabled = false;
                         tsmFileDropExport.Enabled = false;
                     }
@@ -418,18 +411,17 @@ namespace SharpGMad
                     {
                         // Pull (applicable if the file is changed) and drop
                         tsmFileExportTo.Enabled = false;
-                        if (canWrite)
-                            tsmFilePull.Enabled = isExported.First().Modified;
-                        else
-                            tsmFilePull.Enabled = false;
+                        tsmFilePull.Enabled = isExported.First().Modified && AddonHandle.CanWrite;
                         tsmFileDropExport.Enabled = true;
                     }
 
                     // But the buttons should be visible
                     tssExportSeparator.Visible = true;
                     tsmFileExportTo.Visible = true;
-                    tsmFilePull.Enabled = canWrite;
-                    tsmFileDropExport.Enabled = canWrite;
+                    tsmFilePull.Visible = true;
+                    tsmFileDropExport.Visible = true;
+                    tsmFilePull.Enabled = AddonHandle.CanWrite;
+                    tsmFileDropExport.Enabled = AddonHandle.CanWrite;
                 }
             }
             else if (((System.Windows.Forms.ListView)sender).SelectedItems.Count > 1)
@@ -510,6 +502,9 @@ namespace SharpGMad
 
         private void tsmFileRemove_Click(object sender, EventArgs e)
         {
+            if (!AddonHandle.CanWrite)
+                return;
+
             if (lstFiles.SelectedItems.Count == 1)
             {
                 if (lstFiles.FocusedItem != null)
@@ -605,6 +600,9 @@ namespace SharpGMad
 
         private void tsbUpdateMetadata_Click(object sender, EventArgs e)
         {
+            if (!AddonHandle.CanWrite)
+                return;
+
             // Use a toggle mechanism to enable and disable the changing of metadata
             if (!tsbUpdateMetadata.Checked)
             {
@@ -711,6 +709,9 @@ namespace SharpGMad
 
         private void tsbSaveAddon_Click(object sender, EventArgs e)
         {
+            if (!AddonHandle.CanWrite)
+                return;
+
             if (!tsbUpdateMetadata.Checked)
             {
                 if (AddonHandle.Modified)
@@ -823,6 +824,9 @@ namespace SharpGMad
 
         private void tsmFileExportTo_Click(object sender, EventArgs e)
         {
+            if (!AddonHandle.CanWrite)
+                return;
+
             if (lstFiles.FocusedItem != null)
             {
                 string contentPath = lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text;
@@ -1035,6 +1039,9 @@ namespace SharpGMad
         /// The exported path is known automatically.</param>
         private void PullFile(string filename)
         {
+            if (!AddonHandle.CanWrite)
+                return;
+
             try
             {
                 AddonHandle.Pull(filename);
@@ -1264,6 +1271,9 @@ namespace SharpGMad
                         MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return;
                 }
+
+                if (!AddonHandle.CanWrite)
+                    return;
 
                 List<string> addFailures = new List<string>(files.Count);
                 List<string> filesToParse = new List<string>(files); // Create a new list so we can run the foreach below

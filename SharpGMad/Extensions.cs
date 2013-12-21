@@ -75,4 +75,34 @@ namespace System.IO
             return (bytes.Count > 0 ? Encoding.UTF8.GetString(bytes.ToArray()) : "");
         }
     }
+
+    /// <summary>
+    /// Provides extra methods towards file on the local filesystem.
+    /// </summary>
+    static class FileExtensions
+    {
+        /// <summary>
+        /// Checks if you can write to a specific file.
+        /// </summary>
+        /// <param name="filename">The path to the file on the local filesystem.</param>
+        /// <returns>A boolean whether the file is writable.</returns>
+        public static bool CanWrite(string filename)
+        {
+            //Check if the file exists
+            if (!File.Exists(filename))
+                throw new FileNotFoundException("The specified file " + filename + " does not exist.");
+
+            try
+            {
+                // Open a new FileStream and test if it's writable
+                new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None).Dispose();
+                return true; // It is
+            }
+            catch (Exception)
+            {
+                // In case any error happens, the file is not writable.
+                return false;
+            }
+        }
+    }
 }
