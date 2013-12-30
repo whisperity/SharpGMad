@@ -104,7 +104,7 @@ namespace SharpGMad
             txtFile.Text += ".gma";
 
             Addon addon = null;
-            if (chkConvertNeeded.Checked == false)
+            if (gboConvertMetadata.Visible == false)
             {
                 //
                 // Load the Addon Info file
@@ -123,17 +123,12 @@ namespace SharpGMad
 
                 addon = new Addon(addonInfo);
             }
-            else if (chkConvertNeeded.Checked == true)
+            else if (gboConvertMetadata.Visible == true)
             {
-                // Load the addon metadata from the old file structure: info.txt or addon.txt.
-                string legacyInfoFile;
-                if (File.Exists(txtFolder.Text + "\\info.txt"))
-                    legacyInfoFile = "info.txt";
-                else if (File.Exists(txtFolder.Text + "\\addon.txt"))
-                    legacyInfoFile = "addon.txt";
-                else
+                // Load the addon metadata from the old file structure: info.txt.
+                if (!File.Exists(txtFolder.Text + "\\info.txt"))
                 {
-                    MessageBox.Show("A legacy metadata file \"info.txt\" or \"addon.txt\" could not be found!",
+                    MessageBox.Show("A legacy metadata file \"info.txt\" could not be found!",
                         "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                     return;
                 }
@@ -141,7 +136,7 @@ namespace SharpGMad
                 string legacyInfo;
                 try
                 {
-                    legacyInfo = File.ReadAllText(txtFolder.Text + Path.DirectorySeparatorChar + legacyInfoFile);
+                    legacyInfo = File.ReadAllText(txtFolder.Text + Path.DirectorySeparatorChar + "info.txt");
                 }
                 catch (Exception ex)
                 {
@@ -159,11 +154,11 @@ namespace SharpGMad
                 foreach (Match keyMatch in matches)
                 {
                     if (keyMatch.Value.ToLowerInvariant() == "\"name\"")
-                        addon.Title = keyMatch.NextMatch().Value;
+                        addon.Title = keyMatch.NextMatch().Value.TrimStart('"').TrimEnd('"');
                     else if (keyMatch.Value.ToLowerInvariant() == "\"info\"")
-                        addon.Description = keyMatch.NextMatch().Value;
+                        addon.Description = keyMatch.NextMatch().Value.TrimStart('"').TrimEnd('"');
                     /*else if (keyMatch.Value.ToLowerInvariant() == "\"author_name\"")
-                        addon.Author = keyMatch.NextMatch().Value;*/
+                        addon.Author = keyMatch.NextMatch().Value.TrimStart('"').TrimEnd('"');*/
                     // Current GMAD writer only writes "Author Name", not real value
                 }
 
@@ -203,6 +198,9 @@ namespace SharpGMad
                 string file = f;
                 file = file.Replace(txtFolder.Text, String.Empty);
                 file = file.Replace('\\', '/');
+
+                if (file == "addon.json" || file == "info.txt")
+                    continue; // Don't read the metadata file
 
                 try
                 {
@@ -267,7 +265,8 @@ namespace SharpGMad
                 MessageBox.Show("Successfully extracted the addon.", "Create addon",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             else if (errors.Count == 1)
-                MessageBox.Show("Successfully created the addon.\nThe file " + errors[0] + " was not added.", "Create addon",
+                MessageBox.Show("Successfully created the addon.\nThe file " + errors[0].Path + " was not added " +
+                    "because " + errors[0].Type, "Create addon",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
             else if (errors.Count > 1)
             {
@@ -337,9 +336,23 @@ namespace SharpGMad
             cmbTag2.SelectedItem = "(empty)";
         }
 
-        private void chkConvertNeeded_CheckedChanged(object sender, EventArgs e)
+        private void txtFolder_TextChanged(object sender, EventArgs e)
         {
-            gboConvertMetadata.Visible = ((System.Windows.Forms.CheckBox)sender).Checked;
+            if (File.Exists(txtFolder.Text + Path.DirectorySeparatorChar + "addon.json"))
+            {
+                btnCreate.Enabled = true;
+                gboConvertMetadata.Visible = false;
+            }
+            else if (File.Exists(txtFolder.Text + Path.DirectorySeparatorChar + "info.txt"))
+            {
+                btnCreate.Enabled = true;
+                gboConvertMetadata.Visible = true;
+            }
+            else
+            {
+                btnCreate.Enabled = false;
+                gboConvertMetadata.Visible = false;
+            }
         }
     }
 }

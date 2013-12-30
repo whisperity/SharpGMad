@@ -30,9 +30,9 @@ namespace SharpGMad
             }
 
             //
-            // Create (or gmod12 convert)
+            // Create
             //
-            if (strCommand == "create" || strCommand == "convert")
+            if (strCommand == "create")
             {
                 string strFolder;
                 try
@@ -74,9 +74,7 @@ namespace SharpGMad
                     return 1;
                 }
 
-                bool WarnOnInvalidFiles = args.Contains("-warninvalid");
-
-                return CreateAddonFile(strFolder, strTarget, WarnOnInvalidFiles, (strCommand == "convert"));
+                return CreateAddonFile(strFolder, strTarget, args.Contains("-warninvalid"));
             }
 
             //
@@ -133,7 +131,7 @@ namespace SharpGMad
         /// <param name="warnInvalid">Whether there should be a warning for files failing to validate
         /// instead of a full exception halt.</param>
         /// <returns>Integer error code: 0 if success, 1 if error.</returns>
-        static int CreateAddonFile(string strFolder, string strOutfile, bool warnInvalid, bool gmod12convert = false)
+        static int CreateAddonFile(string strFolder, string strOutfile, bool warnInvalid)
         {
             //
             // Make sure there's a slash on the end
@@ -148,8 +146,19 @@ namespace SharpGMad
             Console.WriteLine("Looking in folder \"" + strFolder + "\"");
 
             Addon addon = null;
-            if (!gmod12convert)
+            if (File.Exists(strFolder + "\\addon.json"))
             {
+                // Use addon.json for metadata if it exists
+
+                if (File.Exists(strFolder + "\\info.txt"))
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Both addon.json and info.txt found in source folder.");
+                    Console.WriteLine("addon.json takes priority");
+                    Console.ResetColor();
+                }
+
+
                 //
                 // Load the Addon Info file
                 //
@@ -168,26 +177,14 @@ namespace SharpGMad
 
                 addon = new Addon(addonInfo);
             }
-            else if (gmod12convert)
+            else if (File.Exists(strFolder + "\\info.txt"))
             {
-                // Load the addon metadata from the old file structure: info.txt or addon.txt.
-                string legacyInfoFile;
-                if (File.Exists(strFolder + "\\info.txt"))
-                    legacyInfoFile = "info.txt";
-                else if (File.Exists(strFolder + "\\addon.txt"))
-                    legacyInfoFile = "addon.txt";
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Failed to find legacy addon metadata file \"info.txt\" or \"addon.txt\"");
-                    Console.ResetColor();
-                    return 1;
-                }
+                // Load the addon metadata from the old file structure: info.txt
 
                 string legacyInfo;
                 try
                 {
-                    legacyInfo = File.ReadAllText(strFolder + Path.DirectorySeparatorChar + legacyInfoFile);
+                    legacyInfo = File.ReadAllText(strFolder + Path.DirectorySeparatorChar + "info.txt");
                 }
                 catch (Exception ex)
                 {
@@ -207,19 +204,26 @@ namespace SharpGMad
                 foreach (Match keyMatch in matches)
                 {
                     if (keyMatch.Value.ToLowerInvariant() == "\"name\"")
-                        addon.Title = keyMatch.NextMatch().Value;
+                        addon.Title = keyMatch.NextMatch().Value.TrimStart('"').TrimEnd('"');
                     else if (keyMatch.Value.ToLowerInvariant() == "\"info\"")
-                        addon.Description = keyMatch.NextMatch().Value;
+                        addon.Description = keyMatch.NextMatch().Value.TrimStart('"').TrimEnd('"');
                     /*else if (keyMatch.Value.ToLowerInvariant() == "\"author_name\"")
-                        addon.Author = keyMatch.NextMatch().Value;*/
+                        addon.Author = keyMatch.NextMatch().Value.TrimStart('"').TrimEnd('"');*/
                     // Current GMAD writer only writes "Author Name", not real value
                 }
 
-                Console.WriteLine(addon.Title);/* + " by " + addon.Author);*/
+                Console.WriteLine("Addon: " + addon.Title);/* + " by " + addon.Author);*/
                 Console.WriteLine("You need to set the title, and optionally, the tags for this addon!");
 
                 SetType(addon);
                 SetTags(addon);
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Failed to find addon metadata file \"addon.json\" or \"info.txt\"");
+                Console.ResetColor();
+                return 1;
             }
 
             //
@@ -230,6 +234,9 @@ namespace SharpGMad
                 string file = f;
                 file = file.Replace(strFolder, String.Empty);
                 file = file.Replace('\\', '/');
+
+                if (file == "addon.json" || file == "info.txt")
+                    continue; // Don't read the metadata file
 
                 Console.WriteLine("\t" + file);
 

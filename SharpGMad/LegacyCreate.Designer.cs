@@ -46,7 +46,6 @@
             this.lblTags = new System.Windows.Forms.Label();
             this.lblType = new System.Windows.Forms.Label();
             this.gboConvertMetadata = new System.Windows.Forms.GroupBox();
-            this.chkConvertNeeded = new System.Windows.Forms.CheckBox();
             this.gboConvertMetadata.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -109,8 +108,10 @@
             // 
             this.txtFolder.Location = new System.Drawing.Point(252, 6);
             this.txtFolder.Name = "txtFolder";
+            this.txtFolder.ReadOnly = true;
             this.txtFolder.Size = new System.Drawing.Size(275, 20);
             this.txtFolder.TabIndex = 0;
+            this.txtFolder.TextChanged += new System.EventHandler(this.txtFolder_TextChanged);
             // 
             // fbdFolder
             // 
@@ -126,6 +127,7 @@
             // 
             // btnCreate
             // 
+            this.btnCreate.Enabled = false;
             this.btnCreate.Location = new System.Drawing.Point(358, 95);
             this.btnCreate.Name = "btnCreate";
             this.btnCreate.Size = new System.Drawing.Size(75, 23);
@@ -200,23 +202,13 @@
             this.gboConvertMetadata.Controls.Add(this.lblType);
             this.gboConvertMetadata.Controls.Add(this.cmbTag1);
             this.gboConvertMetadata.Controls.Add(this.lblTags);
-            this.gboConvertMetadata.Location = new System.Drawing.Point(12, 83);
+            this.gboConvertMetadata.Location = new System.Drawing.Point(12, 60);
             this.gboConvertMetadata.Name = "gboConvertMetadata";
             this.gboConvertMetadata.Size = new System.Drawing.Size(335, 78);
             this.gboConvertMetadata.TabIndex = 18;
             this.gboConvertMetadata.TabStop = false;
+            this.gboConvertMetadata.Text = "Convert Garry\'s Mod 12 addon folder";
             this.gboConvertMetadata.Visible = false;
-            // 
-            // chkConvertNeeded
-            // 
-            this.chkConvertNeeded.AutoSize = true;
-            this.chkConvertNeeded.Location = new System.Drawing.Point(15, 60);
-            this.chkConvertNeeded.Name = "chkConvertNeeded";
-            this.chkConvertNeeded.Size = new System.Drawing.Size(199, 17);
-            this.chkConvertNeeded.TabIndex = 19;
-            this.chkConvertNeeded.Text = "Convert Garry\'s Mod 12 addon folder";
-            this.chkConvertNeeded.UseVisualStyleBackColor = true;
-            this.chkConvertNeeded.CheckedChanged += new System.EventHandler(this.chkConvertNeeded_CheckedChanged);
             // 
             // LegacyCreate
             // 
@@ -224,8 +216,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnAbort;
-            this.ClientSize = new System.Drawing.Size(617, 166);
-            this.Controls.Add(this.chkConvertNeeded);
+            this.ClientSize = new System.Drawing.Size(617, 145);
             this.Controls.Add(this.gboConvertMetadata);
             this.Controls.Add(this.btnAbort);
             this.Controls.Add(this.btnCreate);
@@ -272,6 +263,5 @@
         private System.Windows.Forms.Label lblTags;
         private System.Windows.Forms.Label lblType;
         private System.Windows.Forms.GroupBox gboConvertMetadata;
-        private System.Windows.Forms.CheckBox chkConvertNeeded;
     }
 }

@@ -32,12 +32,11 @@ operations are supported.
 
 ### Conversion mode
 
-Packing Garry's Mod 12 _loose_ addons into GMAs are also supported. (This
-way, SharpGMad will use an existing `addon.txt` or `info.txt` and ask the
-user for missing metadata.)
+Garry's Mod 12 _loose_ addon operations are also supported. This way,
+SharpGMad will use an existing `info.txt` and ask the user for missing
+metadata. Discovering that the source `-folder` is a loose structure is
+done automatically.
 
-`SharpGMad.exe convert -folder "C:\path\to\addon\folder\" -out
-"C:\where\to\save\file\out.gma"`
 
 The `gmad` and conversion modes are available in the GUI too, under
 _Legacy operations_.
