@@ -37,6 +37,8 @@ SharpGMad will use an existing `info.txt` and ask the user for missing
 metadata. Discovering that the source `-folder` is a loose structure is
 done automatically.
 
+To extract to the old layout, specifiy `-gmod12` as an argument to the
+`extract` command.
 
 The `gmad` and conversion modes are available in the GUI too, under
 _Legacy operations_.

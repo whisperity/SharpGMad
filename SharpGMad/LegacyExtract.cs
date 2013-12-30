@@ -97,6 +97,19 @@ namespace SharpGMad
                 }
             }
 
+            if (chkWriteLegacy.Checked)
+                File.WriteAllText(txtFolder.Text + "info.txt", "\"AddonInfo\"\n" +
+                    "{\n" +
+                    "\t" + "\"name\"" + "\t" + "\"" + addon.Title + "\"\n" +
+                    "\t" + "\"version\"" + "\t" + "\"1.0\"\n" +
+                    "\t" + "\"up_date\"" + "\t" + "\"" + addon.Timestamp.ToString() + "\"\n" +
+                    "\t" + "\"author_name\"" + "\t" + "\"unknown\"" + "\"\n" + // addon.Author would be nice
+                    "\t" + "\"author_email\"" + "\t" + "\"\"\n" +
+                    "\t" + "\"author_url\"" + "\t" + "\"\"\n" +
+                    "\t" + "\"info\"" + "\t" + "\"" + addon.Description + "\"\n" +
+                    "\t" + "\"override\"" + "\t" + "\"1\"\n" +
+                    "}");
+
             if (extractFailures.Count == 0)
                 MessageBox.Show("Successfully extracted the addon.", "Extract addon",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);

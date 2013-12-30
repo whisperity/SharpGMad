@@ -39,6 +39,7 @@
             this.btnExtract = new System.Windows.Forms.Button();
             this.btnAbort = new System.Windows.Forms.Button();
             this.ofdFile = new System.Windows.Forms.OpenFileDialog();
+            this.chkWriteLegacy = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // lblFolder
@@ -123,6 +124,16 @@
             this.ofdFile.Filter = "Garry\'s Mod Addons|*.gma";
             this.ofdFile.Title = "Extract addon";
             // 
+            // chkWriteLegacy
+            // 
+            this.chkWriteLegacy.AutoSize = true;
+            this.chkWriteLegacy.Location = new System.Drawing.Point(252, 58);
+            this.chkWriteLegacy.Name = "chkWriteLegacy";
+            this.chkWriteLegacy.Size = new System.Drawing.Size(277, 17);
+            this.chkWriteLegacy.TabIndex = 7;
+            this.chkWriteLegacy.Text = "Create a legacy (Garry\'s Mod 12) info.txt metadata file";
+            this.chkWriteLegacy.UseVisualStyleBackColor = true;
+            // 
             // LegacyExtract
             // 
             this.AcceptButton = this.btnExtract;
@@ -130,6 +141,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnAbort;
             this.ClientSize = new System.Drawing.Size(618, 107);
+            this.Controls.Add(this.chkWriteLegacy);
             this.Controls.Add(this.btnAbort);
             this.Controls.Add(this.btnExtract);
             this.Controls.Add(this.txtFile);
@@ -164,5 +176,6 @@
         private System.Windows.Forms.Button btnExtract;
         private System.Windows.Forms.Button btnAbort;
         private System.Windows.Forms.OpenFileDialog ofdFile;
+        private System.Windows.Forms.CheckBox chkWriteLegacy;
     }
 }

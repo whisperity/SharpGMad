@@ -117,7 +117,7 @@ namespace SharpGMad
                     strTarget = "";
                 }
 
-                return ExtractAddonFile(strFile, strTarget);
+                return ExtractAddonFile(strFile, strTarget, args.Contains("-gmod12"));
             }
 
             return 0;
@@ -320,8 +320,9 @@ namespace SharpGMad
         /// </summary>
         /// <param name="strFile">The file path of the GMA to extract.</param>
         /// <param name="strOutPath">The folder where the addon is to be extracted to.</param>
+        /// <param name="gmod12">True if the extract should also create a legacy info.txt file.</param>
         /// <returns>Integer error code: 0 if success, 1 if error.</returns>
-        static int ExtractAddonFile(string strFile, string strOutPath = "")
+        static int ExtractAddonFile(string strFile, string strOutPath = "", bool gmod12)
         {
             Console.WriteLine("Opening " + strFile);
 
@@ -381,6 +382,20 @@ namespace SharpGMad
                     Console.ResetColor();
                 }
             }
+
+            if (gmod12) // Write a legacy info.txt schema
+                File.WriteAllText(strOutPath + "info.txt", "\"AddonInfo\"\n" +
+                    "{\n" +
+                    "\t" + "\"name\"" + "\t" + "\"" + addon.Title + "\"\n" +
+                    "\t" + "\"version\"" + "\t" + "\"1.0\"\n" +
+                    "\t" + "\"up_date\"" + "\t" + "\"" + addon.Timestamp.ToString() + "\"\n" +
+                    "\t" + "\"author_name\"" + "\t" + "\"unknown\"" + "\"\n" + // addon.Author would be nice
+                    "\t" + "\"author_email\"" + "\t" + "\"\"\n" +
+                    "\t" + "\"author_url\"" + "\t" + "\"\"\n" +
+                    "\t" + "\"info\"" + "\t" + "\"" + addon.Description + "\"\n" +
+                    "\t" + "\"override\"" + "\t" + "\"1\"\n" +
+                    "}");
+
             Console.WriteLine("Done!");
             return 0;
         }
