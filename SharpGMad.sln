@@ -5,14 +5,20 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpGMad", "SharpGMad\Shar
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x86 = Debug|x86
-		Release|x86 = Release|x86
+		Debug Mono|x86 = Debug Mono|x86
+		Debug Windows|x86 = Debug Windows|x86
+		Release Mono|x86 = Release Mono|x86
+		Release Windows|x86 = Release Windows|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Debug|x86.ActiveCfg = Debug|x86
-		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Debug|x86.Build.0 = Debug|x86
-		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Release|x86.ActiveCfg = Release|x86
-		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Release|x86.Build.0 = Release|x86
+		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Debug Mono|x86.ActiveCfg = Debug Mono|x86
+		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Debug Mono|x86.Build.0 = Debug Mono|x86
+		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Debug Windows|x86.ActiveCfg = Debug Windows|x86
+		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Debug Windows|x86.Build.0 = Debug Windows|x86
+		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Release Mono|x86.ActiveCfg = Release Mono|x86
+		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Release Mono|x86.Build.0 = Release Mono|x86
+		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Release Windows|x86.ActiveCfg = Release Windows|x86
+		{D3953BB9-01D2-43BA-8457-1E4492200EA0}.Release Windows|x86.Build.0 = Release Windows|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

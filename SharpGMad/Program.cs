@@ -11,11 +11,13 @@ namespace SharpGMad
     /// </summary>
     class Program
     {
+#if WINDOWS
         /// <summary>
         /// External method to find a pointer for an attached console window.
         /// </summary>
         [DllImport("kernel32.dll", EntryPoint = "GetConsoleWindow")]
         private static extern IntPtr _GetConsoleWindow();
+#endif
 
         /// <summary>
         /// The main entry point for the application.
@@ -51,9 +53,15 @@ namespace SharpGMad
             }
             else
             {
+#if WINDOWS
                 IntPtr consoleHandle = _GetConsoleWindow();
+                bool dontRestartMyself = consoleHandle == IntPtr.Zero;
 
-                if (consoleHandle == IntPtr.Zero || AppDomain.CurrentDomain.FriendlyName.Contains(".vshost"))
+#if DEBUG
+                dontRestartMyself = dontRestartMyself || AppDomain.CurrentDomain.FriendlyName.Contains(".vshost");
+#endif
+
+                if (dontRestartMyself)
                     // There is no console window or this is a debug run.
                     // Start the main form
 
@@ -69,6 +77,15 @@ namespace SharpGMad
                         UseShellExecute = false,
                     });
                 }
+#endif
+
+#if MONO
+                Console.WriteLine("Hello Mono! P/Invoke to kernel32.dll is not supported on this platform.");
+                Console.WriteLine("(This console window would be closed on Windows.)");
+                Console.WriteLine("Hope you don't mind if I stay here for a while...");
+
+                Application.Run(new Main(args));
+#endif
             }
 
             return 0;

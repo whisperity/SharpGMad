@@ -44,12 +44,23 @@ namespace SharpGMad
             {
                 if (AddonHandle == null)
                 {
+#if WINDOWS
                     Console.Write("SharpGMad> ");
+#endif
+#if MONO
+                    Console.Write("$ ");
+#endif
                 }
                 else if (AddonHandle is RealtimeAddon)
                 {
                     Console.Write(Path.GetFileName(AddonHandle.AddonPath) + (AddonHandle.CanWrite ? null : " (read-only)") +
-                        (AddonHandle.Modified ? "*" : null) + (AddonHandle.Pullable ? "#" : null) + "> ");
+                        (AddonHandle.Modified ? "*" : null) + (AddonHandle.Pullable ? "!" : null));
+#if WINDOWS
+                     Console.Write("> ");
+#endif
+#if MONO
+                    Console.Write("$ ");
+#endif
                 }
 
                 string input = Console.ReadLine();
@@ -1282,7 +1293,7 @@ namespace SharpGMad
         }
 
         private static void fsw_Changed(object sender, FileSystemEventArgs e)
-        {
+        { // TODO: Mono seems to die from this!
             try
             {
                 Console.WriteLine("The exported file " +
