@@ -322,7 +322,7 @@ namespace SharpGMad
         /// <param name="strOutPath">The folder where the addon is to be extracted to.</param>
         /// <param name="gmod12">True if the extract should also create a legacy info.txt file.</param>
         /// <returns>Integer error code: 0 if success, 1 if error.</returns>
-        static int ExtractAddonFile(string strFile, string strOutPath = "", bool gmod12)
+        static int ExtractAddonFile(string strFile, string strOutPath = "", bool gmod12 = false)
         {
             Console.WriteLine("Opening " + strFile);
 
