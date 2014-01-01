@@ -421,8 +421,6 @@ namespace SharpGMad
                     tsmFileExportTo.Visible = true;
                     tsmFilePull.Visible = true;
                     tsmFileDropExport.Visible = true;
-                    tsmFilePull.Enabled = AddonHandle.CanWrite;
-                    tsmFileDropExport.Enabled = AddonHandle.CanWrite;
                 }
             }
             else if (((System.Windows.Forms.ListView)sender).SelectedItems.Count > 1)
