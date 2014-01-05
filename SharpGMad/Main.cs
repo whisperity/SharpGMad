@@ -895,8 +895,9 @@ namespace SharpGMad
         private void tsbDropAll_Click(object sender, EventArgs e)
         {
             List<string> pathsFailedToDelete = new List<string>();
+            List<FileWatch> watchedFiles = new List<FileWatch>(AddonHandle.WatchedFiles);
 
-            foreach (FileWatch watch in AddonHandle.WatchedFiles)
+            foreach (FileWatch watch in watchedFiles)
             {
                 try
                 {
@@ -907,6 +908,8 @@ namespace SharpGMad
                     pathsFailedToDelete.Add(watch.FilePath);
                 }
             }
+
+            watchedFiles.Clear();
 
             if (pathsFailedToDelete.Count == 0)
                 UpdateStatus("Removed all current exported files");

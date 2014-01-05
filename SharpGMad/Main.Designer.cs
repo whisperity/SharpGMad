@@ -539,7 +539,7 @@ namespace SharpGMad
             this.tsmFileDropExport.Image = global::SharpGMad.Properties.Resources.drop;
             this.tsmFileDropExport.Name = "tsmFileDropExport";
             this.tsmFileDropExport.Size = new System.Drawing.Size(142, 22);
-            this.tsmFileDropExport.Text = "Drop extract";
+            this.tsmFileDropExport.Text = "Drop export";
             this.tsmFileDropExport.ToolTipText = "Delete the exported file from your computer";
             this.tsmFileDropExport.Click += new System.EventHandler(this.tsmFileDropExport_Click);
             // 
