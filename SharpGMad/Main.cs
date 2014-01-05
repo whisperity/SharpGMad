@@ -840,6 +840,10 @@ namespace SharpGMad
                 {
                     string exportPath = sfdExportFile.FileName;
                     
+                    // OK happens also if the user said overwrite. Delete the file if so.
+                    if (File.Exists(exportPath))
+                        File.Delete(exportPath);
+
                     try
                     {
                         AddonHandle.ExportFile(contentPath, exportPath);
@@ -877,6 +881,7 @@ namespace SharpGMad
         {
             UpdateModified();
             UpdateFileList();
+            this.Invoke((MethodInvoker)delegate { UpdateStatus("The file " + e.Name + " changed externally.", Color.Purple); });
         }
 
         private void tsmFileDropExport_Click(object sender, EventArgs e)
