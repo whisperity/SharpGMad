@@ -312,13 +312,13 @@ namespace SharpGMad
         private void tsmiLegacyCreate_Click(object sender, EventArgs e)
         {
             LegacyCreate lcForm = new LegacyCreate();
-            lcForm.ShowDialog(this);
+            lcForm.Show(this);
         }
 
         private void tsmiLegacyExtract_Click(object sender, EventArgs e)
         {
             LegacyExtract leForm = new LegacyExtract();
-            leForm.ShowDialog(this);
+            leForm.Show(this);
         }
 
         private void tsbAddFile_Click(object sender, EventArgs e)

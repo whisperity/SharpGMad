@@ -146,11 +146,11 @@ namespace SharpGMad
             Console.WriteLine("Looking in folder \"" + strFolder + "\"");
 
             Addon addon = null;
-            if (File.Exists(strFolder + "\\addon.json"))
+            if (File.Exists(strFolder + Path.DirectorySeparatorChar + "addon.json"))
             {
                 // Use addon.json for metadata if it exists
 
-                if (File.Exists(strFolder + "\\info.txt"))
+                if (File.Exists(strFolder + Path.DirectorySeparatorChar + "info.txt"))
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine("Both addon.json and info.txt found in source folder.");
@@ -177,7 +177,7 @@ namespace SharpGMad
 
                 addon = new Addon(addonInfo);
             }
-            else if (File.Exists(strFolder + "\\info.txt"))
+            else if (File.Exists(strFolder + Path.DirectorySeparatorChar + "info.txt"))
             {
                 // Load the addon metadata from the old file structure: info.txt
 

@@ -126,7 +126,7 @@ namespace SharpGMad
             else if (gboConvertMetadata.Visible == true)
             {
                 // Load the addon metadata from the old file structure: info.txt.
-                if (!File.Exists(txtFolder.Text + "\\info.txt"))
+                if (!File.Exists(txtFolder.Text + Path.DirectorySeparatorChar + "info.txt"))
                 {
                     MessageBox.Show("A legacy metadata file \"info.txt\" could not be found!",
                         "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -262,7 +262,7 @@ namespace SharpGMad
             // Success!
             //
             if (errors.Count == 0)
-                MessageBox.Show("Successfully extracted the addon.", "Create addon",
+                MessageBox.Show("Successfully created the addon.", "Create addon",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             else if (errors.Count == 1)
                 MessageBox.Show("Successfully created the addon.\nThe file " + errors[0].Path + " was not added " +
