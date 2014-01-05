@@ -864,8 +864,8 @@ namespace SharpGMad
                     }
 
                     // Add a custom event handler so that the form gets updated when a file is pullable.
-                    AddonHandle.WatchedFiles.Where(f => f.ContentPath == contentPath).First().Watcher.Changed += 
-                        new FileSystemEventHandler(fsw_Changed);
+                    AddonHandle.WatchedFiles.Where(f => f.ContentPath == contentPath).First().FileChanged +=
+                        fsw_Changed;
                 }
 
                 sfdExportFile.Reset();

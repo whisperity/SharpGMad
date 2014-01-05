@@ -27,6 +27,20 @@ namespace SharpGMad
         /// The integrated System.IO.FileSystemWatcher object.
         /// </summary>
         public FileSystemWatcher Watcher;
+
+        /// <summary>
+        /// The event to fire when the assigned Watcher reports a file change.
+        /// </summary>
+        public event FileSystemEventHandler FileChanged;
+
+        /// <summary>
+        /// Fires all associated FileChanged delegates.
+        /// </summary>
+        public void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            foreach (FileSystemEventHandler handler in FileChanged.GetInvocationList())
+                handler.Invoke(sender, e);
+        }
     }
 
     /// <summary>
@@ -434,13 +448,16 @@ namespace SharpGMad
 
             FileSystemWatcher fsw = new FileSystemWatcher(Path.GetDirectoryName(to), Path.GetFileName(to));
             fsw.NotifyFilter = NotifyFilters.LastWrite;
-            fsw.Changed += new FileSystemEventHandler(fsw_Changed);
-            fsw.EnableRaisingEvents = true;
 
             FileWatch watch = new FileWatch();
             watch.FilePath = to;
             watch.ContentPath = path;
             watch.Watcher = fsw;
+
+            fsw.Changed += watch.OnChanged;
+            fsw.EnableRaisingEvents = true;
+
+            watch.FileChanged += fsw_Changed;
 
             WatchedFiles.Add(watch);
         }

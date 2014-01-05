@@ -1284,8 +1284,8 @@ namespace SharpGMad
             }
 
             // Add a custom event handler so that the form gets updated when a file is pullable.
-            AddonHandle.WatchedFiles.Where(f => f.ContentPath == filename).First().Watcher.Changed +=
-                new FileSystemEventHandler(fsw_Changed);
+            AddonHandle.WatchedFiles.Where(f => f.ContentPath == filename).First().FileChanged +=
+                fsw_Changed;
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("File exported successfully.");
@@ -1293,7 +1293,7 @@ namespace SharpGMad
         }
 
         private static void fsw_Changed(object sender, FileSystemEventArgs e)
-        { // TODO: Mono seems to die from this!
+        {
             try
             {
                 Console.WriteLine("The exported file " +
