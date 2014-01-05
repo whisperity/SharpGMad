@@ -15,6 +15,44 @@ namespace SharpGMad
         {
             if (disposing && (components != null))
             {
+#if MONO
+                // There seems to be an error with how GDI+ disposes stuff related to resource bitmaps
+                // in these ToolStripItem (and derived) objects.
+                if (cmsFileEntry != null && !cmsFileEntry.IsDisposed)
+                {
+                    System.Collections.Generic.List<System.Windows.Forms.ToolStripItem> items =
+                        new System.Collections.Generic.List<System.Windows.Forms.ToolStripItem>(cmsFileEntry.Items.Count);
+
+                    foreach (System.Windows.Forms.ToolStripItem item in cmsFileEntry.Items)
+                        items.Add(item);
+
+                    foreach (System.Windows.Forms.ToolStripItem item in items)
+                        if (item != null && !item.IsDisposed)
+                            item.Dispose();
+
+                    cmsFileEntry.Dispose();
+                    components.Remove(cmsFileEntry);
+
+                    items.Clear();
+                }
+
+                if (tsddbLegacy != null && tsddbLegacy.HasDropDownItems && !tsddbLegacy.IsDisposed)
+                {
+                    System.Collections.Generic.List<System.Windows.Forms.ToolStripItem> items =
+                        new System.Collections.Generic.List<System.Windows.Forms.ToolStripItem>(tsddbLegacy.DropDownItems.Count);
+
+                    foreach (System.Windows.Forms.ToolStripItem item in tsddbLegacy.DropDownItems)
+                        items.Add(item);
+
+                    foreach (System.Windows.Forms.ToolStripItem item in items)
+                        if (item != null && !item.IsDisposed)
+                            item.Dispose();
+
+                    tsddbLegacy.Dispose();
+
+                    items.Clear();
+                }
+#endif
                 components.Dispose();
             }
             base.Dispose(disposing);
