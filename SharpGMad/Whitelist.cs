@@ -29,30 +29,62 @@ namespace SharpGMad
         /// A list of string patterns of allowed files.
         /// </summary>
         private static string[] Wildcard = new string[]{
-            "maps/*.bsp",
-			"maps/*.png",
+            "lua/*.lua",
+			"scenes/*.vcd",
+			"particles/*.pcf",
+			"resource/fonts/*.ttf",
+			"scripts/vehicles/*.txt",
+			"resource/localization/*/*.properties",
+			"maps/*.bsp",
 			"maps/*.nav",
 			"maps/*.ain",
+			"maps/thumb/*.png",
 			"sound/*.wav",
 			"sound/*.mp3",
-			"lua/*.lua",
+			"sound/*.ogg",
 			"materials/*.vmt",
 			"materials/*.vtf",
 			"materials/*.png",
+			"materials/*.jpg",
+			"materials/*.jpeg",
 			"models/*.mdl",
 			"models/*.vtx",
 			"models/*.phy",
 			"models/*.ani",
 			"models/*.vvd",
-			"gamemodes/*.txt",
-			"gamemodes/*.lua",
-			"scenes/*.vcd",
-			"particles/*.pcf",
-			"gamemodes/*/backgrounds/*.jpg",
-			"gamemodes/*/icon24.png",
+			"gamemodes/*/*.txt",
+			"gamemodes/*/*.fgd",
 			"gamemodes/*/logo.png",
-			"scripts/vehicles/*.txt",
-			"resource/fonts/*.ttf",
+			"gamemodes/*/icon24.png",
+			"gamemodes/*/gamemode/*.lua",
+			"gamemodes/*/entities/effects/*.lua",
+			"gamemodes/*/entities/weapons/*.lua",
+			"gamemodes/*/entities/entities/*.lua",
+			"gamemodes/*/backgrounds/*.png",
+			"gamemodes/*/backgrounds/*.jpg",
+			"gamemodes/*/backgrounds/*.jpeg",
+			"gamemodes/*/content/models/*.mdl",
+			"gamemodes/*/content/models/*.vtx",
+			"gamemodes/*/content/models/*.phy",
+			"gamemodes/*/content/models/*.ani",
+			"gamemodes/*/content/models/*.vvd",
+			"gamemodes/*/content/materials/*.vmt",
+			"gamemodes/*/content/materials/*.vtf",
+			"gamemodes/*/content/materials/*.png",
+			"gamemodes/*/content/materials/*.jpg",
+			"gamemodes/*/content/materials/*.jpeg",
+			"gamemodes/*/content/scenes/*.vcd",
+			"gamemodes/*/content/particles/*.pcf",
+			"gamemodes/*/content/resource/fonts/*.ttf",
+			"gamemodes/*/content/scripts/vehicles/*.txt",
+			"gamemodes/*/content/resource/localization/*/*.properties",
+			"gamemodes/*/content/maps/*.bsp",
+			"gamemodes/*/content/maps/*.nav",
+			"gamemodes/*/content/maps/*.ain",
+			"gamemodes/*/content/maps/thumb/*.png",
+			"gamemodes/*/content/sound/*.wav",
+			"gamemodes/*/content/sound/*.mp3",
+			"gamemodes/*/content/sound/*.ogg",
 			null
         };
 
@@ -77,15 +109,18 @@ namespace SharpGMad
         static Whitelist()
         {
             // Initialize the known file types into the internal dictionary.
-            _WildcardFileTypes.Add("Maps", new string[] { "*.bsp", "*.png", "*.nav", "*.ain" });
+            _WildcardFileTypes.Add("Maps", new string[] { "*.bsp", "*.png", "*.nav", "*.ain", "*.fgd" });
             _WildcardFileTypes.Add("Lua script files", new string[] { "*.lua" });
             _WildcardFileTypes.Add("Materials", new string[] { "*.vmt", "*.vtf", "*.png" });
             _WildcardFileTypes.Add("Models", new string[] { "*.mdl", "*.vtx", "*.phy", "*.ani", "*.vvd" });
             _WildcardFileTypes.Add("Text files", new string[] { "*.txt" });
             _WildcardFileTypes.Add("Fonts", new string[] { "*.ttf" });
-            _WildcardFileTypes.Add("Images", new string[] { "*.png", "*.jpg" });
+            _WildcardFileTypes.Add("Images", new string[] { "*.png", "*.jpg", "*.jpeg" });
             _WildcardFileTypes.Add("Scenes", new string[] { "*.vcd" });
             _WildcardFileTypes.Add("Particle effects", new string[] { "*.pcf" });
+            _WildcardFileTypes.Add("Localization properties", new string[] { "*.properties" });
+            _WildcardFileTypes.Add("Sounds", new string[] { "*.wav", "*.mp3", "*.ogg" });
+
         }
 
         /// <summary>

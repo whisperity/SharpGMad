@@ -10,7 +10,7 @@ C# of Garry Newman's [GMad](http://github.com/garrynewman/gmad) tool, but
 ever since it has been given more functionality.
 
 (The current version implements and complies with
-[`f2a0de4`](http://github.com/garrynewman/gmad/tree/f2a0de42f5d124221ea080f18f338cf8fc23c15f).)
+[`a121a70`](http://github.com/garrynewman/gmad/tree/a121a70e298ab6e07fa77a5e4f72018c7480f758).)
 
 Usage
 -----
