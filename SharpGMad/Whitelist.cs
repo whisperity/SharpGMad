@@ -29,6 +29,29 @@ namespace SharpGMad
         /// A list of string patterns of allowed files.
         /// </summary>
         private static string[] Wildcard = new string[]{
+			"lua/*.lua",
+			"scenes/*.vcd",
+			"particles/*.pcf",
+			"resource/fonts/*.ttf",
+			"scripts/vehicles/*.txt",
+			"resource/localization/*/*.properties",
+			"maps/*.bsp",
+			"maps/*.nav",
+			"maps/*.ain",
+			"maps/thumb/*.png",
+			"sound/*.wav",
+			"sound/*.mp3",
+			"sound/*.ogg",
+			"materials/*.vmt",
+			"materials/*.vtf",
+			"materials/*.png",
+			"materials/*.jpg",
+			"materials/*.jpeg",
+			"models/*.mdl",
+			"models/*.vtx",
+			"models/*.phy",
+			"models/*.ani",
+			"models/*.vvd",
 			"gamemodes/*/*.txt",
 			"gamemodes/*/*.fgd",
 			"gamemodes/*/logo.png",
@@ -62,29 +85,6 @@ namespace SharpGMad
 			"gamemodes/*/content/sound/*.wav",
 			"gamemodes/*/content/sound/*.mp3",
 			"gamemodes/*/content/sound/*.ogg",
-            "lua/*.lua",
-			"scenes/*.vcd",
-			"particles/*.pcf",
-			"resource/fonts/*.ttf",
-			"scripts/vehicles/*.txt",
-			"resource/localization/*/*.properties",
-			"maps/*.bsp",
-			"maps/*.nav",
-			"maps/*.ain",
-			"maps/thumb/*.png",
-			"sound/*.wav",
-			"sound/*.mp3",
-			"sound/*.ogg",
-			"materials/*.vmt",
-			"materials/*.vtf",
-			"materials/*.png",
-			"materials/*.jpg",
-			"materials/*.jpeg",
-			"models/*.mdl",
-			"models/*.vtx",
-			"models/*.phy",
-			"models/*.ani",
-			"models/*.vvd",
 			null
         };
 
@@ -130,7 +130,7 @@ namespace SharpGMad
         /// <returns>True if the file is allowed, false if not.</returns>
         public static bool Check(string path)
         {
-            return Wildcard.Any(wildcard => Check(wildcard, path));
+            return (Program.WhitelistOverridden || Wildcard.Any(wildcard => Check(wildcard, path)));
         }
 
         /// <summary>

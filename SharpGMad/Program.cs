@@ -11,6 +11,12 @@ namespace SharpGMad
     /// </summary>
     class Program
     {
+        // HACK: This has been just tied into the system to fix opening of illegal GMAs
+        /// <summary>
+        /// Indicates whether the whitelist was overridden by an illegal action.
+        /// </summary>
+        public static bool WhitelistOverridden = false;
+
 #if WINDOWS
         /// <summary>
         /// External method to find a pointer for an attached console window.

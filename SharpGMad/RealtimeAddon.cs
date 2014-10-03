@@ -135,7 +135,7 @@ namespace SharpGMad
                 throw new FileNotFoundException("The specified file " + filename + " does not exist.");
             }
 
-            FileStream fs;
+            FileStream fs = null;
             try
             {
                 if (!readOnly)
@@ -145,6 +145,9 @@ namespace SharpGMad
             }
             catch (IOException)
             {
+                if (fs != null)
+                    fs.Dispose();
+
                 throw;
             }
 
@@ -155,10 +158,12 @@ namespace SharpGMad
             }
             catch (IOException)
             {
+                fs.Dispose();
                 throw;
             }
             catch (ReaderException)
             {
+                fs.Dispose();
                 throw;
             }
 
@@ -169,14 +174,17 @@ namespace SharpGMad
             }
             catch (ArgumentException)
             {
+                fs.Dispose();
                 throw;
             }
             catch (WhitelistException)
             {
+                fs.Dispose();
                 throw;
             }
             catch (IgnoredException)
             {
+                fs.Dispose();
                 throw;
             }
 
