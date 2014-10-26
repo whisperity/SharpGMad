@@ -76,7 +76,7 @@ namespace SharpGMad
             this.tsbPullAll = new System.Windows.Forms.ToolStripButton();
             this.tsbDropAll = new System.Windows.Forms.ToolStripButton();
             this.pnlLeftSide = new System.Windows.Forms.Panel();
-            this.pnlFilelist = new System.Windows.Forms.Panel();
+            this.tvFolders = new System.Windows.Forms.TreeView();
             this.pnlFileOpsToolbar = new System.Windows.Forms.Panel();
             this.ssStatus = new System.Windows.Forms.StatusStrip();
             this.tsslStatus = new System.Windows.Forms.ToolStripStatusLabel();
@@ -116,7 +116,6 @@ namespace SharpGMad
             this.fbdFileExtractMulti = new System.Windows.Forms.FolderBrowserDialog();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
-            this.pnlFilelist.SuspendLayout();
             this.pnlFileOpsToolbar.SuspendLayout();
             this.ssStatus.SuspendLayout();
             this.pnlForm.SuspendLayout();
@@ -129,11 +128,11 @@ namespace SharpGMad
             // lstFiles
             // 
             this.lstFiles.AllowDrop = true;
-            this.lstFiles.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lstFiles.HideSelection = false;
-            this.lstFiles.Location = new System.Drawing.Point(0, 0);
+            this.lstFiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lstFiles.Location = new System.Drawing.Point(227, 26);
             this.lstFiles.Name = "lstFiles";
-            this.lstFiles.Size = new System.Drawing.Size(527, 328);
+            this.lstFiles.Size = new System.Drawing.Size(300, 328);
             this.lstFiles.TabIndex = 0;
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.View = System.Windows.Forms.View.Tile;
@@ -205,7 +204,8 @@ namespace SharpGMad
             // 
             // pnlLeftSide
             // 
-            this.pnlLeftSide.Controls.Add(this.pnlFilelist);
+            this.pnlLeftSide.Controls.Add(this.tvFolders);
+            this.pnlLeftSide.Controls.Add(this.lstFiles);
             this.pnlLeftSide.Controls.Add(this.pnlFileOpsToolbar);
             this.pnlLeftSide.Controls.Add(this.ssStatus);
             this.pnlLeftSide.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -214,14 +214,18 @@ namespace SharpGMad
             this.pnlLeftSide.Size = new System.Drawing.Size(527, 359);
             this.pnlLeftSide.TabIndex = 11;
             // 
-            // pnlFilelist
+            // tvFolders
             // 
-            this.pnlFilelist.Controls.Add(this.lstFiles);
-            this.pnlFilelist.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlFilelist.Location = new System.Drawing.Point(0, 26);
-            this.pnlFilelist.Name = "pnlFilelist";
-            this.pnlFilelist.Size = new System.Drawing.Size(527, 328);
-            this.pnlFilelist.TabIndex = 2;
+            this.tvFolders.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tvFolders.Location = new System.Drawing.Point(0, 26);
+            this.tvFolders.Name = "tvFolders";
+            this.tvFolders.PathSeparator = "/";
+            this.tvFolders.ShowPlusMinus = false;
+            this.tvFolders.ShowRootLines = false;
+            this.tvFolders.Size = new System.Drawing.Size(221, 328);
+            this.tvFolders.TabIndex = 4;
             // 
             // pnlFileOpsToolbar
             // 
@@ -583,7 +587,6 @@ namespace SharpGMad
             this.tsFileOperations.PerformLayout();
             this.pnlLeftSide.ResumeLayout(false);
             this.pnlLeftSide.PerformLayout();
-            this.pnlFilelist.ResumeLayout(false);
             this.pnlFileOpsToolbar.ResumeLayout(false);
             this.pnlFileOpsToolbar.PerformLayout();
             this.ssStatus.ResumeLayout(false);
@@ -607,7 +610,6 @@ namespace SharpGMad
         private System.Windows.Forms.OpenFileDialog ofdAddon;
         private System.Windows.Forms.ToolStrip tsFileOperations;
         private System.Windows.Forms.Panel pnlLeftSide;
-        private System.Windows.Forms.Panel pnlFilelist;
         private System.Windows.Forms.Panel pnlFileOpsToolbar;
         private System.Windows.Forms.Panel pnlForm;
         private System.Windows.Forms.Panel pnlRightSide;
@@ -649,6 +651,7 @@ namespace SharpGMad
         private System.Windows.Forms.ToolStripButton tsbDiscardMetadataChanges;
         private System.Windows.Forms.StatusStrip ssStatus;
         private System.Windows.Forms.ToolStripStatusLabel tsslStatus;
+        private System.Windows.Forms.TreeView tvFolders;
 
 
 

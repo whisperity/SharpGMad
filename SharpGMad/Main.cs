@@ -175,6 +175,63 @@ namespace SharpGMad
             }
         }
 
+        // Helper functions to populate the folder tree view.
+        // This starts the recursion with a string[] of all folders known
+        public void GetFolders(string[] Folders)
+        {
+            tvFolders.Nodes.Add("root", Path.GetFileName(AddonHandle.AddonPath));
+
+            // Generate the list of first-depth (below root level) folders.
+            List<string> foldersOnFirstDepth =
+                Folders.Select(f => f.Split('/').FirstOrDefault()) // The first folder in the path
+                .Distinct().ToList(); // only once.
+
+            RecurseFolders(Folders, tvFolders.Nodes["root"], 1); // We start from the first depth (root level is "0th" depth)
+        }
+
+        // This one handles the holy recursion
+        public void RecurseFolders(string[] Folders, TreeNode parentNode, int depth)
+        {
+            // Generate the list of currrent-depth folders.
+            List<string> foldersOnCurrentDepth =
+                Folders.Select(
+                    f => String.Join("/", f.Split('/').Take(depth)) // Select the folders which are on the current level
+                ).Distinct().ToList(); // but each folder only once
+
+            foreach (string f in foldersOnCurrentDepth)
+            {
+                parentNode.Nodes.Add(f, f.Split('/').Last());
+
+                // If the folder itself does not contain files (aka: it is not really in the folder list), make it gray
+                if (!Folders.Contains<string>(f))
+                {
+                    parentNode.Nodes[f].ForeColor = Color.Gray;
+                }
+            }
+
+            // Iterate those current-level folders
+            foreach (string folder in foldersOnCurrentDepth)
+            {
+                // Get the subfolders from the tree.
+                IList<string> fetchedSubfolders = Folders.Where(sf => sf.StartsWith(folder)).ToList();
+
+                // We can't use .Skip(1) in the query above because that would ignore a folder if its parent is an empty one...
+                if (fetchedSubfolders.Contains(folder))
+                {
+                    fetchedSubfolders.Remove(folder); // ... so we remove it here.
+                }
+
+                string[] Subfolders = fetchedSubfolders.ToArray();
+
+                // (Now the length should be 0 to prevent recursion if there are no subfolders,
+                // but it can also be properly 1 or more if the current folder is empty, but has subfolders.)
+                if (Subfolders.Length > 0)
+                {
+                    RecurseFolders(Subfolders, parentNode.Nodes[folder], depth + 1);
+                }
+            }
+        }
+
         /// <summary>
         /// Updates the filelist (lstFiles) with the changes administered to the known files.
         /// </summary>
@@ -197,15 +254,23 @@ namespace SharpGMad
                 tsbPullAll.Enabled = false;
                 tsbDropAll.Enabled = false;
 
+                tvFolders.Nodes.Clear();
+
+                IEnumerable<string> folderlist =
+                    AddonHandle.OpenAddon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/')).Select(f => f.Key);
+                string[] folders = folderlist.ToArray();
+
+                GetFolders(folders);
+                tvFolders.ExpandAll();
 
                 // Clear the list
                 lstFiles.Items.Clear();
                 lstFiles.Groups.Clear();
 
                 // Get and add the groups (folders)
-                IEnumerable<IGrouping<string, ContentFile>> folders =
+                IEnumerable<IGrouping<string, ContentFile>> folders2 =
                     AddonHandle.OpenAddon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/'));
-                foreach (IGrouping<string, ContentFile> folder in folders)
+                foreach (IGrouping<string, ContentFile> folder in folders2)
                 {
                     lstFiles.Groups.Add(folder.Key, folder.Key);
                 }
