@@ -142,6 +142,7 @@ namespace SharpGMad
             if (AddonHandle is RealtimeAddon)
             {
                 UpdateMetadataPanel();
+                UpdateFolderList();
                 UpdateFileList();
                 UpdateModified();
                 UpdateStatus("Loaded the addon" + (AddonHandle.CanWrite ? null : " (read-only mode)"));
@@ -233,6 +234,58 @@ namespace SharpGMad
         }
 
         /// <summary>
+        /// Updates the folder list (tvFolders) with the state of the addon
+        /// </summary>
+        private void UpdateFolderList()
+        {
+            // Reinvocation to fix cross-thread errors.
+            if (tvFolders.InvokeRequired)
+            {
+                this.Invoke((MethodInvoker)delegate { UpdateFolderList(); });
+            }
+            else
+            {
+                // Save the previously selected folder as a variable
+                string previousNode = String.Empty;
+                if (tvFolders.SelectedNode != null)
+                {
+                    previousNode = tvFolders.SelectedNode.Name;
+                }
+
+                // Update the folder list
+                tvFolders.Nodes.Clear();
+
+                string[] folderlist =
+                    AddonHandle.OpenAddon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/')).Select(f => f.Key)
+                    .ToArray();
+
+                GetFolders(folderlist);
+                tvFolders.ExpandAll();
+
+                // Reselect the previously selected node
+                if (!String.IsNullOrWhiteSpace(previousNode))
+                {
+                    // First, state that we will select the root node
+                    TreeNode nodeToSelect = tvFolders.Nodes["root"];
+                    IEnumerable<string> pathElements = previousNode.Split('/'); // Get the number of subnodes.
+
+                    for (int i = 1; i <= pathElements.Count(); i++)
+                    {
+                        // For each element, select the node below the current one.
+                        // (If they exist, of course.)
+                        string elementFullPath = String.Join("/", pathElements.Take(i));
+                        if (nodeToSelect.Nodes.ContainsKey(elementFullPath)) // We have to make it a fullpath here.
+                        {
+                            nodeToSelect = nodeToSelect.Nodes[elementFullPath];
+                        }
+                    }
+
+                    tvFolders.SelectedNode = nodeToSelect;
+                }
+            }
+        }
+
+        /// <summary>
         /// Updates the filelist (lstFiles) with the changes administered to the known files.
         /// </summary>
         private void UpdateFileList()
@@ -250,53 +303,48 @@ namespace SharpGMad
             }
             else
             {
-                // Reset the export counters
+                // Reset the export buttons
                 tsbPullAll.Enabled = false;
                 tsbDropAll.Enabled = false;
 
-                tvFolders.Nodes.Clear();
-
-                IEnumerable<string> folderlist =
-                    AddonHandle.OpenAddon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/')).Select(f => f.Key);
-                string[] folders = folderlist.ToArray();
-
-                GetFolders(folders);
-                tvFolders.ExpandAll();
-
                 // Clear the list
                 lstFiles.Items.Clear();
-                lstFiles.Groups.Clear();
 
-                // Get and add the groups (folders)
-                IEnumerable<IGrouping<string, ContentFile>> folders2 =
-                    AddonHandle.OpenAddon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/'));
-                foreach (IGrouping<string, ContentFile> folder in folders2)
+                // Get and add the files in the current folder
+                if (tvFolders.SelectedNode != null)
                 {
-                    lstFiles.Groups.Add(folder.Key, folder.Key);
-                }
+                    string nodePath = (tvFolders.SelectedNode.Name == "root" ? "" : tvFolders.SelectedNode.Name);
+                    IEnumerable<ContentFile> filesInFolder = AddonHandle.OpenAddon.Files
+                        .Where(f => Path.GetDirectoryName(f.Path).Replace('\\', '/') == nodePath);
 
-                // Get and add the files
-                foreach (ContentFile cfile in AddonHandle.OpenAddon.Files)
-                {
-                    ListViewItem item = new ListViewItem(Path.GetFileName(cfile.Path),
-                        lstFiles.Groups[Path.GetDirectoryName(cfile.Path).Replace('\\', '/')]);
-
-                    IEnumerable<FileWatch> watch = AddonHandle.WatchedFiles.Where(f => f.ContentPath == cfile.Path);
-                    if (watch.Count() == 1)
+                    foreach (ContentFile cfile in filesInFolder)
                     {
-                        tsbDropAll.Enabled = true; // At least one file is exported
-                        item.ForeColor = Color.Blue;
+                        ListViewItem item = new ListViewItem(Path.GetFileName(cfile.Path));
+                        item.Name = cfile.Path; // Store the full path as an internal value for easier use
 
-                        if (watch.First().Modified)
+                        IEnumerable<FileWatch> watch = AddonHandle.WatchedFiles.Where(f => f.ContentPath == cfile.Path);
+                        if (watch.Count() == 1)
                         {
-                            tsbPullAll.Enabled = AddonHandle.CanWrite; // At least one file is modified externally
-                            item.ForeColor = Color.Indigo;
-                        }
-                    }
+                            tsbDropAll.Enabled = true; // At least one file is exported
+                            item.ForeColor = Color.Blue;
 
-                    lstFiles.Items.Add(item);
+                            if (watch.First().Modified)
+                            {
+                                tsbPullAll.Enabled = AddonHandle.CanWrite; // At least one file is modified externally
+                                item.ForeColor = Color.Indigo;
+                            }
+                        }
+
+                        lstFiles.Items.Add(item);
+                    }
                 }
             }
+        }
+
+        private void tvFolders_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            // When a node is selected, we have to update the file list (lstFiles) to display only the files in the selected node.
+            UpdateFileList();
         }
 
         /// <summary>
@@ -466,6 +514,7 @@ namespace SharpGMad
                 }
 
                 UpdateModified();
+                UpdateFolderList();
                 UpdateFileList();
                 ofdAddFile.Reset();
             }
@@ -489,8 +538,8 @@ namespace SharpGMad
                     tsmShellExec.Visible = true;
 
                     // Allow export (and related) options
-                    IEnumerable<FileWatch> isExported = AddonHandle.WatchedFiles.Where(f => f.ContentPath ==
-                        lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+                    IEnumerable<FileWatch> isExported = AddonHandle.WatchedFiles.Where(f => (string)f.ContentPath ==
+                        (string)lstFiles.FocusedItem.Tag);
                     if (isExported.Count() == 0)
                     {
                         // Export is the file is not exported
@@ -599,25 +648,25 @@ namespace SharpGMad
                 if (lstFiles.FocusedItem != null)
                 {
                     DialogResult remove = MessageBox.Show("Really remove " +
-                        lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text + "?", "Remove file",
+                        lstFiles.FocusedItem.Name + "?", "Remove file",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                     if (remove == DialogResult.Yes)
                     {
                         try
                         {
-                            AddonHandle.RemoveFile(lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+                            AddonHandle.RemoveFile(lstFiles.FocusedItem.Name);
                         }
                         catch (FileNotFoundException)
                         {
-                            MessageBox.Show("File not in archive (" + lstFiles.FocusedItem.Group.Header +
-                                "/" + lstFiles.FocusedItem.Text + ")", "Remove file",
+                            MessageBox.Show("File not in archive (" + lstFiles.FocusedItem.Name + ")", "Remove file",
                                 MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             return;
                         }
 
-                        UpdateStatus("Removed file " + lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+                        UpdateStatus("Removed file " + lstFiles.FocusedItem.Name);
                         UpdateModified();
+                        UpdateFolderList();
                         UpdateFileList();
                     }
                 }
@@ -636,11 +685,11 @@ namespace SharpGMad
                     {
                         try
                         {
-                            AddonHandle.RemoveFile(file.Group.Header + "/" + file.Text);
+                            AddonHandle.RemoveFile((string)file.Name);
                         }
                         catch (FileNotFoundException)
                         {
-                            failed_paths.Add(file.Group.Header + "/" + file.Text);
+                            failed_paths.Add((string)file.Name);
                         }
                     }
 
@@ -682,6 +731,7 @@ namespace SharpGMad
                     }
 
                     UpdateModified();
+                    UpdateFolderList();
                     UpdateFileList();
                 }
             }
@@ -909,6 +959,7 @@ namespace SharpGMad
 
                     UpdateModified();
                     UpdateMetadataPanel();
+                    UpdateFolderList();
                     UpdateFileList();
 
                     tsbAddFile.Enabled = true;
@@ -924,18 +975,18 @@ namespace SharpGMad
 
             if (lstFiles.FocusedItem != null)
             {
-                string contentPath = lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text;
+                string contentPath = lstFiles.FocusedItem.Name;
 
-                sfdExportFile.FileName = Path.GetFileName(lstFiles.FocusedItem.Text);
-                sfdExportFile.DefaultExt = Path.GetExtension(lstFiles.FocusedItem.Text);
-                sfdExportFile.Title = "Export " + Path.GetFileName(lstFiles.FocusedItem.Text) + " to...";
+                sfdExportFile.FileName = Path.GetFileName(contentPath);
+                sfdExportFile.DefaultExt = Path.GetExtension(contentPath);
+                sfdExportFile.Title = "Export " + Path.GetFileName(contentPath) + " to...";
 
                 DialogResult save = sfdExportFile.ShowDialog();
 
                 if (save == DialogResult.OK)
                 {
                     string exportPath = sfdExportFile.FileName;
-                    
+
                     // OK happens also if the user said overwrite. Delete the file if so.
                     if (File.Exists(exportPath))
                         File.Delete(exportPath);
@@ -969,6 +1020,7 @@ namespace SharpGMad
                 }
 
                 sfdExportFile.Reset();
+                UpdateFolderList();
                 UpdateFileList();
             }
         }
@@ -976,6 +1028,7 @@ namespace SharpGMad
         private void fsw_Changed(object sender, FileSystemEventArgs e)
         {
             UpdateModified();
+            UpdateFolderList();
             UpdateFileList();
             this.Invoke((MethodInvoker)delegate { UpdateStatus("The file " + e.Name + " changed externally.", Color.Purple); });
         }
@@ -984,7 +1037,7 @@ namespace SharpGMad
         {
             if (lstFiles.FocusedItem != null)
             {
-                DropFileExport(lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+                DropFileExport(lstFiles.FocusedItem.Name);
             }
         }
 
@@ -1043,6 +1096,7 @@ namespace SharpGMad
                 }
             }
 
+            UpdateFolderList();
             UpdateFileList();
         }
 
@@ -1066,13 +1120,14 @@ namespace SharpGMad
                     MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
 
+            UpdateFolderList();
             UpdateFileList();
         }
 
         private void tsmFilePull_Click(object sender, EventArgs e)
         {
             if (lstFiles.FocusedItem != null)
-                PullFile(lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text);
+                PullFile(lstFiles.FocusedItem.Name);
         }
 
         private void tsbPullAll_Click(object sender, EventArgs e)
@@ -1132,6 +1187,7 @@ namespace SharpGMad
             }
 
             UpdateModified();
+            UpdateFolderList();
             UpdateFileList();
         }
 
@@ -1166,6 +1222,7 @@ namespace SharpGMad
 
             UpdateStatus("Successfully pulled changes for " + filename);
             UpdateModified();
+            UpdateFolderList();
             UpdateFileList();
         }
 
@@ -1175,11 +1232,11 @@ namespace SharpGMad
             {
                 if (lstFiles.FocusedItem != null)
                 {
-                    string contentPath = lstFiles.FocusedItem.Group.Header + "/" + lstFiles.FocusedItem.Text;
+                    string contentPath = lstFiles.FocusedItem.Name;
 
-                    sfdExportFile.FileName = Path.GetFileName(lstFiles.FocusedItem.Text);
-                    sfdExportFile.DefaultExt = Path.GetExtension(lstFiles.FocusedItem.Text);
-                    sfdExportFile.Title = "Extract " + Path.GetFileName(lstFiles.FocusedItem.Text) + " to...";
+                    sfdExportFile.FileName = Path.GetFileName(contentPath);
+                    sfdExportFile.DefaultExt = Path.GetExtension(contentPath);
+                    sfdExportFile.Title = "Extract " + Path.GetFileName(contentPath) + " to...";
 
                     DialogResult save = sfdExportFile.ShowDialog();
 
@@ -1221,7 +1278,7 @@ namespace SharpGMad
                     List<string> contentPaths = new List<string>(lstFiles.SelectedItems.Count);
 
                     foreach (System.Windows.Forms.ListViewItem file in lstFiles.SelectedItems)
-                        contentPaths.Add(file.Group.Header + "/" + file.Text);
+                        contentPaths.Add((string)file.Name);
 
                     // Get all the ContentFile objects from the open addon which has path
                     // matching to the paths we've selected in the list view.
@@ -1296,12 +1353,11 @@ namespace SharpGMad
                     string temppath;
                     try
                     {
-                        temppath = Path.GetTempPath() + "/" + Path.GetFileName(lstFiles.FocusedItem.Text);
+                        temppath = Path.GetTempPath() + "/" + Path.GetFileName(lstFiles.FocusedItem.Name);
 
                         try
                         {
-                            File.WriteAllBytes(temppath, AddonHandle.GetFile(lstFiles.FocusedItem.Group.Header +
-                                "/" + lstFiles.FocusedItem.Text).Content);
+                            File.WriteAllBytes(temppath, AddonHandle.GetFile(lstFiles.FocusedItem.Name).Content);
                         }
                         catch (FileNotFoundException)
                         {
@@ -1427,6 +1483,7 @@ namespace SharpGMad
                 }
 
                 UpdateModified();
+                UpdateFolderList();
                 UpdateFileList();
 
                 if (addFailures.Count == 0)

@@ -114,6 +114,7 @@ namespace SharpGMad
             this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmFileExtract = new System.Windows.Forms.ToolStripMenuItem();
             this.fbdFileExtractMulti = new System.Windows.Forms.FolderBrowserDialog();
+            this.spcFoldersAndFiles = new System.Windows.Forms.SplitContainer();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
             this.pnlFileOpsToolbar.SuspendLayout();
@@ -123,16 +124,19 @@ namespace SharpGMad
             this.tsMetadata.SuspendLayout();
             this.tsToolbar.SuspendLayout();
             this.cmsFileEntry.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.spcFoldersAndFiles)).BeginInit();
+            this.spcFoldersAndFiles.Panel1.SuspendLayout();
+            this.spcFoldersAndFiles.Panel2.SuspendLayout();
+            this.spcFoldersAndFiles.SuspendLayout();
             this.SuspendLayout();
             // 
             // lstFiles
             // 
             this.lstFiles.AllowDrop = true;
-            this.lstFiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.lstFiles.Location = new System.Drawing.Point(227, 26);
+            this.lstFiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
-            this.lstFiles.Size = new System.Drawing.Size(300, 328);
+            this.lstFiles.Size = new System.Drawing.Size(379, 393);
             this.lstFiles.TabIndex = 0;
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.View = System.Windows.Forms.View.Tile;
@@ -159,7 +163,7 @@ namespace SharpGMad
             this.tsbDropAll});
             this.tsFileOperations.Location = new System.Drawing.Point(0, 0);
             this.tsFileOperations.Name = "tsFileOperations";
-            this.tsFileOperations.Size = new System.Drawing.Size(527, 26);
+            this.tsFileOperations.Size = new System.Drawing.Size(594, 26);
             this.tsFileOperations.TabIndex = 0;
             // 
             // tsbAddFile
@@ -204,28 +208,26 @@ namespace SharpGMad
             // 
             // pnlLeftSide
             // 
-            this.pnlLeftSide.Controls.Add(this.tvFolders);
-            this.pnlLeftSide.Controls.Add(this.lstFiles);
+            this.pnlLeftSide.Controls.Add(this.spcFoldersAndFiles);
             this.pnlLeftSide.Controls.Add(this.pnlFileOpsToolbar);
             this.pnlLeftSide.Controls.Add(this.ssStatus);
             this.pnlLeftSide.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlLeftSide.Location = new System.Drawing.Point(0, 0);
             this.pnlLeftSide.Name = "pnlLeftSide";
-            this.pnlLeftSide.Size = new System.Drawing.Size(527, 359);
+            this.pnlLeftSide.Size = new System.Drawing.Size(594, 424);
             this.pnlLeftSide.TabIndex = 11;
             // 
             // tvFolders
             // 
-            this.tvFolders.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tvFolders.Location = new System.Drawing.Point(0, 26);
+            this.tvFolders.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tvFolders.Location = new System.Drawing.Point(0, 0);
             this.tvFolders.Name = "tvFolders";
             this.tvFolders.PathSeparator = "/";
             this.tvFolders.ShowPlusMinus = false;
             this.tvFolders.ShowRootLines = false;
-            this.tvFolders.Size = new System.Drawing.Size(221, 328);
+            this.tvFolders.Size = new System.Drawing.Size(211, 393);
             this.tvFolders.TabIndex = 4;
+            this.tvFolders.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.tvFolders_AfterSelect);
             // 
             // pnlFileOpsToolbar
             // 
@@ -233,7 +235,7 @@ namespace SharpGMad
             this.pnlFileOpsToolbar.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlFileOpsToolbar.Location = new System.Drawing.Point(0, 0);
             this.pnlFileOpsToolbar.Name = "pnlFileOpsToolbar";
-            this.pnlFileOpsToolbar.Size = new System.Drawing.Size(527, 26);
+            this.pnlFileOpsToolbar.Size = new System.Drawing.Size(594, 26);
             this.pnlFileOpsToolbar.TabIndex = 0;
             // 
             // ssStatus
@@ -241,9 +243,9 @@ namespace SharpGMad
             this.ssStatus.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsslStatus});
             this.ssStatus.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.Flow;
-            this.ssStatus.Location = new System.Drawing.Point(0, 354);
+            this.ssStatus.Location = new System.Drawing.Point(0, 419);
             this.ssStatus.Name = "ssStatus";
-            this.ssStatus.Size = new System.Drawing.Size(527, 5);
+            this.ssStatus.Size = new System.Drawing.Size(594, 5);
             this.ssStatus.SizingGrip = false;
             this.ssStatus.TabIndex = 3;
             // 
@@ -259,7 +261,7 @@ namespace SharpGMad
             this.pnlForm.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlForm.Location = new System.Drawing.Point(0, 25);
             this.pnlForm.Name = "pnlForm";
-            this.pnlForm.Size = new System.Drawing.Size(734, 359);
+            this.pnlForm.Size = new System.Drawing.Size(801, 424);
             this.pnlForm.TabIndex = 12;
             // 
             // pnlRightSide
@@ -275,9 +277,9 @@ namespace SharpGMad
             this.pnlRightSide.Controls.Add(this.txtMetadataTitle);
             this.pnlRightSide.Controls.Add(this.lblTitle);
             this.pnlRightSide.Dock = System.Windows.Forms.DockStyle.Right;
-            this.pnlRightSide.Location = new System.Drawing.Point(527, 0);
+            this.pnlRightSide.Location = new System.Drawing.Point(594, 0);
             this.pnlRightSide.Name = "pnlRightSide";
-            this.pnlRightSide.Size = new System.Drawing.Size(207, 359);
+            this.pnlRightSide.Size = new System.Drawing.Size(207, 424);
             this.pnlRightSide.TabIndex = 12;
             // 
             // txtMetadataDescription
@@ -413,7 +415,7 @@ namespace SharpGMad
             this.tsddbLegacy});
             this.tsToolbar.Location = new System.Drawing.Point(0, 0);
             this.tsToolbar.Name = "tsToolbar";
-            this.tsToolbar.Size = new System.Drawing.Size(734, 25);
+            this.tsToolbar.Size = new System.Drawing.Size(801, 25);
             this.tsToolbar.TabIndex = 13;
             // 
             // tsbCreateAddon
@@ -570,11 +572,28 @@ namespace SharpGMad
             this.tsmFileExtract.ToolTipText = "Save the selected file somewhere on your computer";
             this.tsmFileExtract.Click += new System.EventHandler(this.tsmFileExtract_Click);
             // 
+            // spcFoldersAndFiles
+            // 
+            this.spcFoldersAndFiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.spcFoldersAndFiles.Location = new System.Drawing.Point(0, 26);
+            this.spcFoldersAndFiles.Name = "spcFoldersAndFiles";
+            // 
+            // spcFoldersAndFiles.Panel1
+            // 
+            this.spcFoldersAndFiles.Panel1.Controls.Add(this.tvFolders);
+            // 
+            // spcFoldersAndFiles.Panel2
+            // 
+            this.spcFoldersAndFiles.Panel2.Controls.Add(this.lstFiles);
+            this.spcFoldersAndFiles.Size = new System.Drawing.Size(594, 393);
+            this.spcFoldersAndFiles.SplitterDistance = 211;
+            this.spcFoldersAndFiles.TabIndex = 5;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(734, 384);
+            this.ClientSize = new System.Drawing.Size(801, 449);
             this.Controls.Add(this.pnlForm);
             this.Controls.Add(this.tsToolbar);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -599,6 +618,10 @@ namespace SharpGMad
             this.tsToolbar.ResumeLayout(false);
             this.tsToolbar.PerformLayout();
             this.cmsFileEntry.ResumeLayout(false);
+            this.spcFoldersAndFiles.Panel1.ResumeLayout(false);
+            this.spcFoldersAndFiles.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.spcFoldersAndFiles)).EndInit();
+            this.spcFoldersAndFiles.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -652,6 +675,7 @@ namespace SharpGMad
         private System.Windows.Forms.StatusStrip ssStatus;
         private System.Windows.Forms.ToolStripStatusLabel tsslStatus;
         private System.Windows.Forms.TreeView tvFolders;
+        private System.Windows.Forms.SplitContainer spcFoldersAndFiles;
 
 
 
