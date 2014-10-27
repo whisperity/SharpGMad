@@ -1,3 +1,8 @@
+#if MONO
+using System.Collections.Generic;
+using System.Windows.Forms;
+#endif
+
 namespace SharpGMad
 {
     partial class Main
@@ -20,13 +25,12 @@ namespace SharpGMad
                 // in these ToolStripItem (and derived) objects.
                 if (cmsFileEntry != null && !cmsFileEntry.IsDisposed)
                 {
-                    System.Collections.Generic.List<System.Windows.Forms.ToolStripItem> items =
-                        new System.Collections.Generic.List<System.Windows.Forms.ToolStripItem>(cmsFileEntry.Items.Count);
+                    List<ToolStripItem> items = new List<ToolStripItem>(cmsFileEntry.Items.Count);
 
-                    foreach (System.Windows.Forms.ToolStripItem item in cmsFileEntry.Items)
+                    foreach (ToolStripItem item in cmsFileEntry.Items)
                         items.Add(item);
 
-                    foreach (System.Windows.Forms.ToolStripItem item in items)
+                    foreach (ToolStripItem item in items)
                         if (item != null && !item.IsDisposed)
                             item.Dispose();
 
@@ -38,17 +42,32 @@ namespace SharpGMad
 
                 if (tsddbLegacy != null && tsddbLegacy.HasDropDownItems && !tsddbLegacy.IsDisposed)
                 {
-                    System.Collections.Generic.List<System.Windows.Forms.ToolStripItem> items =
-                        new System.Collections.Generic.List<System.Windows.Forms.ToolStripItem>(tsddbLegacy.DropDownItems.Count);
+                    List<ToolStripItem> items = new List<ToolStripItem>(tsddbLegacy.DropDownItems.Count);
 
-                    foreach (System.Windows.Forms.ToolStripItem item in tsddbLegacy.DropDownItems)
+                    foreach (ToolStripItem item in tsddbLegacy.DropDownItems)
                         items.Add(item);
 
-                    foreach (System.Windows.Forms.ToolStripItem item in items)
+                    foreach (ToolStripItem item in items)
                         if (item != null && !item.IsDisposed)
                             item.Dispose();
 
                     tsddbLegacy.Dispose();
+
+                    items.Clear();
+                }
+
+                if (tsddbViewOptions != null && tsddbViewOptions.HasDropDownItems && !tsddbViewOptions.IsDisposed)
+                {
+                    List<ToolStripItem> items = new List<ToolStripItem>(tsddbViewOptions.DropDownItems.Count);
+
+                    foreach (ToolStripItem item in tsddbViewOptions.DropDownItems)
+                        items.Add(item);
+
+                    foreach (ToolStripItem item in items)
+                        if (item != null && !item.IsDisposed)
+                            item.Dispose();
+
+                    tsddbViewOptions.Dispose();
 
                     items.Clear();
                 }
