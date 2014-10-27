@@ -199,6 +199,10 @@ namespace SharpGMad
             {
                 UpdateMetadataPanel();
                 UpdateFolderList();
+
+                if (tvFolders.Nodes["root"] != null)
+                    tvFolders.SelectedNode = tvFolders.Nodes["root"];
+
                 UpdateFileList();
                 UpdateModified();
                 UpdateStatus("Loaded the addon" + (AddonHandle.CanWrite ? null : " (read-only mode)"));
@@ -458,7 +462,8 @@ namespace SharpGMad
                             parent.ImageKey = "parentfolder";
                             parent.Tag = FileEntryType.ParentFolder;
 
-                            if (tvFolders.SelectedNode.Parent.ImageKey == "emptyfolder")
+                            // If the parent is empty or is the root folder
+                            if (tvFolders.SelectedNode.Parent.ImageKey == "emptyfolder" || parent.Name == "root")
                                 parent.ForeColor = Color.Gray;
 
                             lstFiles.Items.Add(parent);
