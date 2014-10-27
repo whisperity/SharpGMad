@@ -175,10 +175,12 @@ namespace SharpGMad
         /// Check a path against the internal whitelist determining whether it's allowed or not.
         /// </summary>
         /// <param name="path">The relative path of the filename to determine.</param>
+        /// <param name="honourOverride">Whether the checking call should honour Whitelist.Override.
+        /// Defaults to true. If set to false, Check will forcibly check against the whitelist.</param>
         /// <returns>True if the file is allowed, false if not.</returns>
-        public static bool Check(string path)
+        public static bool Check(string path, bool honourOverride = true)
         {
-            return (Override || Wildcard.Any(wildcard => Check(wildcard, path)));
+            return ((honourOverride && Override) || Wildcard.Any(wildcard => Check(wildcard, path)));
         }
 
         /// <summary>

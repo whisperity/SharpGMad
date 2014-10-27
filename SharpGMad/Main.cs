@@ -79,6 +79,7 @@ namespace SharpGMad
             imgIconsLarge.Images.Add("file", global::SharpGMad.Properties.Resources.file);
             imgIconsLarge.Images.Add("exported", global::SharpGMad.Properties.Resources.exported);
             imgIconsLarge.Images.Add("pullable", global::SharpGMad.Properties.Resources.pullable);
+            imgIconsLarge.Images.Add("whitelistfailure", global::SharpGMad.Properties.Resources.whitelistfailure);
             imgIconsLarge.Images.Add("folder", global::SharpGMad.Properties.Resources.folder);
             imgIconsLarge.Images.Add("emptyfolder", global::SharpGMad.Properties.Resources.emptyfolder);
             imgIconsLarge.Images.Add("parentfolder", global::SharpGMad.Properties.Resources.parentfolder);
@@ -93,6 +94,7 @@ namespace SharpGMad
             imgIconsSmall.Images.Add("file", global::SharpGMad.Properties.Resources.file_s);
             imgIconsSmall.Images.Add("exported", global::SharpGMad.Properties.Resources.exported_s);
             imgIconsSmall.Images.Add("pullable", global::SharpGMad.Properties.Resources.pullable_s);
+            imgIconsSmall.Images.Add("whitelistfailure", global::SharpGMad.Properties.Resources.whitelistfailure_s);
             imgIconsSmall.Images.Add("folder", global::SharpGMad.Properties.Resources.folder_s);
             imgIconsSmall.Images.Add("emptyfolder", global::SharpGMad.Properties.Resources.emptyfolder_s);
             imgIconsSmall.Images.Add("parentfolder", global::SharpGMad.Properties.Resources.parentfolder_s);
@@ -532,6 +534,11 @@ namespace SharpGMad
                         item.Name = cfile.Path; // Store the full path as an internal value for easier use
                         item.Tag = FileEntryType.File;
                         item.ImageKey = "file";
+
+                        // If there can be non-whitelisted files, force check if the file is not whitelisted and change the icon if so.
+                        if (Whitelist.Override)
+                            if (!Whitelist.Check(cfile.Path, false))
+                                item.ImageKey = "whitelistfailure";
 
                         // Add subitems for Details view
                         ListViewItem.ListViewSubItem type = new ListViewItem.ListViewSubItem();

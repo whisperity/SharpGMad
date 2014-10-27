@@ -158,6 +158,8 @@
     <None Include="Resources\exported_32x32.png" />
     <None Include="Resources\pullable_16x16.png" />
     <None Include="Resources\pullable_32x32.png" />
+    <None Include="Resources\whitelistfailure_16x16.png" />
+    <None Include="Resources\whitelistfailure_32x32.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
