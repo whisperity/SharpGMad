@@ -164,9 +164,7 @@ namespace SharpGMad
             // Cross-thread operation not valid: Control 'Main' accessed from a
             // thread other than the thread it was created on.
             if (lstFiles.InvokeRequired)
-            {
                 this.Invoke((MethodInvoker)delegate { UpdateModified(); });
-            }
             else
             {
                 this.Text = Path.GetFileName(AddonHandle.AddonPath) + (Program.WhitelistOverridden ? "!" : null) +
@@ -254,17 +252,13 @@ namespace SharpGMad
         {
             // Reinvocation to fix cross-thread errors.
             if (tvFolders.InvokeRequired)
-            {
                 this.Invoke((MethodInvoker)delegate { UpdateFolderList(); });
-            }
             else
             {
                 // Save the previously selected folder as a variable
                 string previousNode = String.Empty;
                 if (tvFolders.SelectedNode != null)
-                {
                     previousNode = tvFolders.SelectedNode.Name;
-                }
 
                 // Update the folder list
                 tvFolders.Nodes.Clear();
@@ -277,9 +271,7 @@ namespace SharpGMad
 
                 // Reselect the previously selected node
                 if (!String.IsNullOrWhiteSpace(previousNode))
-                {
                     SelectFolderNode(previousNode);
-                }
             }
         }
 
@@ -288,9 +280,7 @@ namespace SharpGMad
         {
             // Reinvocation to fix cross-thread errors.
             if (tvFolders.InvokeRequired)
-            {
                 this.Invoke((MethodInvoker)delegate { SelectFolderNode(fullPath); });
-            }
             else
             {
                 // First, state that we will select the root node
@@ -302,10 +292,9 @@ namespace SharpGMad
                     // For each element, select the node below the current one.
                     // (If they exist, of course.)
                     string elementFullPath = String.Join("/", pathElements.Take(i));
+
                     if (nodeToSelect.Nodes.ContainsKey(elementFullPath)) // We have to make it a fullpath here.
-                    {
                         nodeToSelect = nodeToSelect.Nodes[elementFullPath];
-                    }
                 }
 
                 tvFolders.SelectedNode = nodeToSelect;
@@ -316,10 +305,8 @@ namespace SharpGMad
         {
             // When a node is selected, we have to update the file list (lstFiles) to display only the files in the selected node.
             if (e.Node is TreeNode)
-            {
                 // Don't change the icon
                 tvFolders.SelectedImageKey = e.Node.ImageKey;
-            }
 
             UpdateFileList();
         }
@@ -337,9 +324,7 @@ namespace SharpGMad
             // Cross-thread operation not valid: Control 'lstFiles' accessed from a
             // thread other than the thread it was created on.
             if (lstFiles.InvokeRequired)
-            {
                 this.Invoke((MethodInvoker)delegate { UpdateFileList(); });
-            }
             else
             {
                 // Reset the export buttons
@@ -568,72 +553,162 @@ namespace SharpGMad
 
         private void lstFiles_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (((System.Windows.Forms.ListView)sender).SelectedItems.Count == 1)
+            ListView lv = (ListView)sender;
+
+            if (lv.SelectedItems.Count == 1)
             {
                 // One file is selected
-                if (((System.Windows.Forms.ListView)sender).FocusedItem != null)
+                if (lv.FocusedItem != null)
                 {
-                    // Allow remove, export and execution
+                    if ((string)lv.FocusedItem.Tag != "subfolder")
+                    {
+                        // Allow remove, export and execution
+                        tsmFileRemove.Visible = true;
+                        tsmFileRemove.Enabled = AddonHandle.CanWrite && !Program.WhitelistOverridden;
+
+                        tsmFileExtract.Enabled = true;
+                        tsmFileExtract.Visible = true;
+
+                        tsmShellExec.Enabled = true;
+                        tsmShellExec.Visible = true;
+
+                        // Allow export (and related) options
+                        IEnumerable<FileWatch> isExported = AddonHandle.WatchedFiles.Where(f => (string)f.ContentPath ==
+                            (string)lstFiles.FocusedItem.Tag);
+                        if (isExported.Count() == 0)
+                        {
+                            // Export is the file is not exported
+                            tsmFileExportTo.Enabled = AddonHandle.CanWrite && !Program.WhitelistOverridden;
+                            tsmFilePull.Enabled = false;
+                            tsmFileDropExport.Enabled = false;
+                        }
+                        else
+                        {
+                            // Pull (applicable if the file is changed) and drop
+                            tsmFileExportTo.Enabled = false;
+                            tsmFilePull.Enabled = isExported.First().Modified && AddonHandle.CanWrite && !Program.WhitelistOverridden;
+                            tsmFileDropExport.Enabled = true;
+                        }
+
+                        // But the buttons should be visible
+                        tssExportSeparator.Visible = true;
+                        tsmFileExportTo.Visible = true;
+                        tsmFilePull.Visible = true;
+                        tsmFileDropExport.Visible = true;
+                    }
+                    else
+                    {
+                        // Subfolder selected
+                        // TODO: better handling here.
+                        tsmFileRemove.Enabled = false;
+                        tsmFileRemove.Visible = true;
+
+                        tsmFileExtract.Enabled = false;
+                        tsmFileExtract.Visible = true;
+
+                        tsmShellExec.Enabled = false;
+                        tsmShellExec.Visible = true;
+
+                        tssExportSeparator.Visible = true;
+
+                        tsmFileExportTo.Enabled = false;
+                        tsmFileExportTo.Visible = true;
+
+                        tsmFilePull.Enabled = false;
+                        tsmFilePull.Visible = true;
+
+                        tsmFileDropExport.Enabled = false;
+                        tsmFileDropExport.Visible = true;
+                    }
+                }
+            }
+            else if (lv.SelectedItems.Count > 1)
+            {
+                int subfoldersSelected = 0;
+                int filesSelected = 0;
+                foreach (ListViewItem item in lv.SelectedItems)
+                    if ((string)item.Tag == "subfolder")
+                        subfoldersSelected++;
+                    else
+                        filesSelected++;
+
+                Console.WriteLine("Subf: " + subfoldersSelected + "\tFile:" + filesSelected);
+                if (subfoldersSelected == 0 && filesSelected != 0)
+                {
+                    // Just files selected
+                    // Multiple files support remove, extract, but no exec and export-related stuff
+                    tsmFileRemove.Enabled = !Program.WhitelistOverridden;
                     tsmFileRemove.Visible = true;
-                    tsmFileRemove.Enabled = AddonHandle.CanWrite && !Program.WhitelistOverridden;
 
                     tsmFileExtract.Enabled = true;
                     tsmFileExtract.Visible = true;
 
-                    tsmShellExec.Enabled = true;
+                    tsmShellExec.Enabled = false;
+                    tsmShellExec.Visible = false;
+
+                    tssExportSeparator.Visible = false;
+
+                    tsmFileExportTo.Enabled = false;
+                    tsmFileExportTo.Visible = false;
+
+                    tsmFilePull.Enabled = false;
+                    tsmFilePull.Visible = false;
+
+                    tsmFileDropExport.Enabled = false;
+                    tsmFileDropExport.Visible = false;
+                }
+                else if (subfoldersSelected != 0 && filesSelected == 0)
+                {
+                    // Just subfolders selected
+                    // TODO: better handling here.
+                    tsmFileRemove.Enabled = false;
+                    tsmFileRemove.Visible = true;
+
+                    tsmFileExtract.Enabled = false;
+                    tsmFileExtract.Visible = true;
+
+                    tsmShellExec.Enabled = false;
                     tsmShellExec.Visible = true;
 
-                    // Allow export (and related) options
-                    IEnumerable<FileWatch> isExported = AddonHandle.WatchedFiles.Where(f => (string)f.ContentPath ==
-                        (string)lstFiles.FocusedItem.Tag);
-                    if (isExported.Count() == 0)
-                    {
-                        // Export is the file is not exported
-                        tsmFileExportTo.Enabled = AddonHandle.CanWrite && !Program.WhitelistOverridden;
-                        tsmFilePull.Enabled = false;
-                        tsmFileDropExport.Enabled = false;
-                    }
-                    else
-                    {
-                        // Pull (applicable if the file is changed) and drop
-                        tsmFileExportTo.Enabled = false;
-                        tsmFilePull.Enabled = isExported.First().Modified && AddonHandle.CanWrite && !Program.WhitelistOverridden;
-                        tsmFileDropExport.Enabled = true;
-                    }
-
-                    // But the buttons should be visible
                     tssExportSeparator.Visible = true;
+
+                    tsmFileExportTo.Enabled = false;
                     tsmFileExportTo.Visible = true;
+
+                    tsmFilePull.Enabled = false;
                     tsmFilePull.Visible = true;
+
+                    tsmFileDropExport.Enabled = false;
+                    tsmFileDropExport.Visible = true;
+                }
+                else
+                {
+                    // At least one from both items selected
+                    // TODO: better handling here.
+                    tsmFileRemove.Enabled = false;
+                    tsmFileRemove.Visible = true;
+
+                    tsmFileExtract.Enabled = false;
+                    tsmFileExtract.Visible = true;
+
+                    tsmShellExec.Enabled = false;
+                    tsmShellExec.Visible = true;
+
+                    tssExportSeparator.Visible = true;
+
+                    tsmFileExportTo.Enabled = false;
+                    tsmFileExportTo.Visible = true;
+
+                    tsmFilePull.Enabled = false;
+                    tsmFilePull.Visible = true;
+
+                    tsmFileDropExport.Enabled = false;
                     tsmFileDropExport.Visible = true;
                 }
             }
-            else if (((System.Windows.Forms.ListView)sender).SelectedItems.Count > 1)
-            {
-                // Multiple files support remove, extract, but no exec and export-related stuff
-                tsmFileRemove.Enabled = !Program.WhitelistOverridden;
-                tsmFileRemove.Visible = true;
-
-                tsmFileExtract.Enabled = true;
-                tsmFileExtract.Visible = true;
-
-                tsmShellExec.Enabled = false;
-                tsmShellExec.Visible = false;
-
-                tssExportSeparator.Visible = false;
-
-                tsmFileExportTo.Enabled = false;
-                tsmFileExportTo.Visible = false;
-
-                tsmFilePull.Enabled = false;
-                tsmFilePull.Visible = false;
-
-                tsmFileDropExport.Enabled = false;
-                tsmFileDropExport.Visible = false;
-            }
             else
             {
-                // Nothing if there are no files selected
+                // Nothing if there are no entries selected
                 tsmFileRemove.Enabled = false;
                 tsmFileRemove.Visible = false;
 
@@ -658,29 +733,38 @@ namespace SharpGMad
 
         private void lstFiles_MouseClick(object sender, MouseEventArgs e)
         {
+            ListView lv = (ListView)sender;
+
             if (e.Button == MouseButtons.Right)
-                if (((System.Windows.Forms.ListView)sender).FocusedItem.Bounds.Contains(e.Location) == true)
+                if (lv.FocusedItem.Bounds.Contains(e.Location) == true)
                     cmsFileEntry.Show(Cursor.Position);
         }
 
         private void lstFiles_MouseDoubleClick(object sender, MouseEventArgs e)
         {
+            ListView lv = (ListView)sender;
+
             if (e.Button == MouseButtons.Left && e.Clicks == 2)
-                if (((System.Windows.Forms.ListView)sender).FocusedItem.Bounds.Contains(e.Location) == true)
-                    tsmShellExec_Click(sender, e);
+                if (lv.FocusedItem.Bounds.Contains(e.Location) == true)
+                    if ((string)lv.FocusedItem.Tag != "subfolder")
+                        tsmShellExec_Click(sender, e);
         }
 
         private void lstFiles_KeyDown(object sender, KeyEventArgs e)
         {
+            ListView lv = (ListView)sender;
+
             if (e.KeyCode == Keys.Delete)
             {
-                if (((System.Windows.Forms.ListView)sender).FocusedItem != null)
-                    tsmFileRemove_Click(sender, e);
+                if (lv.FocusedItem != null)
+                    //if ((string)lv.FocusedItem.Tag != "subfolder")
+                        tsmFileRemove_Click(sender, e);
             }
             else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Return)
             {
-                if (((System.Windows.Forms.ListView)sender).FocusedItem != null)
-                    tsmShellExec_Click(sender, e);
+                if (lv.FocusedItem != null)
+                    if ((string)lv.FocusedItem.Tag != "subfolder")
+                        tsmShellExec_Click(sender, e);
             }
         }
 
@@ -693,92 +777,108 @@ namespace SharpGMad
             {
                 if (lstFiles.FocusedItem != null)
                 {
-                    DialogResult remove = MessageBox.Show("Really remove " +
-                        lstFiles.FocusedItem.Name + "?", "Remove file",
-                        MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                    if (remove == DialogResult.Yes)
+                    if ((string)lstFiles.FocusedItem.Tag != "subfolder")
                     {
-                        try
-                        {
-                            AddonHandle.RemoveFile(lstFiles.FocusedItem.Name);
-                        }
-                        catch (FileNotFoundException)
-                        {
-                            MessageBox.Show("File not in archive (" + lstFiles.FocusedItem.Name + ")", "Remove file",
-                                MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                            return;
-                        }
+                        DialogResult remove = MessageBox.Show("Really remove " +
+                            lstFiles.FocusedItem.Name + "?", "Remove file",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-                        UpdateStatus("Removed file " + lstFiles.FocusedItem.Name);
-                        UpdateModified();
-                        UpdateFolderList();
-                        UpdateFileList();
+                        if (remove == DialogResult.Yes)
+                        {
+                            try
+                            {
+                                AddonHandle.RemoveFile(lstFiles.FocusedItem.Name);
+                            }
+                            catch (FileNotFoundException)
+                            {
+                                MessageBox.Show("File not in archive (" + lstFiles.FocusedItem.Name + ")", "Remove file",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                                return;
+                            }
+
+                            UpdateStatus("Removed file " + lstFiles.FocusedItem.Name);
+                            UpdateModified();
+                            UpdateFolderList();
+                            UpdateFileList();
+                        }
                     }
                 }
             }
             else if (lstFiles.SelectedItems.Count >= 1)
             {
-                DialogResult remove = MessageBox.Show("Remove " +
-                    Convert.ToString(lstFiles.SelectedItems.Count) + " files?", "Remove files",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                // Unselect the subfolders as they are not extractable as whole
+                List<ListViewItem> selItems = new List<ListViewItem>(lstFiles.SelectedItems.Count);
+                foreach (ListViewItem item in lstFiles.SelectedItems)
+                    selItems.Add(item);
 
-                if (remove == DialogResult.Yes)
+                foreach (ListViewItem item in selItems)
+                    if ((string)item.Tag == "subfolder")
+                        item.Selected = false;
+                
+                // If there are still files selected
+                if (lstFiles.SelectedItems.Count >= 1)
                 {
-                    List<string> failed_paths = new List<string>(lstFiles.SelectedItems.Count);
+                    DialogResult remove = MessageBox.Show("Remove " +
+                        Convert.ToString(lstFiles.SelectedItems.Count) + " files?", "Remove files",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-                    foreach (System.Windows.Forms.ListViewItem file in lstFiles.SelectedItems)
+                    if (remove == DialogResult.Yes)
                     {
-                        try
-                        {
-                            AddonHandle.RemoveFile((string)file.Name);
-                        }
-                        catch (FileNotFoundException)
-                        {
-                            failed_paths.Add((string)file.Name);
-                        }
-                    }
+                        List<string> failed_paths = new List<string>(lstFiles.SelectedItems.Count);
 
-                    if (failed_paths.Count == 0)
-                        UpdateStatus("Removed " + lstFiles.SelectedItems.Count + " files");
-                    else if (failed_paths.Count == 1)
-                        MessageBox.Show("Failed to remove " + failed_paths[0], "Remove files",
-                            MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    else if (failed_paths.Count > 1)
-                    {
-                        DialogResult showFailedFiles = MessageBox.Show(Convert.ToString(failed_paths.Count) +
-                            " files failed to remove.\n\nShow a list of failures?", "Remove files",
-                            MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
-
-                        if (showFailedFiles == DialogResult.Yes)
+                        foreach (System.Windows.Forms.ListViewItem file in lstFiles.SelectedItems)
                         {
-                            string temppath = ContentFile.GenerateExternalPath(
-                                    new Random().Next() + "_failedRemovals") + ".txt";
-
                             try
                             {
-                                File.WriteAllText(temppath,
-                                    "These files failed to get removed:\r\n\r\n" +
-                                    String.Join("\r\n", failed_paths.ToArray()));
+                                AddonHandle.RemoveFile((string)file.Name);
                             }
-                            catch (Exception)
+                            catch (FileNotFoundException)
                             {
-                                MessageBox.Show("Can't show the list, an error happened generating it.", "Remove files",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                                return;
+                                failed_paths.Add((string)file.Name);
                             }
-
-                            // The file will be opened by the user's default text file handler (Notepad?)
-                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
-                            {
-                                UseShellExecute = true,
-                            });
                         }
-                    }
 
-                    UpdateModified();
-                    UpdateFolderList();
-                    UpdateFileList();
+                        if (failed_paths.Count == 0)
+                            UpdateStatus("Removed " + lstFiles.SelectedItems.Count + " files");
+                        else if (failed_paths.Count == 1)
+                            MessageBox.Show("Failed to remove " + failed_paths[0], "Remove files",
+                                MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        else if (failed_paths.Count > 1)
+                        {
+                            DialogResult showFailedFiles = MessageBox.Show(Convert.ToString(failed_paths.Count) +
+                                " files failed to remove.\n\nShow a list of failures?", "Remove files",
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
+
+                            if (showFailedFiles == DialogResult.Yes)
+                            {
+                                string temppath = ContentFile.GenerateExternalPath(
+                                        new Random().Next() + "_failedRemovals") + ".txt";
+
+                                try
+                                {
+                                    File.WriteAllText(temppath,
+                                        "These files failed to get removed:\r\n\r\n" +
+                                        String.Join("\r\n", failed_paths.ToArray()));
+                                }
+                                catch (Exception)
+                                {
+                                    MessageBox.Show("Can't show the list, an error happened generating it.", "Remove files",
+                                        MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                    return;
+                                }
+
+                                // The file will be opened by the user's default text file handler (Notepad?)
+                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                                {
+                                    UseShellExecute = true,
+                                });
+                            }
+                        }
+
+                        UpdateModified();
+                        UpdateFolderList();
+                        UpdateFileList();
+                    }
                 }
             }
         }
@@ -1021,53 +1121,56 @@ namespace SharpGMad
 
             if (lstFiles.FocusedItem != null)
             {
-                string contentPath = lstFiles.FocusedItem.Name;
-
-                sfdExportFile.FileName = Path.GetFileName(contentPath);
-                sfdExportFile.DefaultExt = Path.GetExtension(contentPath);
-                sfdExportFile.Title = "Export " + Path.GetFileName(contentPath) + " to...";
-
-                DialogResult save = sfdExportFile.ShowDialog();
-
-                if (save == DialogResult.OK)
+                if ((string)lstFiles.FocusedItem.Tag != "subfolder")
                 {
-                    string exportPath = sfdExportFile.FileName;
+                    string contentPath = lstFiles.FocusedItem.Name;
 
-                    // OK happens also if the user said overwrite. Delete the file if so.
-                    if (File.Exists(exportPath))
-                        File.Delete(exportPath);
+                    sfdExportFile.FileName = Path.GetFileName(contentPath);
+                    sfdExportFile.DefaultExt = Path.GetExtension(contentPath);
+                    sfdExportFile.Title = "Export " + Path.GetFileName(contentPath) + " to...";
 
-                    try
+                    DialogResult save = sfdExportFile.ShowDialog();
+
+                    if (save == DialogResult.OK)
                     {
-                        AddonHandle.ExportFile(contentPath, exportPath);
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        MessageBox.Show("Another file is already exported at " + exportPath, "Export file",
-                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                        return;
-                    }
-                    catch (ArgumentException)
-                    {
-                        MessageBox.Show("The file is already exported elsewhere.", "Export file",
-                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                        return;
-                    }
-                    catch (IOException)
-                    {
-                        MessageBox.Show("The file cannot be created on the disk.", "Export file",
-                            MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                        return;
+                        string exportPath = sfdExportFile.FileName;
+
+                        // OK happens also if the user said overwrite. Delete the file if so.
+                        if (File.Exists(exportPath))
+                            File.Delete(exportPath);
+
+                        try
+                        {
+                            AddonHandle.ExportFile(contentPath, exportPath);
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            MessageBox.Show("Another file is already exported at " + exportPath, "Export file",
+                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            return;
+                        }
+                        catch (ArgumentException)
+                        {
+                            MessageBox.Show("The file is already exported elsewhere.", "Export file",
+                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            return;
+                        }
+                        catch (IOException)
+                        {
+                            MessageBox.Show("The file cannot be created on the disk.", "Export file",
+                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            return;
+                        }
+
+                        // Add a custom event handler so that the form gets updated when a file is pullable.
+                        AddonHandle.WatchedFiles.Where(f => f.ContentPath == contentPath).First().FileChanged +=
+                            fsw_Changed;
                     }
 
-                    // Add a custom event handler so that the form gets updated when a file is pullable.
-                    AddonHandle.WatchedFiles.Where(f => f.ContentPath == contentPath).First().FileChanged +=
-                        fsw_Changed;
+                    sfdExportFile.Reset();
+                    UpdateFolderList();
+                    UpdateFileList();
                 }
-
-                sfdExportFile.Reset();
-                UpdateFolderList();
-                UpdateFileList();
             }
         }
 
@@ -1082,9 +1185,8 @@ namespace SharpGMad
         private void tsmFileDropExport_Click(object sender, EventArgs e)
         {
             if (lstFiles.FocusedItem != null)
-            {
-                DropFileExport(lstFiles.FocusedItem.Name);
-            }
+                if ((string)lstFiles.FocusedItem.Tag != "subfolder")
+                    DropFileExport(lstFiles.FocusedItem.Name);
         }
 
         private void tsbDropAll_Click(object sender, EventArgs e)
@@ -1173,7 +1275,8 @@ namespace SharpGMad
         private void tsmFilePull_Click(object sender, EventArgs e)
         {
             if (lstFiles.FocusedItem != null)
-                PullFile(lstFiles.FocusedItem.Name);
+                if ((string)lstFiles.FocusedItem.Tag != "subfolder")
+                    PullFile(lstFiles.FocusedItem.Name);
         }
 
         private void tsbPullAll_Click(object sender, EventArgs e)
@@ -1278,115 +1381,131 @@ namespace SharpGMad
             {
                 if (lstFiles.FocusedItem != null)
                 {
-                    string contentPath = lstFiles.FocusedItem.Name;
-
-                    sfdExportFile.FileName = Path.GetFileName(contentPath);
-                    sfdExportFile.DefaultExt = Path.GetExtension(contentPath);
-                    sfdExportFile.Title = "Extract " + Path.GetFileName(contentPath) + " to...";
-
-                    DialogResult save = sfdExportFile.ShowDialog();
-
-                    if (save == DialogResult.OK)
+                    if ((string)lstFiles.FocusedItem.Tag != "subfolder")
                     {
-                        string extractPath = sfdExportFile.FileName;
+                        string contentPath = lstFiles.FocusedItem.Name;
 
-                        try
+                        sfdExportFile.FileName = Path.GetFileName(contentPath);
+                        sfdExportFile.DefaultExt = Path.GetExtension(contentPath);
+                        sfdExportFile.Title = "Extract " + Path.GetFileName(contentPath) + " to...";
+
+                        DialogResult save = sfdExportFile.ShowDialog();
+
+                        if (save == DialogResult.OK)
                         {
-                            AddonHandle.ExtractFile(contentPath, extractPath);
+                            string extractPath = sfdExportFile.FileName;
+
+                            try
+                            {
+                                AddonHandle.ExtractFile(contentPath, extractPath);
+                            }
+                            catch (UnauthorizedAccessException)
+                            {
+                                MessageBox.Show("This file is already exported at " + extractPath, "Extract file",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                return;
+                            }
+                            catch (IOException)
+                            {
+                                MessageBox.Show("There was a problem creating the file.", "Extract file",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                return;
+                            }
                         }
-                        catch (UnauthorizedAccessException)
-                        {
-                            MessageBox.Show("This file is already exported at " + extractPath, "Extract file",
-                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                            return;
-                        }
-                        catch (IOException)
-                        {
-                            MessageBox.Show("There was a problem creating the file.", "Extract file",
-                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                            return;
-                        }
+
+                        sfdExportFile.Reset();
                     }
-
-                    sfdExportFile.Reset();
                 }
             }
             else if (lstFiles.SelectedItems.Count >= 1)
             {
-                fbdFileExtractMulti.Description = "Extract the selected " + Convert.ToString(lstFiles.SelectedItems.Count) +
-                    " files to...";
-                fbdFileExtractMulti.SelectedPath = Directory.GetCurrentDirectory();
+                // Unselect the subfolders as they are not extractable as whole
+                List<ListViewItem> selItems = new List<ListViewItem>(lstFiles.SelectedItems.Count);
+                foreach (ListViewItem item in lstFiles.SelectedItems)
+                    selItems.Add(item);
 
-                DialogResult save = fbdFileExtractMulti.ShowDialog();
-                if (save == DialogResult.OK)
+                foreach (ListViewItem item in selItems)
+                    if ((string)item.Tag == "subfolder")
+                        item.Selected = false;
+                
+                // If there are still files selected
+                if (lstFiles.SelectedItems.Count >= 1)
                 {
-                    string extractPath = fbdFileExtractMulti.SelectedPath;
-                    List<string> contentPaths = new List<string>(lstFiles.SelectedItems.Count);
+                    fbdFileExtractMulti.Description = "Extract the selected " + Convert.ToString(lstFiles.SelectedItems.Count) +
+                        " files to...";
+                    fbdFileExtractMulti.SelectedPath = Directory.GetCurrentDirectory();
 
-                    foreach (System.Windows.Forms.ListViewItem file in lstFiles.SelectedItems)
-                        contentPaths.Add((string)file.Name);
-
-                    // Get all the ContentFile objects from the open addon which has path
-                    // matching to the paths we've selected in the list view.
-                    IEnumerable<ContentFile> files = AddonHandle.OpenAddon.Files.Join(contentPaths,
-                        cfile => cfile.Path, cpath => cpath, (cfile, cpath) => cfile);
-
-                    List<string> failed_paths = new List<string>(lstFiles.SelectedItems.Count);
-
-                    foreach (ContentFile file in files)
+                    DialogResult save = fbdFileExtractMulti.ShowDialog();
+                    if (save == DialogResult.OK)
                     {
-                        string outpath = extractPath + Path.DirectorySeparatorChar + Path.GetFileName(file.Path);
+                        string extractPath = fbdFileExtractMulti.SelectedPath;
+                        List<string> contentPaths = new List<string>(lstFiles.SelectedItems.Count);
 
-                        try
-                        {
-                            AddonHandle.ExtractFile(file.Path, outpath);
-                        }
-                        catch (Exception)
-                        {
-                            failed_paths.Add(file.Path);
-                            continue;
-                        }
-                    }
+                        foreach (System.Windows.Forms.ListViewItem file in lstFiles.SelectedItems)
+                            contentPaths.Add((string)file.Name);
 
-                    if (failed_paths.Count == 0)
-                        UpdateStatus("Extracted " + files.Count() + " files successfully");
-                    else if (failed_paths.Count == 1)
-                        MessageBox.Show("Failed to extract " + failed_paths[0], "Extract files",
-                            MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                    else if (failed_paths.Count > 1)
-                    {
-                        DialogResult showFailedFiles = MessageBox.Show(Convert.ToString(failed_paths.Count) +
-                            " files failed to export.\n\nShow a list of failures?", "Extract files",
-                            MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
+                        // Get all the ContentFile objects from the open addon which has path
+                        // matching to the paths we've selected in the list view.
+                        IEnumerable<ContentFile> files = AddonHandle.OpenAddon.Files.Join(contentPaths,
+                            cfile => cfile.Path, cpath => cpath, (cfile, cpath) => cfile);
 
-                        if (showFailedFiles == DialogResult.Yes)
+                        List<string> failed_paths = new List<string>(lstFiles.SelectedItems.Count);
+
+                        foreach (ContentFile file in files)
                         {
-                            string temppath = ContentFile.GenerateExternalPath(
-                                    new Random().Next() + "_failedExtracts") + ".txt";
+                            string outpath = extractPath + Path.DirectorySeparatorChar + Path.GetFileName(file.Path);
 
                             try
                             {
-                                File.WriteAllText(temppath,
-                                    "These files failed to get removed:\r\n\r\n" +
-                                    String.Join("\r\n", failed_paths.ToArray()));
+                                AddonHandle.ExtractFile(file.Path, outpath);
                             }
                             catch (Exception)
                             {
-                                MessageBox.Show("Can't show the list, an error happened generating it.", "Extract files",
-                                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                                return;
+                                failed_paths.Add(file.Path);
+                                continue;
                             }
+                        }
 
-                            // The file will be opened by the user's default text file handler (Notepad?)
-                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                        if (failed_paths.Count == 0)
+                            UpdateStatus("Extracted " + files.Count() + " files successfully");
+                        else if (failed_paths.Count == 1)
+                            MessageBox.Show("Failed to extract " + failed_paths[0], "Extract files",
+                                MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        else if (failed_paths.Count > 1)
+                        {
+                            DialogResult showFailedFiles = MessageBox.Show(Convert.ToString(failed_paths.Count) +
+                                " files failed to export.\n\nShow a list of failures?", "Extract files",
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Exclamation);
+
+                            if (showFailedFiles == DialogResult.Yes)
                             {
-                                UseShellExecute = true,
-                            });
+                                string temppath = ContentFile.GenerateExternalPath(
+                                        new Random().Next() + "_failedExtracts") + ".txt";
+
+                                try
+                                {
+                                    File.WriteAllText(temppath,
+                                        "These files failed to get removed:\r\n\r\n" +
+                                        String.Join("\r\n", failed_paths.ToArray()));
+                                }
+                                catch (Exception)
+                                {
+                                    MessageBox.Show("Can't show the list, an error happened generating it.", "Extract files",
+                                        MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                    return;
+                                }
+
+                                // The file will be opened by the user's default text file handler (Notepad?)
+                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                                {
+                                    UseShellExecute = true,
+                                });
+                            }
                         }
                     }
-                }
 
-                fbdFileExtractMulti.Reset();
+                    fbdFileExtractMulti.Reset();
+                }
             }
         }
 
@@ -1396,14 +1515,29 @@ namespace SharpGMad
             {
                 if (lstFiles.FocusedItem != null)
                 {
-                    string temppath;
-                    try
+                    if ((string)lstFiles.FocusedItem.Tag != "subfolder")
                     {
-                        temppath = Path.GetTempPath() + "/" + Path.GetFileName(lstFiles.FocusedItem.Name);
-
+                        string temppath;
                         try
                         {
-                            File.WriteAllBytes(temppath, AddonHandle.GetFile(lstFiles.FocusedItem.Name).Content);
+                            temppath = Path.GetTempPath() + "/" + Path.GetFileName(lstFiles.FocusedItem.Name);
+
+                            try
+                            {
+                                File.WriteAllBytes(temppath, AddonHandle.GetFile(lstFiles.FocusedItem.Name).Content);
+                            }
+                            catch (FileNotFoundException)
+                            {
+                                MessageBox.Show("The file is not in the archive.", "Shell execute",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                                return;
+                            }
+                            catch (Exception)
+                            {
+                                MessageBox.Show("Failed to extract file to disk.", "Shell execute",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                                return;
+                            }
                         }
                         catch (FileNotFoundException)
                         {
@@ -1411,25 +1545,13 @@ namespace SharpGMad
                                 MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             return;
                         }
-                        catch (Exception)
-                        {
-                            MessageBox.Show("Failed to extract file to disk.", "Shell execute",
-                                MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                            return;
-                        }
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        MessageBox.Show("The file is not in the archive.", "Shell execute",
-                            MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                        return;
-                    }
 
-                    // Start the file
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
-                    {
-                        UseShellExecute = true,
-                    });
+                        // Start the file
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(temppath)
+                        {
+                            UseShellExecute = true,
+                        });
+                    }
                 }
             }
         }
