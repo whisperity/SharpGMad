@@ -18,6 +18,7 @@ namespace SharpGMad
         {
             InitializeComponent();
             UnloadAddon();
+            tsmiViewLargeIcons_Click(tsmiViewLargeIcons, new EventArgs()); // Default to large icons view.
             tsbCreateAddon.Enabled = !Program.WhitelistOverridden;
         }
 
@@ -180,17 +181,20 @@ namespace SharpGMad
         // This starts the recursion with a string[] of all folders known
         public void GetFolders(string[] Folders)
         {
-            tvFolders.Nodes.Add("root", Path.GetFileName(AddonHandle.AddonPath));
-            tvFolders.Nodes["root"].ImageKey = "gma";
-            tvFolders.Nodes["root"].SelectedImageKey = "gma";
-            tvFolders.Nodes["root"].NodeFont = new Font(tvFolders.Font, FontStyle.Bold);
+            TreeNode rootNode = new TreeNode(Path.GetFileName(AddonHandle.AddonPath));
+            rootNode.Name = "root";
+            rootNode.ImageKey = "gma";
+            rootNode.SelectedImageKey = "gma";
+            rootNode.NodeFont = new Font(tvFolders.Font, FontStyle.Bold);
 
             // Generate the list of first-depth (below root level) folders.
             List<string> foldersOnFirstDepth =
                 Folders.Select(f => f.Split('/').FirstOrDefault()) // The first folder in the path
                 .Distinct().ToList(); // only once.
 
-            RecurseFolders(Folders, tvFolders.Nodes["root"], 1); // We start from the first depth (root level is "0th" depth)
+            RecurseFolders(Folders, rootNode, 1); // We start from the first depth (root level is "0th" depth)
+
+            tvFolders.Nodes.Add(rootNode);
         }
 
         // This one handles the holy recursion
@@ -1564,6 +1568,37 @@ namespace SharpGMad
                     }
                 }
             }
+        }
+
+        // -- lstFiles view options --
+        private void tsmiViewLargeIcons_Click(object sender, EventArgs e)
+        {
+            lstFiles.View = View.LargeIcon;
+            tsddbViewOptions.Image = ((ToolStripMenuItem)sender).Image;
+        }
+
+        private void tsmiViewSmallIcons_Click(object sender, EventArgs e)
+        {
+            lstFiles.View = View.SmallIcon;
+            tsddbViewOptions.Image = ((ToolStripMenuItem)sender).Image;
+        }
+
+        private void tsmiViewDetails_Click(object sender, EventArgs e)
+        {
+            lstFiles.View = View.Details;
+            tsddbViewOptions.Image = ((ToolStripMenuItem)sender).Image;
+        }
+
+        private void tsmiViewList_Click(object sender, EventArgs e)
+        {
+            lstFiles.View = View.List;
+            tsddbViewOptions.Image = ((ToolStripMenuItem)sender).Image;
+        }
+
+        private void tsmiViewTiles_Click(object sender, EventArgs e)
+        {
+            lstFiles.View = View.Tile;
+            tsddbViewOptions.Image = ((ToolStripMenuItem)sender).Image;
         }
     }
 }

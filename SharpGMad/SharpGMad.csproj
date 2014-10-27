@@ -36,7 +36,7 @@
     <StartupObject>SharpGMad.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\main.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\gma.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug Mono|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -121,7 +121,6 @@
     <None Include="Resources\create.png" />
     <None Include="Resources\extract.png" />
     <None Include="Resources\legacy.png" />
-    <None Include="Resources\main.ico" />
     <None Include="Resources\metadata.png" />
     <None Include="Resources\newaddon.png" />
     <None Include="Resources\open.png" />
@@ -141,6 +140,16 @@
     <None Include="Resources\file_32x32.png" />
     <None Include="Resources\folder_16x16.png" />
     <None Include="Resources\folder_32x32.png" />
+    <None Include="Resources\view_details.png" />
+    <None Include="Resources\view_largeicons.png" />
+    <None Include="Resources\view_list.png" />
+    <None Include="Resources\view_smallicons.png" />
+    <None Include="Resources\view_tiles.png" />
+    <None Include="Resources\drop_all.png" />
+    <None Include="Resources\drop_export.png" />
+    <None Include="Resources\gma.ico" />
+    <None Include="Resources\gma_16x16.png" />
+    <None Include="Resources\gma_32x32.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
