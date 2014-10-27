@@ -84,6 +84,8 @@ namespace SharpGMad
             this.tsmiViewList = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiViewTiles = new System.Windows.Forms.ToolStripMenuItem();
             this.tssViewSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.tsmiViewShowAllFiles = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiViewShowFolderTree = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiViewShowSubfolders = new System.Windows.Forms.ToolStripMenuItem();
             this.pnlLeftSide = new System.Windows.Forms.Panel();
             this.spcFoldersAndFiles = new System.Windows.Forms.SplitContainer();
@@ -150,8 +152,10 @@ namespace SharpGMad
             this.lstFiles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
+            this.lstFiles.ShowGroups = false;
             this.lstFiles.Size = new System.Drawing.Size(383, 412);
             this.lstFiles.TabIndex = 0;
+            this.lstFiles.TileSize = new System.Drawing.Size(150, 50);
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.SelectedIndexChanged += new System.EventHandler(this.lstFiles_SelectedIndexChanged);
             this.lstFiles.DragDrop += new System.Windows.Forms.DragEventHandler(this.lstFiles_DragDrop);
@@ -246,6 +250,8 @@ namespace SharpGMad
             this.tsmiViewList,
             this.tsmiViewTiles,
             this.tssViewSeparator,
+            this.tsmiViewShowAllFiles,
+            this.tsmiViewShowFolderTree,
             this.tsmiViewShowSubfolders});
             this.tsddbViewOptions.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsddbViewOptions.Name = "tsddbViewOptions";
@@ -257,7 +263,7 @@ namespace SharpGMad
             // 
             this.tsmiViewLargeIcons.Image = global::SharpGMad.Properties.Resources.view_largeicons;
             this.tsmiViewLargeIcons.Name = "tsmiViewLargeIcons";
-            this.tsmiViewLargeIcons.Size = new System.Drawing.Size(161, 22);
+            this.tsmiViewLargeIcons.Size = new System.Drawing.Size(152, 22);
             this.tsmiViewLargeIcons.Text = "Large Icons";
             this.tsmiViewLargeIcons.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
@@ -265,25 +271,23 @@ namespace SharpGMad
             // 
             this.tsmiViewSmallIcons.Image = global::SharpGMad.Properties.Resources.view_smallicons;
             this.tsmiViewSmallIcons.Name = "tsmiViewSmallIcons";
-            this.tsmiViewSmallIcons.Size = new System.Drawing.Size(161, 22);
+            this.tsmiViewSmallIcons.Size = new System.Drawing.Size(152, 22);
             this.tsmiViewSmallIcons.Text = "Small Icons";
             this.tsmiViewSmallIcons.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
             // tsmiViewDetails
             // 
-            this.tsmiViewDetails.Enabled = false;
             this.tsmiViewDetails.Image = global::SharpGMad.Properties.Resources.view_details;
             this.tsmiViewDetails.Name = "tsmiViewDetails";
-            this.tsmiViewDetails.Size = new System.Drawing.Size(161, 22);
+            this.tsmiViewDetails.Size = new System.Drawing.Size(152, 22);
             this.tsmiViewDetails.Text = "Details";
-            this.tsmiViewDetails.Visible = false;
             this.tsmiViewDetails.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
             // tsmiViewList
             // 
             this.tsmiViewList.Image = global::SharpGMad.Properties.Resources.view_list;
             this.tsmiViewList.Name = "tsmiViewList";
-            this.tsmiViewList.Size = new System.Drawing.Size(161, 22);
+            this.tsmiViewList.Size = new System.Drawing.Size(152, 22);
             this.tsmiViewList.Text = "List";
             this.tsmiViewList.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
@@ -291,21 +295,42 @@ namespace SharpGMad
             // 
             this.tsmiViewTiles.Image = global::SharpGMad.Properties.Resources.view_tiles;
             this.tsmiViewTiles.Name = "tsmiViewTiles";
-            this.tsmiViewTiles.Size = new System.Drawing.Size(161, 22);
+            this.tsmiViewTiles.Size = new System.Drawing.Size(152, 22);
             this.tsmiViewTiles.Text = "Tiles";
             this.tsmiViewTiles.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
             // tssViewSeparator
             // 
             this.tssViewSeparator.Name = "tssViewSeparator";
-            this.tssViewSeparator.Size = new System.Drawing.Size(158, 6);
+            this.tssViewSeparator.Size = new System.Drawing.Size(149, 6);
+            // 
+            // tsmiViewShowAllFiles
+            // 
+            this.tsmiViewShowAllFiles.Image = global::SharpGMad.Properties.Resources.allfiles;
+            this.tsmiViewShowAllFiles.Name = "tsmiViewShowAllFiles";
+            this.tsmiViewShowAllFiles.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewShowAllFiles.Text = "All files";
+            this.tsmiViewShowAllFiles.ToolTipText = "Whether or not the file list view should show all files, not just current folder";
+            this.tsmiViewShowAllFiles.Click += new System.EventHandler(this.tsmiViewShowAllFiles_Click);
+            // 
+            // tsmiViewShowFolderTree
+            // 
+            this.tsmiViewShowFolderTree.Checked = true;
+            this.tsmiViewShowFolderTree.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.tsmiViewShowFolderTree.Image = global::SharpGMad.Properties.Resources.foldertree;
+            this.tsmiViewShowFolderTree.Name = "tsmiViewShowFolderTree";
+            this.tsmiViewShowFolderTree.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewShowFolderTree.Text = "Folder tree";
+            this.tsmiViewShowFolderTree.Click += new System.EventHandler(this.tsmiViewShowFolderTree_Click);
             // 
             // tsmiViewShowSubfolders
             // 
-            this.tsmiViewShowSubfolders.Image = global::SharpGMad.Properties.Resources.folder_16x16;
+            this.tsmiViewShowSubfolders.Checked = true;
+            this.tsmiViewShowSubfolders.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.tsmiViewShowSubfolders.Image = global::SharpGMad.Properties.Resources.folder_s;
             this.tsmiViewShowSubfolders.Name = "tsmiViewShowSubfolders";
-            this.tsmiViewShowSubfolders.Size = new System.Drawing.Size(161, 22);
-            this.tsmiViewShowSubfolders.Text = "Show subfolders";
+            this.tsmiViewShowSubfolders.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewShowSubfolders.Text = "Subfolders";
             this.tsmiViewShowSubfolders.ToolTipText = "Switch whether the file list should show subfolders or not";
             this.tsmiViewShowSubfolders.Click += new System.EventHandler(this.tsmiViewShowSubfolders_Click);
             // 
@@ -789,6 +814,8 @@ namespace SharpGMad
         private System.Windows.Forms.ColumnHeader chFilename;
         private System.Windows.Forms.ColumnHeader chFileType;
         private System.Windows.Forms.ColumnHeader chSize;
+        private System.Windows.Forms.ToolStripMenuItem tsmiViewShowFolderTree;
+        private System.Windows.Forms.ToolStripMenuItem tsmiViewShowAllFiles;
 
 
 

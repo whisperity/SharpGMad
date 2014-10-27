@@ -73,6 +73,16 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap allfiles {
+            get {
+                object obj = ResourceManager.GetObject("allfiles", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap create {
             get {
                 object obj = ResourceManager.GetObject("create", resourceCulture);
@@ -133,9 +143,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap emptyfolder_16x16 {
+        internal static System.Drawing.Bitmap emptyfolder {
             get {
-                object obj = ResourceManager.GetObject("emptyfolder_16x16", resourceCulture);
+                object obj = ResourceManager.GetObject("emptyfolder", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -143,9 +153,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap emptyfolder_32x32 {
+        internal static System.Drawing.Bitmap emptyfolder_s {
             get {
-                object obj = ResourceManager.GetObject("emptyfolder_32x32", resourceCulture);
+                object obj = ResourceManager.GetObject("emptyfolder_s", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -173,6 +183,26 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap exported {
+            get {
+                object obj = ResourceManager.GetObject("exported", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap exported_s {
+            get {
+                object obj = ResourceManager.GetObject("exported_s", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap extract {
             get {
                 object obj = ResourceManager.GetObject("extract", resourceCulture);
@@ -193,9 +223,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap file_16x16 {
+        internal static System.Drawing.Bitmap file {
             get {
-                object obj = ResourceManager.GetObject("file_16x16", resourceCulture);
+                object obj = ResourceManager.GetObject("file", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -203,9 +233,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap file_32x32 {
+        internal static System.Drawing.Bitmap file_s {
             get {
-                object obj = ResourceManager.GetObject("file_32x32", resourceCulture);
+                object obj = ResourceManager.GetObject("file_s", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -213,9 +243,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap folder_16x16 {
+        internal static System.Drawing.Bitmap folder {
             get {
-                object obj = ResourceManager.GetObject("folder_16x16", resourceCulture);
+                object obj = ResourceManager.GetObject("folder", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -223,9 +253,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap folder_32x32 {
+        internal static System.Drawing.Bitmap folder_s {
             get {
-                object obj = ResourceManager.GetObject("folder_32x32", resourceCulture);
+                object obj = ResourceManager.GetObject("folder_s", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -233,9 +263,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap gma_16x16 {
+        internal static System.Drawing.Bitmap foldertree {
             get {
-                object obj = ResourceManager.GetObject("gma_16x16", resourceCulture);
+                object obj = ResourceManager.GetObject("foldertree", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -243,9 +273,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap gma_32x32 {
+        internal static System.Drawing.Bitmap gma {
             get {
-                object obj = ResourceManager.GetObject("gma_32x32", resourceCulture);
+                object obj = ResourceManager.GetObject("gma", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -257,6 +287,16 @@ namespace SharpGMad.Properties {
             get {
                 object obj = ResourceManager.GetObject("gma_ico", resourceCulture);
                 return ((System.Drawing.Icon)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap gma_s {
+            get {
+                object obj = ResourceManager.GetObject("gma_s", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
 
@@ -303,9 +343,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap parentfolder_16x16 {
+        internal static System.Drawing.Bitmap parentfolder {
             get {
-                object obj = ResourceManager.GetObject("parentfolder_16x16", resourceCulture);
+                object obj = ResourceManager.GetObject("parentfolder", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -313,9 +353,9 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap parentfolder_32x32 {
+        internal static System.Drawing.Bitmap parentfolder_s {
             get {
-                object obj = ResourceManager.GetObject("parentfolder_32x32", resourceCulture);
+                object obj = ResourceManager.GetObject("parentfolder_s", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -340,6 +380,26 @@ namespace SharpGMad.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap pullable {
+            get {
+                object obj = ResourceManager.GetObject("pullable", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap pullable_s {
+            get {
+                object obj = ResourceManager.GetObject("pullable_s", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>

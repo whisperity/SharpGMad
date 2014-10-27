@@ -31,6 +31,10 @@ namespace SharpGMad
             tsmiViewShowSubfolders.Checked = false;
             tsmiViewShowSubfolders_Click(tsmiViewShowSubfolders, new EventArgs()); // _Click() will set it to true.
 
+            // Default to showing the folder tree
+            tsmiViewShowFolderTree.Checked = false;
+            tsmiViewShowFolderTree_Click(tsmiViewShowFolderTree, new EventArgs()); // Same as above.
+
             tsbCreateAddon.Enabled = !Program.WhitelistOverridden;
         }
 
@@ -70,17 +74,13 @@ namespace SharpGMad
             imgIconsLarge.TransparentColor = Color.Transparent;
             imgIconsLarge.ImageSize = new Size(32, 32);
 
-            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.gma_32x32);
-            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.file_32x32);
-            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.folder_32x32);
-            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.emptyfolder_32x32);
-            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.parentfolder_32x32);
-
-            imgIconsLarge.Images.SetKeyName(0, "gma");
-            imgIconsLarge.Images.SetKeyName(1, "file");
-            imgIconsLarge.Images.SetKeyName(2, "folder");
-            imgIconsLarge.Images.SetKeyName(3, "emptyfolder");
-            imgIconsLarge.Images.SetKeyName(4, "parentfolder");
+            imgIconsLarge.Images.Add("gma", global::SharpGMad.Properties.Resources.gma_s);
+            imgIconsLarge.Images.Add("file", global::SharpGMad.Properties.Resources.file);
+            imgIconsLarge.Images.Add("exported", global::SharpGMad.Properties.Resources.exported);
+            imgIconsLarge.Images.Add("pullable", global::SharpGMad.Properties.Resources.pullable);
+            imgIconsLarge.Images.Add("folder", global::SharpGMad.Properties.Resources.folder);
+            imgIconsLarge.Images.Add("emptyfolder", global::SharpGMad.Properties.Resources.emptyfolder);
+            imgIconsLarge.Images.Add("parentfolder", global::SharpGMad.Properties.Resources.parentfolder);
 
             // Small icons
             imgIconsSmall = new ImageList();
@@ -88,17 +88,13 @@ namespace SharpGMad
             imgIconsSmall.TransparentColor = Color.Transparent;
             imgIconsSmall.ImageSize = new Size(16, 16);
 
-            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.gma_16x16);
-            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.file_16x16);
-            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.folder_16x16);
-            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.emptyfolder_16x16);
-            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.parentfolder_16x16);
-
-            imgIconsSmall.Images.SetKeyName(0, "gma");
-            imgIconsSmall.Images.SetKeyName(1, "file");
-            imgIconsSmall.Images.SetKeyName(2, "folder");
-            imgIconsSmall.Images.SetKeyName(3, "emptyfolder");
-            imgIconsSmall.Images.SetKeyName(4, "parentfolder");
+            imgIconsSmall.Images.Add("gma", global::SharpGMad.Properties.Resources.gma_s);
+            imgIconsSmall.Images.Add("file", global::SharpGMad.Properties.Resources.file_s);
+            imgIconsSmall.Images.Add("exported", global::SharpGMad.Properties.Resources.exported_s);
+            imgIconsSmall.Images.Add("pullable", global::SharpGMad.Properties.Resources.pullable_s);
+            imgIconsSmall.Images.Add("folder", global::SharpGMad.Properties.Resources.folder_s);
+            imgIconsSmall.Images.Add("emptyfolder", global::SharpGMad.Properties.Resources.emptyfolder_s);
+            imgIconsSmall.Images.Add("parentfolder", global::SharpGMad.Properties.Resources.parentfolder_s);
         }
 
         private void tsbOpenAddon_Click(object sender, EventArgs e)
@@ -440,7 +436,18 @@ namespace SharpGMad
                 // Get and add the files in the current folder
                 if (tvFolders.SelectedNode != null)
                 {
-                    if (tsmiViewShowSubfolders.Checked)
+                    // Show subfolders if
+                    // showing subfolders is on and all-file mode is off
+                    // subfolders is off, though folder-tree is also off (in this state, the user can't enable subfolders)
+                    // But don't show subfolders if all-file mode is on
+                    //
+                    // bool shouldShow = tsmiViewShowSubfolders.Checked && !tsmiViewShowAllFiles.Checked;
+                    // shouldShow = shouldShow || (!tsmiViewShowSubfolders.Checked && !tsmiViewShowFolderTree.Checked);
+                    // shouldShow = shouldShow && !tsmiViewShowAllFiles.Checked;
+                    //
+                    // This formula simplifies as follows:
+                    if ((tsmiViewShowSubfolders.Checked && !tsmiViewShowAllFiles.Checked) ||
+                        (!tsmiViewShowAllFiles.Checked && !tsmiViewShowFolderTree.Checked))
                     {
                         // Add the folders to the list also.
 
@@ -472,13 +479,26 @@ namespace SharpGMad
                         }
                     }
 
-                    string nodePath = (tvFolders.SelectedNode.Name == "root" ? "" : tvFolders.SelectedNode.Name);
-                    IEnumerable<ContentFile> filesInFolder = AddonHandle.OpenAddon.Files
-                        .Where(f => Path.GetDirectoryName(f.Path).Replace('\\', '/') == nodePath);
+                    // Add the files to the list
+                    IEnumerable<ContentFile> filesInFolder;
+                    if (tsmiViewShowAllFiles.Checked)
+                        // If all-files mode is on, we query all file.
+                        filesInFolder = AddonHandle.OpenAddon.Files;
+                    else
+                        // Query the files in the selected folder.
+                        filesInFolder = AddonHandle.OpenAddon.Files
+                            .Where(f => Path.GetDirectoryName(f.Path).Replace('\\', '/') ==
+                                (tvFolders.SelectedNode.Name == "root" ? "" : tvFolders.SelectedNode.Name));
 
                     foreach (ContentFile cfile in filesInFolder)
                     {
-                        ListViewItem item = new ListViewItem(Path.GetFileName(cfile.Path));
+                        ListViewItem item = new ListViewItem();
+
+                        if (tsmiViewShowAllFiles.Checked)
+                            item.Text = cfile.Path; // Show full path if all-files mode is on
+                        else
+                            item.Text = Path.GetFileName(cfile.Path);
+
                         item.Name = cfile.Path; // Store the full path as an internal value for easier use
                         item.Tag = FileEntryType.File;
                         item.ImageKey = "file";
@@ -506,11 +526,13 @@ namespace SharpGMad
                         {
                             tsbDropAll.Enabled = true; // At least one file is exported
                             item.ForeColor = Color.Blue;
+                            item.ImageKey = "exported";
 
                             if (watch.First().Modified)
                             {
                                 tsbPullAll.Enabled = AddonHandle.CanWrite; // At least one file is modified externally
                                 item.ForeColor = Color.Indigo;
+                                item.ImageKey = "pullable";
                             }
                         }
 
@@ -993,7 +1015,6 @@ namespace SharpGMad
 
                     verbString += "files";
                 }
-
 
                 DialogResult remove = MessageBox.Show("Remove " + countString + "?", "Remove " + verbString + "?",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -2053,6 +2074,37 @@ namespace SharpGMad
             // Switch the "show" to the opposite value and force update the file list.
             tsmiViewShowSubfolders.Checked = !tsmiViewShowSubfolders.Checked;
             UpdateFileList();
+        }
+
+        private void tsmiViewShowFolderTree_Click(object sender, EventArgs e)
+        {
+            // Switch the "show" to the opposite value and force update the file list.
+            tsmiViewShowFolderTree.Checked = !tsmiViewShowFolderTree.Checked;
+
+            if (tsmiViewShowFolderTree.Checked && tsmiViewShowAllFiles.Checked)
+                // All-file and folder-tree mode are mutually exclusive.
+                tsmiViewShowAllFiles_Click(sender, e);
+            else
+                UpdateFileList();
+
+            // The option to toggle subfolder showing is only valid if the folder tree is visible
+            tsmiViewShowSubfolders.Visible = tsmiViewShowFolderTree.Checked;
+            tsmiViewShowSubfolders.Enabled = tsmiViewShowFolderTree.Checked;
+
+            tvFolders.Visible = tsmiViewShowFolderTree.Checked;
+            spcFoldersAndFiles.Panel1Collapsed = !tsmiViewShowFolderTree.Checked;
+        }
+
+        private void tsmiViewShowAllFiles_Click(object sender, EventArgs e)
+        {
+            // Switch the "show" to the opposite value and force update the file list.
+            tsmiViewShowAllFiles.Checked = !tsmiViewShowAllFiles.Checked;
+
+            if (tsmiViewShowAllFiles.Checked && tsmiViewShowFolderTree.Checked)
+                // All-file and folder-tree mode are mutually exclusive.
+                tsmiViewShowFolderTree_Click(sender, e);
+            else
+                UpdateFileList();
         }
     }
 }
