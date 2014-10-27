@@ -67,10 +67,7 @@ namespace SharpGMad
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.lstFiles = new System.Windows.Forms.ListView();
-            this.imlIconsLarge = new System.Windows.Forms.ImageList(this.components);
-            this.imlIconsSmall = new System.Windows.Forms.ImageList(this.components);
             this.ofdAddon = new System.Windows.Forms.OpenFileDialog();
             this.tsFileOperations = new System.Windows.Forms.ToolStrip();
             this.tsbAddFile = new System.Windows.Forms.ToolStripButton();
@@ -144,11 +141,9 @@ namespace SharpGMad
             // 
             this.lstFiles.AllowDrop = true;
             this.lstFiles.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lstFiles.LargeImageList = this.imlIconsLarge;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
             this.lstFiles.Size = new System.Drawing.Size(383, 412);
-            this.lstFiles.SmallImageList = this.imlIconsSmall;
             this.lstFiles.TabIndex = 0;
             this.lstFiles.UseCompatibleStateImageBehavior = false;
             this.lstFiles.SelectedIndexChanged += new System.EventHandler(this.lstFiles_SelectedIndexChanged);
@@ -157,24 +152,6 @@ namespace SharpGMad
             this.lstFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstFiles_KeyDown);
             this.lstFiles.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseClick);
             this.lstFiles.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseDoubleClick);
-            // 
-            // imlIconsLarge
-            // 
-            this.imlIconsLarge.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imlIconsLarge.ImageStream")));
-            this.imlIconsLarge.TransparentColor = System.Drawing.Color.Transparent;
-            this.imlIconsLarge.Images.SetKeyName(0, "gma");
-            this.imlIconsLarge.Images.SetKeyName(1, "file");
-            this.imlIconsLarge.Images.SetKeyName(2, "folder");
-            this.imlIconsLarge.Images.SetKeyName(3, "emptyFolder");
-            // 
-            // imlIconsSmall
-            // 
-            this.imlIconsSmall.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imlIconsSmall.ImageStream")));
-            this.imlIconsSmall.TransparentColor = System.Drawing.Color.Transparent;
-            this.imlIconsSmall.Images.SetKeyName(0, "gma");
-            this.imlIconsSmall.Images.SetKeyName(1, "file");
-            this.imlIconsSmall.Images.SetKeyName(2, "folder");
-            this.imlIconsSmall.Images.SetKeyName(3, "emptyFolder");
             // 
             // ofdAddon
             // 
@@ -340,12 +317,9 @@ namespace SharpGMad
             // tvFolders
             // 
             this.tvFolders.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tvFolders.ImageIndex = 0;
-            this.tvFolders.ImageList = this.imlIconsSmall;
             this.tvFolders.Location = new System.Drawing.Point(0, 0);
             this.tvFolders.Name = "tvFolders";
             this.tvFolders.PathSeparator = "/";
-            this.tvFolders.SelectedImageIndex = 0;
             this.tvFolders.ShowRootLines = false;
             this.tvFolders.Size = new System.Drawing.Size(165, 412);
             this.tvFolders.TabIndex = 4;
@@ -702,7 +676,6 @@ namespace SharpGMad
             this.ClientSize = new System.Drawing.Size(759, 468);
             this.Controls.Add(this.pnlForm);
             this.Controls.Add(this.tsToolbar);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Main";
             this.Text = "SharpGMad";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Main_FormClosing);
@@ -782,8 +755,6 @@ namespace SharpGMad
         private System.Windows.Forms.ToolStripStatusLabel tsslStatus;
         private System.Windows.Forms.TreeView tvFolders;
         private System.Windows.Forms.SplitContainer spcFoldersAndFiles;
-        private System.Windows.Forms.ImageList imlIconsLarge;
-        private System.Windows.Forms.ImageList imlIconsSmall;
         private System.Windows.Forms.ToolStripDropDownButton tsddbViewOptions;
         private System.Windows.Forms.ToolStripMenuItem tsmiViewLargeIcons;
         private System.Windows.Forms.ToolStripMenuItem tsmiViewSmallIcons;

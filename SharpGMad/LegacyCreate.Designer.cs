@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(LegacyCreate));
             this.lblFolder = new System.Windows.Forms.Label();
             this.lblFile = new System.Windows.Forms.Label();
             this.chkWarnInvalid = new System.Windows.Forms.CheckBox();
@@ -228,7 +227,6 @@
             this.Controls.Add(this.lblFile);
             this.Controls.Add(this.lblFolder);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "LegacyCreate";

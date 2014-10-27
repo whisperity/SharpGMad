@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(LegacyExtract));
             this.lblFolder = new System.Windows.Forms.Label();
             this.lblFile = new System.Windows.Forms.Label();
             this.btnFileBrowse = new System.Windows.Forms.Button();
@@ -151,7 +150,6 @@
             this.Controls.Add(this.lblFile);
             this.Controls.Add(this.lblFolder);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "LegacyExtract";

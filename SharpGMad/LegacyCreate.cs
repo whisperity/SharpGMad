@@ -11,6 +11,7 @@ namespace SharpGMad
         public LegacyCreate()
         {
             InitializeComponent();
+            this.Icon = global::SharpGMad.Properties.Resources.create_ico;
         }
 
         private void btnAbort_Click(object sender, EventArgs e)

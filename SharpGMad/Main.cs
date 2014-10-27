@@ -17,7 +17,14 @@ namespace SharpGMad
         private Main()
         {
             InitializeComponent();
+            InitializeIcons();
             UnloadAddon();
+
+            // Hook the lists to the icons
+            tvFolders.ImageList = imgIconsSmall;
+            lstFiles.SmallImageList = imgIconsSmall;
+            lstFiles.LargeImageList = imgIconsLarge;
+
             tsmiViewElements_changeView(tsmiViewLargeIcons, new EventArgs()); // Default to large icons view.
 
             // Default to showing subfolders in file list.
@@ -45,6 +52,49 @@ namespace SharpGMad
                     return;
                 }
             }
+        }
+
+        // Visual Studio tends to crap up the good-looking icons when a saved project is reloaded...
+        // So we don't rely on it, instead, we "runtime-create" the image lists.
+        private ImageList imgIconsLarge;
+        private ImageList imgIconsSmall;
+
+        private void InitializeIcons()
+        {
+            // Form icon itself
+            this.Icon = global::SharpGMad.Properties.Resources.gma_ico;
+
+            // Large icons
+            imgIconsLarge = new ImageList();
+            imgIconsLarge.ColorDepth = ColorDepth.Depth32Bit;
+            imgIconsLarge.TransparentColor = Color.Transparent;
+            imgIconsLarge.ImageSize = new Size(32, 32);
+
+            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.gma_32x32);
+            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.file_32x32);
+            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.folder_32x32);
+            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.emptyfolder_32x32);
+
+            imgIconsLarge.Images.SetKeyName(0, "gma");
+            imgIconsLarge.Images.SetKeyName(1, "file");
+            imgIconsLarge.Images.SetKeyName(2, "folder");
+            imgIconsLarge.Images.SetKeyName(3, "emptyFolder");
+
+            // Small icons
+            imgIconsSmall = new ImageList();
+            imgIconsSmall.ColorDepth = ColorDepth.Depth32Bit;
+            imgIconsSmall.TransparentColor = Color.Transparent;
+            imgIconsSmall.ImageSize = new Size(16, 16);
+
+            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.gma_16x16);
+            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.file_16x16);
+            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.folder_16x16);
+            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.emptyfolder_16x16);
+
+            imgIconsSmall.Images.SetKeyName(0, "gma");
+            imgIconsSmall.Images.SetKeyName(1, "file");
+            imgIconsSmall.Images.SetKeyName(2, "folder");
+            imgIconsSmall.Images.SetKeyName(3, "emptyFolder");
         }
 
         private void tsbOpenAddon_Click(object sender, EventArgs e)

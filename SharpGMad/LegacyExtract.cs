@@ -10,6 +10,7 @@ namespace SharpGMad
         public LegacyExtract()
         {
             InitializeComponent();
+            this.Icon = global::SharpGMad.Properties.Resources.extract_ico;
         }
 
         private void btnAbort_Click(object sender, EventArgs e)

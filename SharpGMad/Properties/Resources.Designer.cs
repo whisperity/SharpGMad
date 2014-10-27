@@ -81,6 +81,16 @@ namespace SharpGMad.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon create_ico {
+            get {
+                object obj = ResourceManager.GetObject("create_ico", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap discard {
@@ -171,6 +181,16 @@ namespace SharpGMad.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon extract_ico {
+            get {
+                object obj = ResourceManager.GetObject("extract_ico", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap file_16x16 {
@@ -230,6 +250,16 @@ namespace SharpGMad.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon gma_ico {
+            get {
+                object obj = ResourceManager.GetObject("gma_ico", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
