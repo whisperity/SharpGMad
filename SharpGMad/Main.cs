@@ -35,10 +35,10 @@ namespace SharpGMad
             tsmiViewShowFolderTree.Checked = false;
             tsmiViewShowFolderTree_Click(tsmiViewShowFolderTree, new EventArgs()); // Same as above.
 
-            tsbCreateAddon.Enabled = !Program.WhitelistOverridden;
+            tsbCreateAddon.Enabled = !Whitelist.Override;
         }
 
-        public Main(string[] args)
+        public Main(string[] args, bool whitelistOverride = false)
             : this()
         {
             // Try to autoload the addon if there's a first parameter specified.
@@ -49,7 +49,8 @@ namespace SharpGMad
             {
                 try
                 {
-                    LoadAddon(path);
+                    Whitelist.Override = whitelistOverride;
+                    LoadAddon(path, whitelistOverride);
                 }
                 catch (IOException)
                 {
@@ -121,8 +122,26 @@ namespace SharpGMad
         /// Loads an addon from the filesystem.
         /// </summary>
         /// <param name="filename">The path of the addon to load.</param>
-        private void LoadAddon(string path)
+        /// <param name="isOverrideReloading">Indicates whether the call is an override reload.</param>
+        private void LoadAddon(string path, bool isOverrideReloading = false)
         {
+            tsbCreateAddon.Enabled = !Whitelist.Override;
+            if (!isOverrideReloading)
+            {
+                // If the current call is not because a whitelist override (so it is a real "Open an addon" request)
+                // We disable the override and reset the form.
+                Whitelist.Override = false;
+
+                if (this.Status == "Restrictions disabled by user's request.") // Remove this line from saved status as its expired.
+                    this.Status = "Ready to work. :)";
+                UpdateStatus(this.Status, tsslStatus.ForeColor);
+                this.Text = "SharpGMad";
+                tsbAddFile.Enabled = !Whitelist.Override;
+                tsbUpdateMetadata.Enabled = !Whitelist.Override;
+            }
+
+            bool shouldOverrideReload = false; // Whether an override reload should take place.
+
             try
             {
                 AddonHandle = RealtimeAddon.Load(path, !FileExtensions.CanWrite(path));
@@ -152,12 +171,12 @@ namespace SharpGMad
             }
             catch (WhitelistException e)
             {
-                if (!Program.WhitelistOverridden)
+                if (!Whitelist.Override)
                 {
                     DialogResult ovrride = MessageBox.Show("This addon is against the GMA whitelist rules defined by garry!\n" +
                         e.Message + "\n\nFor datamining purposes, it is still possible to open this addon, HOWEVER " +
                         "opening this addon is an illegal operation and SharpGMad will prevent further modifications.\n\n" +
-                        "Do you want to enable forced opening of addons by overriding the whitelist?",
+                        "Do you want to enable forced opening of this addon by overriding the whitelist?",
                         "Addon is corrupted", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                     if (ovrride == DialogResult.No)
@@ -167,13 +186,12 @@ namespace SharpGMad
                     }
                     else if (ovrride == DialogResult.Yes)
                     {
-                        Program.WhitelistOverridden = true;
-                        tsbCreateAddon.Enabled = !Program.WhitelistOverridden;
-                        MessageBox.Show("Restrictions disabled.\nPlease browse for the addon to open it again.",
-                            "Addon is corrupted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        Whitelist.Override = true;
+                        tsbCreateAddon.Enabled = !Whitelist.Override;
                         this.Text = "! - SharpGMad";
                         UpdateStatus("Restrictions disabled by user's request.");
-                        return;
+
+                        shouldOverrideReload = true;
                     }
                 }
             }
@@ -195,6 +213,13 @@ namespace SharpGMad
                 return;
             }
 
+            // If a reloading is specified, do it and don't continue.
+            if (shouldOverrideReload)
+            {
+                LoadAddon(path, shouldOverrideReload);
+                return;
+            }
+
             if (AddonHandle is RealtimeAddon)
             {
                 UpdateMetadataPanel();
@@ -207,8 +232,8 @@ namespace SharpGMad
                 UpdateModified();
                 UpdateStatus("Loaded the addon" + (AddonHandle.CanWrite ? null : " (read-only mode)"));
 
-                tsbAddFile.Enabled = AddonHandle.CanWrite && !Program.WhitelistOverridden;
-                tsbUpdateMetadata.Enabled = AddonHandle.CanWrite && !Program.WhitelistOverridden;
+                tsbAddFile.Enabled = AddonHandle.CanWrite && !Whitelist.Override;
+                tsbUpdateMetadata.Enabled = AddonHandle.CanWrite && !Whitelist.Override;
             }
         }
 
@@ -226,11 +251,11 @@ namespace SharpGMad
                 this.Invoke((MethodInvoker)delegate { UpdateModified(); });
             else
             {
-                this.Text = Path.GetFileName(AddonHandle.AddonPath) + (Program.WhitelistOverridden ? "!" : null) +
+                this.Text = Path.GetFileName(AddonHandle.AddonPath) + (Whitelist.Override ? "!" : null) +
                     (AddonHandle.CanWrite ? null : " (read-only)") +
                     (AddonHandle.Modified ? "*" : null) + " - SharpGMad";
 
-                tsbSaveAddon.Enabled = AddonHandle.CanWrite && AddonHandle.Modified && (!Program.WhitelistOverridden);
+                tsbSaveAddon.Enabled = AddonHandle.CanWrite && AddonHandle.Modified && (!Whitelist.Override);
             }
         }
 
@@ -548,18 +573,25 @@ namespace SharpGMad
         }
 
         /// <summary>
+        /// The application's status displayed to the user.
+        /// (This is a saving variable for the real status message without bloat.)
+        /// </summary>
+        private string Status = String.Empty;
+
+        /// <summary>
         /// Update the status label on the bottom of the form.
         /// </summary>
         /// <param name="text">The text to write.</param>
         /// <param name="foreColor">The color the text should have.</param>
         private void UpdateStatus(string text, Color foreColor = default(Color))
         {
+            Status = text;
             if (foreColor == default(Color))
                 foreColor = System.Drawing.SystemColors.ControlText;
 
             tsslStatus.ForeColor = foreColor;
-            tsslStatus.Text = (Program.WhitelistOverridden ? "!Cannot modify addons because the whitelist had been overridden! " : null) +
-                "[" + DateTime.Now.ToString() + "] " + text;
+            tsslStatus.Text = (Whitelist.Override ? "!Cannot modify addons because the whitelist had been overridden! " : null) +
+                "[" + DateTime.Now.ToString() + "] " + Status;
         }
 
         /// <summary>
@@ -614,10 +646,9 @@ namespace SharpGMad
             cmbMetadataTag2.Items.Clear();
             txtMetadataDescription.Text = String.Empty;
 
+            tvFolders.Nodes.Clear();
             lstFiles.Items.Clear();
-            lstFiles.Groups.Clear();
 
-            this.Text = "SharpGMad" + (Program.WhitelistOverridden ? "!" : null);
             tsbSaveAddon.Enabled = false;
 
             if (AddonHandle != null)
@@ -627,6 +658,15 @@ namespace SharpGMad
             tsbUpdateMetadata.Enabled = false;
             tsbDiscardMetadataChanges_Click(null, new EventArgs());
             tsbAddFile.Enabled = false;
+
+            // Unloading an addon reenables the whitelist.
+            Whitelist.Override = false;
+            tsbCreateAddon.Enabled = !Whitelist.Override;
+
+            if (this.Status == "Restrictions disabled by user's request.") // Remove this line from saved status as its expired.
+                this.Status = "Addon closed.";
+            UpdateStatus(this.Status);
+            this.Text = "SharpGMad";
         }
 
         // Dock the txtDescription text box.
@@ -661,7 +701,7 @@ namespace SharpGMad
 
         private void tsbAddFile_Click(object sender, EventArgs e)
         {
-            if (AddonHandle == null || Program.WhitelistOverridden)
+            if (AddonHandle == null || Whitelist.Override)
                 return;
 
             // If there is no value for file filtering, load a file list
@@ -733,7 +773,7 @@ namespace SharpGMad
                     {
                         // Allow remove, extract and execution
                         tsmFileRemove.Visible = true;
-                        tsmFileRemove.Enabled = AddonHandle.CanWrite && !Program.WhitelistOverridden;
+                        tsmFileRemove.Enabled = AddonHandle.CanWrite && !Whitelist.Override;
 
                         tsmFileExtract.Enabled = true;
                         tsmFileExtract.Visible = true;
@@ -747,7 +787,7 @@ namespace SharpGMad
                         if (isExported.Count() == 0)
                         {
                             // Export is the file is not exported
-                            tsmFileExportTo.Enabled = AddonHandle.CanWrite && !Program.WhitelistOverridden;
+                            tsmFileExportTo.Enabled = AddonHandle.CanWrite && !Whitelist.Override;
                             tsmFilePull.Enabled = false;
                             tsmFileDropExport.Enabled = false;
                         }
@@ -755,7 +795,7 @@ namespace SharpGMad
                         {
                             // Pull (applicable if the file is changed) and drop
                             tsmFileExportTo.Enabled = false;
-                            tsmFilePull.Enabled = isExported.First().Modified && AddonHandle.CanWrite && !Program.WhitelistOverridden;
+                            tsmFilePull.Enabled = isExported.First().Modified && AddonHandle.CanWrite && !Whitelist.Override;
                             tsmFileDropExport.Enabled = true;
                         }
 
@@ -771,7 +811,7 @@ namespace SharpGMad
 
                         // Allow remove and extract
                         tsmFileRemove.Visible = true;
-                        tsmFileRemove.Enabled = AddonHandle.CanWrite && !Program.WhitelistOverridden;
+                        tsmFileRemove.Enabled = AddonHandle.CanWrite && !Whitelist.Override;
 
                         tsmFileExtract.Enabled = true;
                         tsmFileExtract.Visible = true;
@@ -821,7 +861,7 @@ namespace SharpGMad
             {
                 // Multiple entries only support removal and extraction
                 // Parent folders won't be checked here, they are ignored when an operation is executed.
-                tsmFileRemove.Enabled = !Program.WhitelistOverridden;
+                tsmFileRemove.Enabled = !Whitelist.Override;
                 tsmFileRemove.Visible = true;
 
                 tsmFileExtract.Enabled = true;
@@ -909,7 +949,7 @@ namespace SharpGMad
 
         private void tsmFileRemove_Click(object sender, EventArgs e)
         {
-            if (!AddonHandle.CanWrite || Program.WhitelistOverridden)
+            if (!AddonHandle.CanWrite || Whitelist.Override)
                 return;
 
             if (lstFiles.SelectedItems.Count == 1)
@@ -1109,7 +1149,7 @@ namespace SharpGMad
 
         private void tsbUpdateMetadata_Click(object sender, EventArgs e)
         {
-            if (!AddonHandle.CanWrite || Program.WhitelistOverridden)
+            if (!AddonHandle.CanWrite || Whitelist.Override)
                 return;
 
             // Use a toggle mechanism to enable and disable the changing of metadata
@@ -1222,7 +1262,7 @@ namespace SharpGMad
 
         private void tsbSaveAddon_Click(object sender, EventArgs e)
         {
-            if (!AddonHandle.CanWrite || Program.WhitelistOverridden)
+            if (!AddonHandle.CanWrite || Whitelist.Override)
                 return;
 
             if (!tsbUpdateMetadata.Checked)
@@ -1259,7 +1299,7 @@ namespace SharpGMad
 
         private void Main_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (AddonHandle is RealtimeAddon && AddonHandle.Modified && !Program.WhitelistOverridden)
+            if (AddonHandle is RealtimeAddon && AddonHandle.Modified && !Whitelist.Override)
             {
                 DialogResult yesClose = MessageBox.Show("Save the addon before quitting?",
                     Path.GetFileName(AddonHandle.AddonPath), MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
@@ -1284,18 +1324,23 @@ namespace SharpGMad
             {
                 UnloadAddon();
             }
+
+#if MONO
+            // Mono tends not to hide the form when it is loaded from the realtime console with the "gui" command.
+            this.Hide();
+#endif
         }
 
         private void tsbCreateAddon_Click(object sender, EventArgs e)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
-                tsbCreateAddon.Enabled = !Program.WhitelistOverridden;
+                tsbCreateAddon.Enabled = !Whitelist.Override;
                 return;
             }
 
             DialogResult dropChanges = new DialogResult();
-            if (AddonHandle is RealtimeAddon && AddonHandle.Modified && !Program.WhitelistOverridden)
+            if (AddonHandle is RealtimeAddon && AddonHandle.Modified && !Whitelist.Override)
             {
                 dropChanges = MessageBox.Show("Open an another addon without saving the current one?\nYou'll lose the changes.",
                     "Addon already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -1344,7 +1389,7 @@ namespace SharpGMad
 
         private void tsmFileExportTo_Click(object sender, EventArgs e)
         {
-            if (!AddonHandle.CanWrite || Program.WhitelistOverridden)
+            if (!AddonHandle.CanWrite || Whitelist.Override)
                 return;
 
             if (lstFiles.FocusedItem != null)
@@ -1575,7 +1620,7 @@ namespace SharpGMad
         /// The exported path is known automatically.</param>
         private void PullFile(string filename)
         {
-            if (!AddonHandle.CanWrite || Program.WhitelistOverridden)
+            if (!AddonHandle.CanWrite || Whitelist.Override)
                 return;
 
             try

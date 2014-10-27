@@ -53,7 +53,7 @@ namespace SharpGMad
                 }
                 else if (AddonHandle is RealtimeAddon)
                 {
-                    Console.Write(Path.GetFileName(AddonHandle.AddonPath) + (Program.WhitelistOverridden ? "!" : null) +
+                    Console.Write(Path.GetFileName(AddonHandle.AddonPath) + (Whitelist.Override ? "!" : null) +
                         (AddonHandle.CanWrite ? null : " (read-only)") +
                         (AddonHandle.Modified ? "*" : null) + (AddonHandle.Pullable ? "!" : null));
 #if WINDOWS
@@ -571,14 +571,23 @@ namespace SharpGMad
                                 Console.WriteLine("The addon will close in the console and will be reopened by the GUI.");
                                 // Save the addon path and close it in the console.
                                 string addonpath = AddonHandle.AddonPath;
+
+                                // Save whether the addon required a whitelist override.
+                                bool whitelistOverride = Whitelist.Override;
                                 CloseAddon();
 
+                                // Reenable the override, if it was enabled. (CloseAddon() automatically disables it.)
+                                Whitelist.Override = whitelistOverride;
+
                                 // Open the GUI with the path. The addon will automatically reload.
-                                System.Windows.Forms.Application.Run(new Main(new string[] { addonpath }));
+                                System.Windows.Forms.Application.Run(new Main(new string[] { addonpath }, whitelistOverride));
+
+                                // Set the override status again. (Closing the form disables the override again.)
+                                Whitelist.Override = whitelistOverride;
 
                                 // This thread will hang until the GUI is closed.
                                 Console.WriteLine("GUI was closed. Reopening the addon...");
-                                LoadAddon(addonpath);
+                                LoadAddon(addonpath, whitelistOverride);
                             }
                         }
                         break;
@@ -591,25 +600,25 @@ namespace SharpGMad
                         if (AddonHandle == null)
                         {
                             Console.WriteLine("load <filename>            Loads <filename> addon into the memory");
-                            if (!Program.WhitelistOverridden)
+                            if (!Whitelist.Override)
                                 Console.WriteLine("new <filename>             Create a new, empty addon named <filename>");
                         }
 
                         if (AddonHandle is RealtimeAddon)
                         {
-                            if (AddonHandle.CanWrite && !Program.WhitelistOverridden)
+                            if (AddonHandle.CanWrite && !Whitelist.Override)
                             {
                                 Console.WriteLine("add <filename>             Adds <filename> to the archive");
                                 Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
                             }
                             Console.WriteLine("list                       Lists the files in the memory");
-                            if (AddonHandle.CanWrite && !Program.WhitelistOverridden)
+                            if (AddonHandle.CanWrite && !Whitelist.Override)
                             {
                                 Console.WriteLine("remove <filename>          Removes <filename> from the archive");
                             }
                             Console.WriteLine("extract <filename> [path]  Extract <filename> (to [path] if specified)");
                             Console.WriteLine("mget <folder> <f1> [f2...] Extract all specified files to <folder>");
-                            if (AddonHandle.CanWrite && !Program.WhitelistOverridden)
+                            if (AddonHandle.CanWrite && !Whitelist.Override)
                             {
                                 Console.WriteLine("export                     View the list of exported files");
                                 Console.WriteLine("export <filename> [path]   Export <filename> for editing (to [path] if specified)");
@@ -618,7 +627,7 @@ namespace SharpGMad
                                 Console.WriteLine("drop <filename>            Drops the export for <filename>");
                             }
                             Console.WriteLine("get <parameter>            Prints the value of metadata <parameter>");
-                            if (AddonHandle.CanWrite && !Program.WhitelistOverridden)
+                            if (AddonHandle.CanWrite && !Whitelist.Override)
                             {
                                 Console.WriteLine("set <parameter> [value]    Sets metadata <parameter> to the specified [value]");
                                 Console.WriteLine("push                       Writes the changes to the disk");
@@ -665,7 +674,7 @@ namespace SharpGMad
                             }
                         }
 
-                        if (Program.WhitelistOverridden)
+                        if (Whitelist.Override)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -703,7 +712,7 @@ namespace SharpGMad
         /// <param name="filename">The filename where the addon should be saved to.</param>
         static void NewAddon(string filename)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -762,7 +771,7 @@ namespace SharpGMad
         /// <param name="title">Optional. The new title the addon should have.</param>
         private static void SetTitle(string title = null)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -796,7 +805,7 @@ namespace SharpGMad
         /// <param name="description">Optional. The new description the addon should have.</param>
         private static void SetDescription(string description = null)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -830,7 +839,7 @@ namespace SharpGMad
         /// <param name="author">Optional. The new author the addon should have.</param>
         private static void SetAuthor(string author = null)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -866,7 +875,7 @@ namespace SharpGMad
         /// <param name="type">Optional. The new type the addon should have.</param>
         private static void SetType(string type = null)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -922,7 +931,7 @@ namespace SharpGMad
         /// <param name="tagsInput">Optional. The new tags the addon should have.</param>
         private static void SetTags(string[] tagsInput = null)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -1045,7 +1054,8 @@ namespace SharpGMad
         /// Loads an addon from the filesystem.
         /// </summary>
         /// <param name="filename">The path of the addon to load.</param>
-        private static void LoadAddon(string filename)
+        /// /// <param name="isOverrideReloading">Indicates whether the call is an override reload.</param>
+        private static void LoadAddon(string filename, bool isOverrideReloading = false)
         {
             if (AddonHandle is RealtimeAddon)
             {
@@ -1055,6 +1065,11 @@ namespace SharpGMad
                 return;
             }
 
+            if (!isOverrideReloading) // If the current call is not an override call, reenable the whitelist
+                Whitelist.Override = false;
+
+            bool shouldOverrideReload = false; // Whether a whitelist overriding reload should take place.
+
             Console.WriteLine("Loading file...");
             try
             {
@@ -1062,45 +1077,47 @@ namespace SharpGMad
             }
             catch (WhitelistException e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("There was a problem opening the file.");
-                Console.ResetColor();
-
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.Write("This addon is against the GMA whitelist rules defined by garry!\n" +
-                    e.Message + "\n\nFor datamining purposes, it is still possible to open this addon, HOWEVER " +
-                    "opening this addon is an illegal operation and SharpGMad will prevent further modifications.");
-                Console.ResetColor();
-
-                bool decided = false;
-                string decision;
-                while (!decided)
+                if (!Whitelist.Override)
                 {
-                    Console.Write("\nDo you want to enable forced opening of addons by overriding the whitelist? (y/n) ");
-                    decision = Console.ReadLine();
-                    if (decision == "n" || decision == "N")
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("There was a problem opening the file.");
+                    Console.ResetColor();
+
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write("This addon is against the GMA whitelist rules defined by garry!\n" +
+                        e.Message + "\n\nFor datamining purposes, it is still possible to open this addon, HOWEVER\n" +
+                        "opening this addon is an illegal operation and SharpGMad will\nprevent further modifications.");
+                    Console.ResetColor();
+
+                    bool decided = false;
+                    string decision;
+                    while (!decided)
                     {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("The addon will not be opened.");
-                        Console.ResetColor();
-                        decided = true;
-                        return;
-                    }
-                    else if (decision == "y" || decision == "Y")
-                    {
-                        Program.WhitelistOverridden = true;
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("All security safeguards and restrictions HAD BEEN DISABLED.");
-                        Console.ResetColor();
-                        Console.WriteLine("Please type the command again to load the addon.");
-                        decided = true;
-                        CloseAddon();
-                        return;
-                    }
-                    else
-                    {
-                        decided = false;
-                        Console.WriteLine("Invalid input. Please write y for yes or n for no.");
+                        Console.Write("\nDo you want to enable opening this addon by overriding the whitelist? (y/n) ");
+                        decision = Console.ReadLine();
+                        if (decision == "n" || decision == "N")
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("The addon will not be opened.");
+                            Console.ResetColor();
+                            decided = true;
+                            return;
+                        }
+                        else if (decision == "y" || decision == "Y")
+                        {
+                            Whitelist.Override = true;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Whitelist overridden.");
+                            Console.ResetColor();
+                            shouldOverrideReload = true;
+
+                            decided = true;
+                        }
+                        else
+                        {
+                            decided = false;
+                            Console.WriteLine("Invalid input. Please write y for yes or n for no.");
+                        }
                     }
                 }
             }
@@ -1111,6 +1128,13 @@ namespace SharpGMad
                 Console.ResetColor();
                 Console.WriteLine(e.Message);
                 CloseAddon();
+                return;
+            }
+
+            // If a reloading is specified, do it and don't continue.
+            if (shouldOverrideReload)
+            {
+                LoadAddon(filename, shouldOverrideReload);
                 return;
             }
 
@@ -1133,7 +1157,7 @@ namespace SharpGMad
         /// <param name="filename">The path of the file to be added.</param>
         private static void AddFile(string filename)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -1208,7 +1232,7 @@ namespace SharpGMad
         /// <param name="folder">The folder containing the files to be added.</param>
         private static void AddFolder(string folder)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -1264,7 +1288,7 @@ namespace SharpGMad
         /// <param name="filename">The path of the file to be removed.</param>
         private static void RemoveFile(string filename)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -1358,7 +1382,7 @@ namespace SharpGMad
         /// If omitted, the file will be exported to the current working directory.</param>
         private static void ExportFile(string filename, string exportPath = null)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -1446,7 +1470,7 @@ namespace SharpGMad
         /// The exported path is known internally.</param>
         private static void DropExport(string filename)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -1491,7 +1515,7 @@ namespace SharpGMad
         /// The exported path is known automatically.</param>
         private static void PullFile(string filename)
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -1543,7 +1567,7 @@ namespace SharpGMad
         /// </summary>
         private static void Push()
         {
-            if (Program.WhitelistOverridden)
+            if (Whitelist.Override)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
@@ -1648,6 +1672,9 @@ namespace SharpGMad
 
             AddonHandle.Close();
             AddonHandle = null;
+
+            // Closing an addon reenables the whitelist.
+            Whitelist.Override = false;
         }
     }
 }

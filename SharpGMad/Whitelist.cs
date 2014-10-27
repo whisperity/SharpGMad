@@ -11,13 +11,7 @@ namespace SharpGMad
     [Serializable]
     class WhitelistException : Exception
     {
-        public WhitelistException() { }
         public WhitelistException(string message) : base(message) { }
-        public WhitelistException(string message, Exception inner) : base(message, inner) { }
-        protected WhitelistException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context)
-            : base(info, context) { }
     }
 
     /// <summary>
@@ -25,6 +19,11 @@ namespace SharpGMad
     /// </summary>
     static class Whitelist
     {
+        /// <summary>
+        /// Gets or sets whether the whitelist has been overridden to support whitelist non-conforming addons.
+        /// </summary>
+        public static bool Override = false;
+
         /// <summary>
         /// A list of string patterns of allowed files.
         /// </summary>
@@ -179,7 +178,7 @@ namespace SharpGMad
         /// <returns>True if the file is allowed, false if not.</returns>
         public static bool Check(string path)
         {
-            return (Program.WhitelistOverridden || Wildcard.Any(wildcard => Check(wildcard, path)));
+            return (Override || Wildcard.Any(wildcard => Check(wildcard, path)));
         }
 
         /// <summary>
