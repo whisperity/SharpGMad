@@ -136,8 +136,8 @@ namespace SharpGMad
 
                 if (this.Status == "Restrictions disabled by user's request.") // Remove this line from saved status as its expired.
                     this.Status = "Ready to work. :)";
-                UpdateStatus(this.Status, tsslStatus.ForeColor);
-                this.Text = "SharpGMad";
+                UpdateStatus(this.Status);
+                this.Text = "SharpGMad " + Program.PrettyVersion;
                 tsbAddFile.Enabled = !Whitelist.Override;
                 tsbUpdateMetadata.Enabled = !Whitelist.Override;
             }
@@ -190,7 +190,7 @@ namespace SharpGMad
                     {
                         Whitelist.Override = true;
                         tsbCreateAddon.Enabled = !Whitelist.Override;
-                        this.Text = "! - SharpGMad";
+                        this.Text = "! - SharpGMad " + Program.PrettyVersion;
                         UpdateStatus("Restrictions disabled by user's request.");
 
                         shouldOverrideReload = true;
@@ -255,7 +255,8 @@ namespace SharpGMad
             {
                 this.Text = Path.GetFileName(AddonHandle.AddonPath) + (Whitelist.Override ? "!" : null) +
                     (AddonHandle.CanWrite ? null : " (read-only)") +
-                    (AddonHandle.Modified ? "*" : null) + " - SharpGMad";
+                    (AddonHandle.Modified ? "*" : null) + " - SharpGMad " +
+                    Program.PrettyVersion;
 
                 tsbSaveAddon.Enabled = AddonHandle.CanWrite && AddonHandle.Modified && (!Whitelist.Override);
             }
@@ -670,10 +671,8 @@ namespace SharpGMad
             Whitelist.Override = false;
             tsbCreateAddon.Enabled = !Whitelist.Override;
 
-            if (this.Status == "Restrictions disabled by user's request.") // Remove this line from saved status as its expired.
-                this.Status = "Addon closed.";
-            UpdateStatus(this.Status);
-            this.Text = "SharpGMad";
+            UpdateStatus("Addon unloaded.");
+            this.Text = "SharpGMad " + Program.PrettyVersion;
         }
 
         // Dock the txtDescription text box.
@@ -1105,7 +1104,7 @@ namespace SharpGMad
                             catch (FileNotFoundException)
                             {
                                 // This should not happen as the expression loaded _found_ files, but yeah...
-                                failed_paths.Add(entry);
+                                failed_paths.Add(entry + ": file not found.");
                             }
                         }
                     }
@@ -1727,9 +1726,9 @@ namespace SharpGMad
 
                                         AddonHandle.ExtractFile(file, outpath);
                                     }
-                                    catch (Exception)
+                                    catch (Exception ex)
                                     {
-                                        failed_paths.Add(file);
+                                        failed_paths.Add(file + ": " + ex.Message);
                                         continue;
                                     }
                                 }
@@ -1824,7 +1823,7 @@ namespace SharpGMad
                 if (save == DialogResult.OK)
                 {
                     string extractPath = fbdFileExtractMulti.SelectedPath;
-                    List<string> failed_paths = new List<string>(); // TODO: better handling why the operation failed
+                    List<string> failed_paths = new List<string>();
 
                     foreach (string file in files)
                     {
@@ -1867,9 +1866,9 @@ namespace SharpGMad
 
                                 AddonHandle.ExtractFile(entry, outpath);
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
-                                failed_paths.Add(entry);
+                                failed_paths.Add(entry + ": " + ex.Message);
                                 continue;
                             }
                         }

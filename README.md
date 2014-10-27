@@ -29,7 +29,7 @@ on your filesystem and edited with any appropriate editor. When you are
 done with the changes, a single click of a button will _pull_ these
 changes into the archive.
 
-Both a grafical and a command-line interface is available for realtime
+Both a graphical and a command-line interface is available for realtime
 mode.
 
 #### GUI

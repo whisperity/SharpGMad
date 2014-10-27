@@ -594,6 +594,7 @@ namespace SharpGMad
                     case "?":
                     case "help":
                         Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("SharpGMad " + Program.PrettyVersion);
                         Console.WriteLine("Available commands:");
                         Console.ResetColor();
 
