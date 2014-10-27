@@ -74,11 +74,13 @@ namespace SharpGMad
             imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.file_32x32);
             imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.folder_32x32);
             imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.emptyfolder_32x32);
+            imgIconsLarge.Images.Add(global::SharpGMad.Properties.Resources.parentfolder_32x32);
 
             imgIconsLarge.Images.SetKeyName(0, "gma");
             imgIconsLarge.Images.SetKeyName(1, "file");
             imgIconsLarge.Images.SetKeyName(2, "folder");
-            imgIconsLarge.Images.SetKeyName(3, "emptyFolder");
+            imgIconsLarge.Images.SetKeyName(3, "emptyfolder");
+            imgIconsLarge.Images.SetKeyName(4, "parentfolder");
 
             // Small icons
             imgIconsSmall = new ImageList();
@@ -90,11 +92,13 @@ namespace SharpGMad
             imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.file_16x16);
             imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.folder_16x16);
             imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.emptyfolder_16x16);
+            imgIconsSmall.Images.Add(global::SharpGMad.Properties.Resources.parentfolder_16x16);
 
             imgIconsSmall.Images.SetKeyName(0, "gma");
             imgIconsSmall.Images.SetKeyName(1, "file");
             imgIconsSmall.Images.SetKeyName(2, "folder");
-            imgIconsSmall.Images.SetKeyName(3, "emptyFolder");
+            imgIconsSmall.Images.SetKeyName(3, "emptyfolder");
+            imgIconsSmall.Images.SetKeyName(4, "parentfolder");
         }
 
         private void tsbOpenAddon_Click(object sender, EventArgs e)
@@ -271,8 +275,8 @@ namespace SharpGMad
                 if (!Folders.Contains<string>(f))
                 {
                     node.ForeColor = Color.Gray;
-                    node.ImageKey = "emptyFolder";
-                    node.SelectedImageKey = "emptyFolder";
+                    node.ImageKey = "emptyfolder";
+                    node.SelectedImageKey = "emptyfolder";
                 }
             }
 
@@ -403,6 +407,13 @@ namespace SharpGMad
             UpdateFileList();
         }
 
+        private enum FileEntryType : byte
+        {
+            ParentFolder,
+            Subfolder,
+            File
+        }
+
         /// <summary>
         /// Updates the filelist (lstFiles) with the changes administered to the known files.
         /// </summary>
@@ -432,15 +443,29 @@ namespace SharpGMad
                     if (tsmiViewShowSubfolders.Checked)
                     {
                         // Add the folders to the list also.
+
+                        if (tvFolders.SelectedNode.Name != "root")
+                        {
+                            ListViewItem parent = new ListViewItem(tvFolders.SelectedNode.Parent.Text);
+                            parent.Name = tvFolders.SelectedNode.Parent.Name; // Full path of the parent
+                            parent.ImageKey = "parentfolder";
+                            parent.Tag = FileEntryType.ParentFolder;
+
+                            if (tvFolders.SelectedNode.Parent.ImageKey == "emptyfolder")
+                                parent.ForeColor = Color.Gray;
+
+                            lstFiles.Items.Add(parent);
+                        }
+
                         // We get the list of subfolders from the child nodes of the currently selected for ease of operation.
                         foreach (TreeNode subfolder in tvFolders.SelectedNode.Nodes)
                         {
                             ListViewItem item = new ListViewItem(subfolder.Text);
-                            item.Name = subfolder.Name;
+                            item.Name = subfolder.Name; // Full path
                             item.ImageKey = subfolder.ImageKey;
-                            item.Tag = "subfolder";
+                            item.Tag = FileEntryType.Subfolder;
 
-                            if (item.ImageKey == "emptyFolder")
+                            if (item.ImageKey == "emptyfolder")
                                 item.ForeColor = Color.Gray;
 
                             lstFiles.Items.Add(item);
@@ -455,6 +480,7 @@ namespace SharpGMad
                     {
                         ListViewItem item = new ListViewItem(Path.GetFileName(cfile.Path));
                         item.Name = cfile.Path; // Store the full path as an internal value for easier use
+                        item.Tag = FileEntryType.File;
                         item.ImageKey = "file";
 
                         // Add subitems for Details view
@@ -676,7 +702,7 @@ namespace SharpGMad
                 // One file is selected
                 if (lv.FocusedItem != null)
                 {
-                    if ((string)lv.FocusedItem.Tag != "subfolder")
+                    if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.File)
                     {
                         // Allow remove, extract and execution
                         tsmFileRemove.Visible = true;
@@ -712,7 +738,7 @@ namespace SharpGMad
                         tsmFilePull.Visible = true;
                         tsmFileDropExport.Visible = true;
                     }
-                    else
+                    else if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.Subfolder)
                     {
                         // Subfolder selected
 
@@ -738,11 +764,36 @@ namespace SharpGMad
                         tsmFileDropExport.Enabled = false;
                         tsmFileDropExport.Visible = false;
                     }
+                    else
+                    {
+                        // Parent folder selected
+                        // Don't allow anything.
+                        tsmFileRemove.Visible = false;
+                        tsmFileRemove.Enabled = false;
+
+                        tsmFileExtract.Enabled = false;
+                        tsmFileExtract.Visible = false;
+
+                        tsmFileShellExec.Enabled = false;
+                        tsmFileShellExec.Visible = false;
+
+                        tssExportSeparator.Visible = false;
+
+                        tsmFileExportTo.Enabled = false;
+                        tsmFileExportTo.Visible = false;
+
+                        tsmFilePull.Enabled = false;
+                        tsmFilePull.Visible = false;
+
+                        tsmFileDropExport.Enabled = false;
+                        tsmFileDropExport.Visible = false;
+                    }
                 }
             }
             else if (lv.SelectedItems.Count > 1)
             {
                 // Multiple entries only support removal and extraction
+                // Parent folders won't be checked here, they are ignored when an operation is executed.
                 tsmFileRemove.Enabled = !Program.WhitelistOverridden;
                 tsmFileRemove.Visible = true;
 
@@ -804,10 +855,10 @@ namespace SharpGMad
 
             if (e.Button == MouseButtons.Left && e.Clicks == 2)
                 if (lv.FocusedItem.Bounds.Contains(e.Location) == true)
-                    if ((string)lv.FocusedItem.Tag != "subfolder")
-                        tsmFileShellExec_Click(sender, e);
-                    else
+                    if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.ParentFolder || (FileEntryType)lv.FocusedItem.Tag == FileEntryType.Subfolder)
                         SelectFolderNode(lv.FocusedItem.Name);
+                    else if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.File)
+                        tsmFileShellExec_Click(sender, e);
         }
 
         private void lstFiles_KeyDown(object sender, KeyEventArgs e)
@@ -817,16 +868,15 @@ namespace SharpGMad
             if (e.KeyCode == Keys.Delete)
             {
                 if (lv.FocusedItem != null)
-                    //if ((string)lv.FocusedItem.Tag != "subfolder")
                         tsmFileRemove_Click(sender, e);
             }
             else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Return)
             {
                 if (lv.FocusedItem != null)
-                    if ((string)lv.FocusedItem.Tag != "subfolder")
-                        tsmFileShellExec_Click(sender, e);
-                    else
+                    if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.ParentFolder || (FileEntryType)lv.FocusedItem.Tag == FileEntryType.Subfolder)
                         SelectFolderNode(lv.FocusedItem.Name);
+                    else if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.File)
+                        tsmFileShellExec_Click(sender, e);
             }
         }
 
@@ -839,7 +889,7 @@ namespace SharpGMad
             {
                 if (lstFiles.FocusedItem != null)
                 {
-                    if ((string)lstFiles.FocusedItem.Tag != "subfolder")
+                    if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.File)
                     {
                         DialogResult remove = MessageBox.Show("Really remove " +
                             lstFiles.FocusedItem.Name + "?", "Remove file",
@@ -864,7 +914,7 @@ namespace SharpGMad
                             UpdateFileList();
                         }
                     }
-                    else
+                    else if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.Subfolder)
                     {
                         // Removal of a subfolder
                         List<string> entriesInFolder = AddonHandle.OpenAddon.Files
@@ -900,6 +950,7 @@ namespace SharpGMad
                             UpdateFileList();
                         }
                     }
+                    // Noop for parent folders.
                 }
             }
             else if (lstFiles.SelectedItems.Count >= 1)
@@ -909,10 +960,11 @@ namespace SharpGMad
                 List<string> files = new List<string>();
 
                 foreach (ListViewItem item in lstFiles.SelectedItems)
-                    if ((string)item.Tag == "subfolder")
+                    if ((FileEntryType)item.Tag == FileEntryType.Subfolder)
                         subfolders.Add(item.Name);
-                    else
+                    else if ((FileEntryType)item.Tag == FileEntryType.File)
                         files.Add(item.Name);
+                    // Noop for parent folders. Ignore them here.
                 
                 // Put together a nice prompt :)
                 string countString = String.Empty;
@@ -1271,7 +1323,7 @@ namespace SharpGMad
 
             if (lstFiles.FocusedItem != null)
             {
-                if ((string)lstFiles.FocusedItem.Tag != "subfolder")
+                if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.File)
                 {
                     string contentPath = lstFiles.FocusedItem.Name;
 
@@ -1335,7 +1387,7 @@ namespace SharpGMad
         private void tsmFileDropExport_Click(object sender, EventArgs e)
         {
             if (lstFiles.FocusedItem != null)
-                if ((string)lstFiles.FocusedItem.Tag != "subfolder")
+                if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.File)
                     DropFileExport(lstFiles.FocusedItem.Name);
         }
 
@@ -1425,7 +1477,7 @@ namespace SharpGMad
         private void tsmFilePull_Click(object sender, EventArgs e)
         {
             if (lstFiles.FocusedItem != null)
-                if ((string)lstFiles.FocusedItem.Tag != "subfolder")
+                if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.File)
                     PullFile(lstFiles.FocusedItem.Name);
         }
 
@@ -1531,7 +1583,7 @@ namespace SharpGMad
             {
                 if (lstFiles.FocusedItem != null)
                 {
-                    if ((string)lstFiles.FocusedItem.Tag != "subfolder")
+                    if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.File)
                     {
                         string contentPath = lstFiles.FocusedItem.Name;
 
@@ -1565,7 +1617,7 @@ namespace SharpGMad
 
                         sfdExportFile.Reset();
                     }
-                    else
+                    else if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.Subfolder)
                     {
                         // Extracting a subfolder.
                         List<string> files = AddonHandle.OpenAddon.Files
@@ -1643,6 +1695,7 @@ namespace SharpGMad
                             }
                         }
                     }
+                    // Noop for parent folders.
                 }
             }
             else if (lstFiles.SelectedItems.Count >= 1)
@@ -1652,10 +1705,11 @@ namespace SharpGMad
                 List<string> files = new List<string>();
 
                 foreach (ListViewItem item in lstFiles.SelectedItems)
-                    if ((string)item.Tag == "subfolder")
+                    if ((FileEntryType)item.Tag == FileEntryType.Subfolder)
                         subfolders.Add(item.Name);
-                    else
+                    else if ((FileEntryType)item.Tag == FileEntryType.File)
                         files.Add(item.Name);
+                    // Noop for parent folders. Ignore them here.
 
                 // Put together a nice prompt :)
                 string countString = String.Empty;
@@ -1791,7 +1845,7 @@ namespace SharpGMad
             {
                 if (lstFiles.FocusedItem != null)
                 {
-                    if ((string)lstFiles.FocusedItem.Tag != "subfolder")
+                    if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.File)
                     {
                         string temppath;
                         try

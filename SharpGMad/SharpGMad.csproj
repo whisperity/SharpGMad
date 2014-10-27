@@ -150,6 +150,8 @@
     <None Include="Resources\gma.ico" />
     <None Include="Resources\gma_16x16.png" />
     <None Include="Resources\gma_32x32.png" />
+    <None Include="Resources\parentfolder_16x16.png" />
+    <None Include="Resources\parentfolder_32x32.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
