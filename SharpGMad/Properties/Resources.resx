@@ -163,4 +163,22 @@
   <data name="discard" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\discard.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="emptyfolder_16x16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\emptyfolder_16x16.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="emptyfolder_32x32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\emptyfolder_32x32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="file_16x16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\file_16x16.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="file_32x32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\file_32x32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="folder_16x16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\folder_16x16.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="folder_32x32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\folder_32x32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

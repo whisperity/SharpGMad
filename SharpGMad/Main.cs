@@ -181,6 +181,9 @@ namespace SharpGMad
         public void GetFolders(string[] Folders)
         {
             tvFolders.Nodes.Add("root", Path.GetFileName(AddonHandle.AddonPath));
+            tvFolders.Nodes["root"].ImageKey = "gma";
+            tvFolders.Nodes["root"].SelectedImageKey = "gma";
+            tvFolders.Nodes["root"].NodeFont = new Font(tvFolders.Font, FontStyle.Bold);
 
             // Generate the list of first-depth (below root level) folders.
             List<string> foldersOnFirstDepth =
@@ -201,12 +204,19 @@ namespace SharpGMad
 
             foreach (string f in foldersOnCurrentDepth)
             {
-                parentNode.Nodes.Add(f, f.Split('/').Last());
+                TreeNode node = new TreeNode(f.Split('/').Last());
+                node.Name = f;
+                node.ImageKey = "folder";
+                node.SelectedImageKey = "folder";
+
+                parentNode.Nodes.Add(node);
 
                 // If the folder itself does not contain files (aka: it is not really in the folder list), make it gray
                 if (!Folders.Contains<string>(f))
                 {
-                    parentNode.Nodes[f].ForeColor = Color.Gray;
+                    node.ForeColor = Color.Gray;
+                    node.ImageKey = "emptyFolder";
+                    node.SelectedImageKey = "emptyFolder";
                 }
             }
 
@@ -260,29 +270,54 @@ namespace SharpGMad
                     .ToArray();
 
                 GetFolders(folderlist);
-                tvFolders.ExpandAll();
 
                 // Reselect the previously selected node
                 if (!String.IsNullOrWhiteSpace(previousNode))
                 {
-                    // First, state that we will select the root node
-                    TreeNode nodeToSelect = tvFolders.Nodes["root"];
-                    IEnumerable<string> pathElements = previousNode.Split('/'); // Get the number of subnodes.
-
-                    for (int i = 1; i <= pathElements.Count(); i++)
-                    {
-                        // For each element, select the node below the current one.
-                        // (If they exist, of course.)
-                        string elementFullPath = String.Join("/", pathElements.Take(i));
-                        if (nodeToSelect.Nodes.ContainsKey(elementFullPath)) // We have to make it a fullpath here.
-                        {
-                            nodeToSelect = nodeToSelect.Nodes[elementFullPath];
-                        }
-                    }
-
-                    tvFolders.SelectedNode = nodeToSelect;
+                    SelectFolderNode(previousNode);
                 }
             }
+        }
+
+        // Reselect a folder node based on its full-path.
+        private void SelectFolderNode(string fullPath)
+        {
+            // Reinvocation to fix cross-thread errors.
+            if (tvFolders.InvokeRequired)
+            {
+                this.Invoke((MethodInvoker)delegate { SelectFolderNode(fullPath); });
+            }
+            else
+            {
+                // First, state that we will select the root node
+                TreeNode nodeToSelect = tvFolders.Nodes["root"];
+                IEnumerable<string> pathElements = fullPath.Split('/'); // Get the number of subnodes.
+
+                for (int i = 1; i <= pathElements.Count(); i++)
+                {
+                    // For each element, select the node below the current one.
+                    // (If they exist, of course.)
+                    string elementFullPath = String.Join("/", pathElements.Take(i));
+                    if (nodeToSelect.Nodes.ContainsKey(elementFullPath)) // We have to make it a fullpath here.
+                    {
+                        nodeToSelect = nodeToSelect.Nodes[elementFullPath];
+                    }
+                }
+
+                tvFolders.SelectedNode = nodeToSelect;
+            }
+        }
+
+        private void tvFolders_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            // When a node is selected, we have to update the file list (lstFiles) to display only the files in the selected node.
+            if (e.Node is TreeNode)
+            {
+                // Don't change the icon
+                tvFolders.SelectedImageKey = e.Node.ImageKey;
+            }
+
+            UpdateFileList();
         }
 
         /// <summary>
@@ -313,6 +348,18 @@ namespace SharpGMad
                 // Get and add the files in the current folder
                 if (tvFolders.SelectedNode != null)
                 {
+                    // Add the folders to the list also.
+                    // We get the list of subfolders from the child nodes of the currently selected for ease of operation.
+                    foreach (TreeNode subfolder in tvFolders.SelectedNode.Nodes)
+                    {
+                        ListViewItem item = new ListViewItem(subfolder.Text);
+                        item.Name = subfolder.Name;
+                        item.ImageKey = subfolder.ImageKey;
+                        item.Tag = "subfolder";
+
+                        lstFiles.Items.Add(item);
+                    }
+
                     string nodePath = (tvFolders.SelectedNode.Name == "root" ? "" : tvFolders.SelectedNode.Name);
                     IEnumerable<ContentFile> filesInFolder = AddonHandle.OpenAddon.Files
                         .Where(f => Path.GetDirectoryName(f.Path).Replace('\\', '/') == nodePath);
@@ -321,6 +368,7 @@ namespace SharpGMad
                     {
                         ListViewItem item = new ListViewItem(Path.GetFileName(cfile.Path));
                         item.Name = cfile.Path; // Store the full path as an internal value for easier use
+                        item.ImageKey = "file";
 
                         IEnumerable<FileWatch> watch = AddonHandle.WatchedFiles.Where(f => f.ContentPath == cfile.Path);
                         if (watch.Count() == 1)
@@ -339,12 +387,6 @@ namespace SharpGMad
                     }
                 }
             }
-        }
-
-        private void tvFolders_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            // When a node is selected, we have to update the file list (lstFiles) to display only the files in the selected node.
-            UpdateFileList();
         }
 
         /// <summary>

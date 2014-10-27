@@ -135,6 +135,12 @@
     <None Include="Resources\pull_all.png" />
     <None Include="Resources\execute.png" />
     <None Include="Resources\discard.png" />
+    <None Include="Resources\emptyfolder_16x16.png" />
+    <None Include="Resources\emptyfolder_32x32.png" />
+    <None Include="Resources\file_16x16.png" />
+    <None Include="Resources\file_32x32.png" />
+    <None Include="Resources\folder_16x16.png" />
+    <None Include="Resources\folder_32x32.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

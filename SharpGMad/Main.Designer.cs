@@ -69,6 +69,8 @@ namespace SharpGMad
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.lstFiles = new System.Windows.Forms.ListView();
+            this.imlIconsLarge = new System.Windows.Forms.ImageList(this.components);
+            this.imlIconsSmall = new System.Windows.Forms.ImageList(this.components);
             this.ofdAddon = new System.Windows.Forms.OpenFileDialog();
             this.tsFileOperations = new System.Windows.Forms.ToolStrip();
             this.tsbAddFile = new System.Windows.Forms.ToolStripButton();
@@ -76,6 +78,7 @@ namespace SharpGMad
             this.tsbPullAll = new System.Windows.Forms.ToolStripButton();
             this.tsbDropAll = new System.Windows.Forms.ToolStripButton();
             this.pnlLeftSide = new System.Windows.Forms.Panel();
+            this.spcFoldersAndFiles = new System.Windows.Forms.SplitContainer();
             this.tvFolders = new System.Windows.Forms.TreeView();
             this.pnlFileOpsToolbar = new System.Windows.Forms.Panel();
             this.ssStatus = new System.Windows.Forms.StatusStrip();
@@ -105,18 +108,21 @@ namespace SharpGMad
             this.ofdAddFile = new System.Windows.Forms.OpenFileDialog();
             this.sfdAddon = new System.Windows.Forms.SaveFileDialog();
             this.sfdExportFile = new System.Windows.Forms.SaveFileDialog();
-            this.tsmFileRemove = new System.Windows.Forms.ToolStripMenuItem();
             this.tssExportSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.tsmFileRemove = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmFileExtract = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmShellExec = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFileExportTo = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFilePull = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFileDropExport = new System.Windows.Forms.ToolStripMenuItem();
-            this.cmsFileEntry = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.tsmFileExtract = new System.Windows.Forms.ToolStripMenuItem();
             this.fbdFileExtractMulti = new System.Windows.Forms.FolderBrowserDialog();
-            this.spcFoldersAndFiles = new System.Windows.Forms.SplitContainer();
             this.tsFileOperations.SuspendLayout();
             this.pnlLeftSide.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.spcFoldersAndFiles)).BeginInit();
+            this.spcFoldersAndFiles.Panel1.SuspendLayout();
+            this.spcFoldersAndFiles.Panel2.SuspendLayout();
+            this.spcFoldersAndFiles.SuspendLayout();
             this.pnlFileOpsToolbar.SuspendLayout();
             this.ssStatus.SuspendLayout();
             this.pnlForm.SuspendLayout();
@@ -124,28 +130,43 @@ namespace SharpGMad
             this.tsMetadata.SuspendLayout();
             this.tsToolbar.SuspendLayout();
             this.cmsFileEntry.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.spcFoldersAndFiles)).BeginInit();
-            this.spcFoldersAndFiles.Panel1.SuspendLayout();
-            this.spcFoldersAndFiles.Panel2.SuspendLayout();
-            this.spcFoldersAndFiles.SuspendLayout();
             this.SuspendLayout();
             // 
             // lstFiles
             // 
             this.lstFiles.AllowDrop = true;
             this.lstFiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lstFiles.LargeImageList = this.imlIconsLarge;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
             this.lstFiles.Size = new System.Drawing.Size(379, 393);
+            this.lstFiles.SmallImageList = this.imlIconsSmall;
             this.lstFiles.TabIndex = 0;
             this.lstFiles.UseCompatibleStateImageBehavior = false;
-            this.lstFiles.View = System.Windows.Forms.View.Tile;
             this.lstFiles.SelectedIndexChanged += new System.EventHandler(this.lstFiles_SelectedIndexChanged);
             this.lstFiles.DragDrop += new System.Windows.Forms.DragEventHandler(this.lstFiles_DragDrop);
             this.lstFiles.DragEnter += new System.Windows.Forms.DragEventHandler(this.lstFiles_DragEnter);
             this.lstFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstFiles_KeyDown);
             this.lstFiles.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseClick);
             this.lstFiles.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseDoubleClick);
+            // 
+            // imlIconsLarge
+            // 
+            this.imlIconsLarge.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imlIconsLarge.ImageStream")));
+            this.imlIconsLarge.TransparentColor = System.Drawing.Color.Transparent;
+            this.imlIconsLarge.Images.SetKeyName(0, "emptyFolder");
+            this.imlIconsLarge.Images.SetKeyName(1, "folder");
+            this.imlIconsLarge.Images.SetKeyName(2, "file");
+            this.imlIconsLarge.Images.SetKeyName(3, "gma");
+            // 
+            // imlIconsSmall
+            // 
+            this.imlIconsSmall.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imlIconsSmall.ImageStream")));
+            this.imlIconsSmall.TransparentColor = System.Drawing.Color.Transparent;
+            this.imlIconsSmall.Images.SetKeyName(0, "emptyFolder");
+            this.imlIconsSmall.Images.SetKeyName(1, "folder");
+            this.imlIconsSmall.Images.SetKeyName(2, "file");
+            this.imlIconsSmall.Images.SetKeyName(3, "gma");
             // 
             // ofdAddon
             // 
@@ -170,10 +191,9 @@ namespace SharpGMad
             // 
             this.tsbAddFile.AutoToolTip = false;
             this.tsbAddFile.Enabled = false;
-            this.tsbAddFile.Image = global::SharpGMad.Properties.Resources.add;
             this.tsbAddFile.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbAddFile.Name = "tsbAddFile";
-            this.tsbAddFile.Size = new System.Drawing.Size(68, 23);
+            this.tsbAddFile.Size = new System.Drawing.Size(52, 23);
             this.tsbAddFile.Text = "Add file";
             this.tsbAddFile.Click += new System.EventHandler(this.tsbAddFile_Click);
             // 
@@ -186,10 +206,9 @@ namespace SharpGMad
             // 
             this.tsbPullAll.AutoToolTip = false;
             this.tsbPullAll.Enabled = false;
-            this.tsbPullAll.Image = global::SharpGMad.Properties.Resources.pull_all;
             this.tsbPullAll.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbPullAll.Name = "tsbPullAll";
-            this.tsbPullAll.Size = new System.Drawing.Size(138, 23);
+            this.tsbPullAll.Size = new System.Drawing.Size(122, 23);
             this.tsbPullAll.Text = "Update exported files";
             this.tsbPullAll.ToolTipText = "Updates all changes from external files into the addon";
             this.tsbPullAll.Click += new System.EventHandler(this.tsbPullAll_Click);
@@ -198,10 +217,9 @@ namespace SharpGMad
             // 
             this.tsbDropAll.AutoToolTip = false;
             this.tsbDropAll.Enabled = false;
-            this.tsbDropAll.Image = global::SharpGMad.Properties.Resources.drop;
             this.tsbDropAll.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbDropAll.Name = "tsbDropAll";
-            this.tsbDropAll.Size = new System.Drawing.Size(94, 23);
+            this.tsbDropAll.Size = new System.Drawing.Size(78, 23);
             this.tsbDropAll.Text = "Drop exports";
             this.tsbDropAll.ToolTipText = "Deletes all exported files";
             this.tsbDropAll.Click += new System.EventHandler(this.tsbDropAll_Click);
@@ -217,13 +235,32 @@ namespace SharpGMad
             this.pnlLeftSide.Size = new System.Drawing.Size(594, 424);
             this.pnlLeftSide.TabIndex = 11;
             // 
+            // spcFoldersAndFiles
+            // 
+            this.spcFoldersAndFiles.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.spcFoldersAndFiles.Location = new System.Drawing.Point(0, 26);
+            this.spcFoldersAndFiles.Name = "spcFoldersAndFiles";
+            // 
+            // spcFoldersAndFiles.Panel1
+            // 
+            this.spcFoldersAndFiles.Panel1.Controls.Add(this.tvFolders);
+            // 
+            // spcFoldersAndFiles.Panel2
+            // 
+            this.spcFoldersAndFiles.Panel2.Controls.Add(this.lstFiles);
+            this.spcFoldersAndFiles.Size = new System.Drawing.Size(594, 393);
+            this.spcFoldersAndFiles.SplitterDistance = 211;
+            this.spcFoldersAndFiles.TabIndex = 5;
+            // 
             // tvFolders
             // 
             this.tvFolders.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tvFolders.ImageIndex = 2;
+            this.tvFolders.ImageList = this.imlIconsSmall;
             this.tvFolders.Location = new System.Drawing.Point(0, 0);
             this.tvFolders.Name = "tvFolders";
             this.tvFolders.PathSeparator = "/";
-            this.tvFolders.ShowPlusMinus = false;
+            this.tvFolders.SelectedImageIndex = 2;
             this.tvFolders.ShowRootLines = false;
             this.tvFolders.Size = new System.Drawing.Size(211, 393);
             this.tvFolders.TabIndex = 4;
@@ -308,20 +345,18 @@ namespace SharpGMad
             // 
             this.tsbUpdateMetadata.AutoToolTip = false;
             this.tsbUpdateMetadata.Enabled = false;
-            this.tsbUpdateMetadata.Image = global::SharpGMad.Properties.Resources.metadata;
             this.tsbUpdateMetadata.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbUpdateMetadata.Name = "tsbUpdateMetadata";
-            this.tsbUpdateMetadata.Size = new System.Drawing.Size(118, 22);
+            this.tsbUpdateMetadata.Size = new System.Drawing.Size(102, 22);
             this.tsbUpdateMetadata.Text = "Update metadata";
             this.tsbUpdateMetadata.Click += new System.EventHandler(this.tsbUpdateMetadata_Click);
             // 
             // tsbDiscardMetadataChanges
             // 
             this.tsbDiscardMetadataChanges.Enabled = false;
-            this.tsbDiscardMetadataChanges.Image = global::SharpGMad.Properties.Resources.discard;
             this.tsbDiscardMetadataChanges.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbDiscardMetadataChanges.Name = "tsbDiscardMetadataChanges";
-            this.tsbDiscardMetadataChanges.Size = new System.Drawing.Size(66, 22);
+            this.tsbDiscardMetadataChanges.Size = new System.Drawing.Size(50, 22);
             this.tsbDiscardMetadataChanges.Text = "Discard";
             this.tsbDiscardMetadataChanges.Visible = false;
             this.tsbDiscardMetadataChanges.Click += new System.EventHandler(this.tsbDiscardMetadataChanges_Click);
@@ -421,20 +456,18 @@ namespace SharpGMad
             // tsbCreateAddon
             // 
             this.tsbCreateAddon.AutoToolTip = false;
-            this.tsbCreateAddon.Image = global::SharpGMad.Properties.Resources.newaddon;
             this.tsbCreateAddon.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbCreateAddon.Name = "tsbCreateAddon";
-            this.tsbCreateAddon.Size = new System.Drawing.Size(86, 22);
+            this.tsbCreateAddon.Size = new System.Drawing.Size(70, 22);
             this.tsbCreateAddon.Text = "Create new";
             this.tsbCreateAddon.Click += new System.EventHandler(this.tsbCreateAddon_Click);
             // 
             // tsbOpenAddon
             // 
             this.tsbOpenAddon.AutoToolTip = false;
-            this.tsbOpenAddon.Image = global::SharpGMad.Properties.Resources.open;
             this.tsbOpenAddon.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbOpenAddon.Name = "tsbOpenAddon";
-            this.tsbOpenAddon.Size = new System.Drawing.Size(56, 22);
+            this.tsbOpenAddon.Size = new System.Drawing.Size(40, 22);
             this.tsbOpenAddon.Text = "Open";
             this.tsbOpenAddon.Click += new System.EventHandler(this.tsbOpenAddon_Click);
             // 
@@ -442,10 +475,9 @@ namespace SharpGMad
             // 
             this.tsbSaveAddon.AutoToolTip = false;
             this.tsbSaveAddon.Enabled = false;
-            this.tsbSaveAddon.Image = global::SharpGMad.Properties.Resources.save;
             this.tsbSaveAddon.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbSaveAddon.Name = "tsbSaveAddon";
-            this.tsbSaveAddon.Size = new System.Drawing.Size(51, 22);
+            this.tsbSaveAddon.Size = new System.Drawing.Size(35, 22);
             this.tsbSaveAddon.Text = "Save";
             this.tsbSaveAddon.Click += new System.EventHandler(this.tsbSaveAddon_Click);
             // 
@@ -460,16 +492,14 @@ namespace SharpGMad
             this.tsddbLegacy.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiLegacyCreate,
             this.tsmiLegacyExtract});
-            this.tsddbLegacy.Image = global::SharpGMad.Properties.Resources.legacy;
             this.tsddbLegacy.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsddbLegacy.Name = "tsddbLegacy";
-            this.tsddbLegacy.Size = new System.Drawing.Size(132, 22);
+            this.tsddbLegacy.Size = new System.Drawing.Size(116, 22);
             this.tsddbLegacy.Text = "Legacy operations";
             this.tsddbLegacy.ToolTipText = "Access the legacy wrapper windows";
             // 
             // tsmiLegacyCreate
             // 
-            this.tsmiLegacyCreate.Image = global::SharpGMad.Properties.Resources.create;
             this.tsmiLegacyCreate.Name = "tsmiLegacyCreate";
             this.tsmiLegacyCreate.Size = new System.Drawing.Size(171, 22);
             this.tsmiLegacyCreate.Text = "Create from folder";
@@ -478,7 +508,6 @@ namespace SharpGMad
             // 
             // tsmiLegacyExtract
             // 
-            this.tsmiLegacyExtract.Image = global::SharpGMad.Properties.Resources.extract;
             this.tsmiLegacyExtract.Name = "tsmiLegacyExtract";
             this.tsmiLegacyExtract.Size = new System.Drawing.Size(171, 22);
             this.tsmiLegacyExtract.Text = "Extract to folder";
@@ -499,55 +528,10 @@ namespace SharpGMad
             // 
             this.sfdExportFile.Filter = "All files|*.*";
             // 
-            // tsmFileRemove
-            // 
-            this.tsmFileRemove.Image = global::SharpGMad.Properties.Resources.remove;
-            this.tsmFileRemove.Name = "tsmFileRemove";
-            this.tsmFileRemove.Size = new System.Drawing.Size(142, 22);
-            this.tsmFileRemove.Text = "Remove";
-            this.tsmFileRemove.Click += new System.EventHandler(this.tsmFileRemove_Click);
-            // 
             // tssExportSeparator
             // 
             this.tssExportSeparator.Name = "tssExportSeparator";
             this.tssExportSeparator.Size = new System.Drawing.Size(139, 6);
-            // 
-            // tsmShellExec
-            // 
-            this.tsmShellExec.Image = global::SharpGMad.Properties.Resources.execute;
-            this.tsmShellExec.Name = "tsmShellExec";
-            this.tsmShellExec.Size = new System.Drawing.Size(142, 22);
-            this.tsmShellExec.Text = "Shell execute";
-            this.tsmShellExec.ToolTipText = "Run the selected file like it was opened in Explorer";
-            this.tsmShellExec.Click += new System.EventHandler(this.tsmShellExec_Click);
-            // 
-            // tsmFileExportTo
-            // 
-            this.tsmFileExportTo.Image = global::SharpGMad.Properties.Resources.export;
-            this.tsmFileExportTo.Name = "tsmFileExportTo";
-            this.tsmFileExportTo.Size = new System.Drawing.Size(142, 22);
-            this.tsmFileExportTo.Text = "Export to...";
-            this.tsmFileExportTo.ToolTipText = "Export the selected file to somewhere on your computer and set up a realtime chan" +
-    "ge-watch. Changed files will be purple.";
-            this.tsmFileExportTo.Click += new System.EventHandler(this.tsmFileExportTo_Click);
-            // 
-            // tsmFilePull
-            // 
-            this.tsmFilePull.Image = global::SharpGMad.Properties.Resources.pull;
-            this.tsmFilePull.Name = "tsmFilePull";
-            this.tsmFilePull.Size = new System.Drawing.Size(142, 22);
-            this.tsmFilePull.Text = "Update";
-            this.tsmFilePull.ToolTipText = "Update this file with the changes from the exported file on your computer";
-            this.tsmFilePull.Click += new System.EventHandler(this.tsmFilePull_Click);
-            // 
-            // tsmFileDropExport
-            // 
-            this.tsmFileDropExport.Image = global::SharpGMad.Properties.Resources.drop;
-            this.tsmFileDropExport.Name = "tsmFileDropExport";
-            this.tsmFileDropExport.Size = new System.Drawing.Size(142, 22);
-            this.tsmFileDropExport.Text = "Drop export";
-            this.tsmFileDropExport.ToolTipText = "Delete the exported file from your computer";
-            this.tsmFileDropExport.Click += new System.EventHandler(this.tsmFileDropExport_Click);
             // 
             // cmsFileEntry
             // 
@@ -562,32 +546,54 @@ namespace SharpGMad
             this.cmsFileEntry.Name = "cmsFileEntry";
             this.cmsFileEntry.Size = new System.Drawing.Size(143, 142);
             // 
+            // tsmFileRemove
+            // 
+            this.tsmFileRemove.Name = "tsmFileRemove";
+            this.tsmFileRemove.Size = new System.Drawing.Size(142, 22);
+            this.tsmFileRemove.Text = "Remove";
+            this.tsmFileRemove.Click += new System.EventHandler(this.tsmFileRemove_Click);
+            // 
             // tsmFileExtract
             // 
             this.tsmFileExtract.Enabled = false;
-            this.tsmFileExtract.Image = global::SharpGMad.Properties.Resources.extract;
             this.tsmFileExtract.Name = "tsmFileExtract";
             this.tsmFileExtract.Size = new System.Drawing.Size(142, 22);
             this.tsmFileExtract.Text = "Extract";
             this.tsmFileExtract.ToolTipText = "Save the selected file somewhere on your computer";
             this.tsmFileExtract.Click += new System.EventHandler(this.tsmFileExtract_Click);
             // 
-            // spcFoldersAndFiles
+            // tsmShellExec
             // 
-            this.spcFoldersAndFiles.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.spcFoldersAndFiles.Location = new System.Drawing.Point(0, 26);
-            this.spcFoldersAndFiles.Name = "spcFoldersAndFiles";
+            this.tsmShellExec.Name = "tsmShellExec";
+            this.tsmShellExec.Size = new System.Drawing.Size(142, 22);
+            this.tsmShellExec.Text = "Shell execute";
+            this.tsmShellExec.ToolTipText = "Run the selected file like it was opened in Explorer";
+            this.tsmShellExec.Click += new System.EventHandler(this.tsmShellExec_Click);
             // 
-            // spcFoldersAndFiles.Panel1
+            // tsmFileExportTo
             // 
-            this.spcFoldersAndFiles.Panel1.Controls.Add(this.tvFolders);
+            this.tsmFileExportTo.Name = "tsmFileExportTo";
+            this.tsmFileExportTo.Size = new System.Drawing.Size(142, 22);
+            this.tsmFileExportTo.Text = "Export to...";
+            this.tsmFileExportTo.ToolTipText = "Export the selected file to somewhere on your computer and set up a realtime chan" +
+    "ge-watch. Changed files will be purple.";
+            this.tsmFileExportTo.Click += new System.EventHandler(this.tsmFileExportTo_Click);
             // 
-            // spcFoldersAndFiles.Panel2
+            // tsmFilePull
             // 
-            this.spcFoldersAndFiles.Panel2.Controls.Add(this.lstFiles);
-            this.spcFoldersAndFiles.Size = new System.Drawing.Size(594, 393);
-            this.spcFoldersAndFiles.SplitterDistance = 211;
-            this.spcFoldersAndFiles.TabIndex = 5;
+            this.tsmFilePull.Name = "tsmFilePull";
+            this.tsmFilePull.Size = new System.Drawing.Size(142, 22);
+            this.tsmFilePull.Text = "Update";
+            this.tsmFilePull.ToolTipText = "Update this file with the changes from the exported file on your computer";
+            this.tsmFilePull.Click += new System.EventHandler(this.tsmFilePull_Click);
+            // 
+            // tsmFileDropExport
+            // 
+            this.tsmFileDropExport.Name = "tsmFileDropExport";
+            this.tsmFileDropExport.Size = new System.Drawing.Size(142, 22);
+            this.tsmFileDropExport.Text = "Drop export";
+            this.tsmFileDropExport.ToolTipText = "Delete the exported file from your computer";
+            this.tsmFileDropExport.Click += new System.EventHandler(this.tsmFileDropExport_Click);
             // 
             // Main
             // 
@@ -606,6 +612,10 @@ namespace SharpGMad
             this.tsFileOperations.PerformLayout();
             this.pnlLeftSide.ResumeLayout(false);
             this.pnlLeftSide.PerformLayout();
+            this.spcFoldersAndFiles.Panel1.ResumeLayout(false);
+            this.spcFoldersAndFiles.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.spcFoldersAndFiles)).EndInit();
+            this.spcFoldersAndFiles.ResumeLayout(false);
             this.pnlFileOpsToolbar.ResumeLayout(false);
             this.pnlFileOpsToolbar.PerformLayout();
             this.ssStatus.ResumeLayout(false);
@@ -618,10 +628,6 @@ namespace SharpGMad
             this.tsToolbar.ResumeLayout(false);
             this.tsToolbar.PerformLayout();
             this.cmsFileEntry.ResumeLayout(false);
-            this.spcFoldersAndFiles.Panel1.ResumeLayout(false);
-            this.spcFoldersAndFiles.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.spcFoldersAndFiles)).EndInit();
-            this.spcFoldersAndFiles.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -676,6 +682,8 @@ namespace SharpGMad
         private System.Windows.Forms.ToolStripStatusLabel tsslStatus;
         private System.Windows.Forms.TreeView tvFolders;
         private System.Windows.Forms.SplitContainer spcFoldersAndFiles;
+        private System.Windows.Forms.ImageList imlIconsLarge;
+        private System.Windows.Forms.ImageList imlIconsSmall;
 
 
 
