@@ -104,13 +104,18 @@ namespace SharpGMad
         }
 
         /// <summary>
+        /// Get a list of file extension - filetype maps known.
+        /// </summary>
+        public static Dictionary<string, string> FileTypes = new Dictionary<string, string>();
+
+        /// <summary>
         /// Static constructor
         /// </summary>
         static Whitelist()
         {
             // Initialize the known file types into the internal dictionary.
-            _WildcardFileTypes.Add("Maps", new string[] { "*.bsp", "*.png", "*.nav", "*.ain", "*.fgd" });
-            _WildcardFileTypes.Add("Lua script files", new string[] { "*.lua" });
+            _WildcardFileTypes.Add("Map files", new string[] { "*.bsp", "*.png", "*.nav", "*.ain", "*.fgd" });
+            _WildcardFileTypes.Add("Lua scripts", new string[] { "*.lua" });
             _WildcardFileTypes.Add("Materials", new string[] { "*.vmt", "*.vtf", "*.png" });
             _WildcardFileTypes.Add("Models", new string[] { "*.mdl", "*.vtx", "*.phy", "*.ani", "*.vvd" });
             _WildcardFileTypes.Add("Text files", new string[] { "*.txt" });
@@ -121,6 +126,50 @@ namespace SharpGMad
             _WildcardFileTypes.Add("Localization properties", new string[] { "*.properties" });
             _WildcardFileTypes.Add("Sounds", new string[] { "*.wav", "*.mp3", "*.ogg" });
 
+            // Map files
+            FileTypes.Add("bsp", "Source Map file");
+            FileTypes.Add("nav", "Navigation mesh");
+            FileTypes.Add("ain", "AI node graph");
+            FileTypes.Add("fgd", "Game definitions");
+
+            // Lua scripts
+            FileTypes.Add("lua", "Lua script");
+
+            // Materials
+            FileTypes.Add("vmt", "Valve Material File");
+            FileTypes.Add("vtf", "Valve Texture File");
+
+            // Models
+            FileTypes.Add("mdl", "Model");
+            FileTypes.Add("vtx", "Hardware-specific material");
+            FileTypes.Add("phy", "Model physics");
+            FileTypes.Add("ani", "Model animations");
+            FileTypes.Add("vvd", "Model vertex data");
+
+            // Text files
+            FileTypes.Add("txt", "Text document");
+
+            // Fonts
+            FileTypes.Add("ttf", "True-Type font");
+
+            // Images
+            FileTypes.Add("png", "Portable Network Graphics image");
+            FileTypes.Add("jpg", "JPEG image");
+            FileTypes.Add("jpeg", "JPEG image");
+
+            // Scenes
+            FileTypes.Add("vcd", "Valve Choreography Data");
+
+            // Particle effects
+            FileTypes.Add("pcf", "Particle effect");
+
+            // Localization properties
+            FileTypes.Add("properties", "Localization property");
+
+            // Sounds
+            FileTypes.Add("wav", "Waveform sound");
+            FileTypes.Add("mp3", "MP3 music");
+            FileTypes.Add("ogg", "OGG Vorbis audio");
         }
 
         /// <summary>

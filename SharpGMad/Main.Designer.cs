@@ -68,6 +68,9 @@ namespace SharpGMad
         {
             this.components = new System.ComponentModel.Container();
             this.lstFiles = new System.Windows.Forms.ListView();
+            this.chFilename = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.chFileType = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.chSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.ofdAddon = new System.Windows.Forms.OpenFileDialog();
             this.tsFileOperations = new System.Windows.Forms.ToolStrip();
             this.tsbAddFile = new System.Windows.Forms.ToolStripButton();
@@ -140,6 +143,10 @@ namespace SharpGMad
             // lstFiles
             // 
             this.lstFiles.AllowDrop = true;
+            this.lstFiles.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.chFilename,
+            this.chFileType,
+            this.chSize});
             this.lstFiles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
@@ -152,6 +159,22 @@ namespace SharpGMad
             this.lstFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstFiles_KeyDown);
             this.lstFiles.MouseClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseClick);
             this.lstFiles.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lstFiles_MouseDoubleClick);
+            // 
+            // chFilename
+            // 
+            this.chFilename.Text = "Filename";
+            this.chFilename.Width = 182;
+            // 
+            // chFileType
+            // 
+            this.chFileType.Text = "Type";
+            this.chFileType.Width = 113;
+            // 
+            // chSize
+            // 
+            this.chSize.Text = "Size";
+            this.chSize.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.chSize.Width = 75;
             // 
             // ofdAddon
             // 
@@ -763,6 +786,9 @@ namespace SharpGMad
         private System.Windows.Forms.ToolStripMenuItem tsmiViewTiles;
         private System.Windows.Forms.ToolStripSeparator tssViewSeparator;
         private System.Windows.Forms.ToolStripMenuItem tsmiViewShowSubfolders;
+        private System.Windows.Forms.ColumnHeader chFilename;
+        private System.Windows.Forms.ColumnHeader chFileType;
+        private System.Windows.Forms.ColumnHeader chSize;
 
 
 

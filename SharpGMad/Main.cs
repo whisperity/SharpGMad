@@ -457,6 +457,24 @@ namespace SharpGMad
                         item.Name = cfile.Path; // Store the full path as an internal value for easier use
                         item.ImageKey = "file";
 
+                        // Add subitems for Details view
+                        ListViewItem.ListViewSubItem type = new ListViewItem.ListViewSubItem();
+
+                        // Get the extension name from the known list
+                        string typestring;
+                        if (Whitelist.FileTypes.ContainsKey(Path.GetExtension(cfile.Path).TrimStart('.').ToLowerInvariant()))
+                            typestring = Whitelist.FileTypes[Path.GetExtension(cfile.Path).TrimStart('.').ToLowerInvariant()];
+                        else
+                            typestring = Path.GetExtension(cfile.Path).TrimStart('.').ToUpperInvariant() + " file";
+
+                        type.Text = typestring;
+
+                        ListViewItem.ListViewSubItem size = new ListViewItem.ListViewSubItem();
+                        size.Text = ((int)cfile.Size).HumanReadableSize();
+
+                        item.SubItems.Add(type);
+                        item.SubItems.Add(size);
+
                         IEnumerable<FileWatch> watch = AddonHandle.WatchedFiles.Where(f => f.ContentPath == cfile.Path);
                         if (watch.Count() == 1)
                         {
