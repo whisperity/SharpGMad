@@ -83,6 +83,7 @@ namespace SharpGMad
             imgIconsLarge.Images.Add("folder", global::SharpGMad.Properties.Resources.folder);
             imgIconsLarge.Images.Add("emptyfolder", global::SharpGMad.Properties.Resources.emptyfolder);
             imgIconsLarge.Images.Add("parentfolder", global::SharpGMad.Properties.Resources.parentfolder);
+            imgIconsLarge.Images.Add("parentgma", global::SharpGMad.Properties.Resources.parentgma);
 
             // Small icons
             imgIconsSmall = new ImageList();
@@ -98,6 +99,7 @@ namespace SharpGMad
             imgIconsSmall.Images.Add("folder", global::SharpGMad.Properties.Resources.folder_s);
             imgIconsSmall.Images.Add("emptyfolder", global::SharpGMad.Properties.Resources.emptyfolder_s);
             imgIconsSmall.Images.Add("parentfolder", global::SharpGMad.Properties.Resources.parentfolder_s);
+            imgIconsSmall.Images.Add("parentgma", global::SharpGMad.Properties.Resources.parentgma_s);
         }
 
         private void tsbOpenAddon_Click(object sender, EventArgs e)
@@ -493,6 +495,10 @@ namespace SharpGMad
                             // If the parent is empty or is the root folder
                             if (tvFolders.SelectedNode.Parent.ImageKey == "emptyfolder" || parent.Name == "root")
                                 parent.ForeColor = Color.Gray;
+
+                            // If the parent folder is the root folder, make it have a special icon
+                            if (parent.Name == "root")
+                                parent.ImageKey = "parentgma";
 
                             lstFiles.Items.Add(parent);
                         }

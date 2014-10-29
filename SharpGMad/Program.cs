@@ -80,10 +80,6 @@ namespace SharpGMad
 #endif
 
 #if MONO
-                Console.WriteLine("Hello Mono! P/Invoke to kernel32.dll is not supported on this platform.");
-                Console.WriteLine("(This console window would be closed on Windows.)");
-                Console.WriteLine("Hope you don't mind if I stay here for a while...");
-
                 Application.Run(new Main(args));
 #endif
             }
