@@ -729,10 +729,53 @@ namespace SharpGMad
             {
                 string filename = ofdAddFile.FileName.Replace("\\", "/");
 
+                // Handle adding files without their full in-GMA path on the disk.
+                // This way, users can just add a file from anywhere.
+                // If the internal path counterpart is not found, they will be asked.
+                string internalPath = String.Empty;
+
+                if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(filename)))
+                    internalPath = Whitelist.GetMatchingString(filename);
+                else
+                {
+                    string testPath;
+                    if (tvFolders.SelectedNode.Name == "root")
+                        testPath = Path.GetFileName(filename);
+                    else
+                        testPath = tvFolders.SelectedNode.Name + "/" + Path.GetFileName(filename);
+
+                    if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(testPath)))
+                        internalPath = testPath;
+                    else
+                    {
+                        // Ask the user for a path to use.
+                        DialogResult askPath = MessageBox.Show("You tried to add " + filename + ", but SharpGMad " +
+                            "can't figure out where the file should be going inside the addon.\n" +
+                            "Do you wish to specify the filename by hand?" +
+                            "\n\n(Tip: If you know the folder where the file should be going, open it before adding the " +
+                            "file. We will try to put the file in the currently open folder.)", "Add file",
+                            MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                        if (askPath == DialogResult.Yes)
+                        {
+                            AddAs addAs = new AddAs(filename,
+                                (tvFolders.SelectedNode.Name == "root" ? null : tvFolders.SelectedNode.Name + "/") +
+                                Path.GetFileName(filename));
+                            DialogResult addAsResult = addAs.ShowDialog(this);
+                            string pathAsked = addAs.Filename;
+                            addAs.Dispose();
+
+                            if (addAsResult == DialogResult.OK)
+                                if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(pathAsked)))
+                                    internalPath = Whitelist.GetMatchingString(pathAsked);
+                        }
+                    }
+                }
+
                 try
                 {
-                    AddonHandle.OpenAddon.CheckRestrictions(Whitelist.GetMatchingString(filename));
-                    AddonHandle.AddFile(Whitelist.GetMatchingString(filename), File.ReadAllBytes(ofdAddFile.FileName));
+                    AddonHandle.OpenAddon.CheckRestrictions(internalPath);
+                    AddonHandle.AddFile(internalPath, File.ReadAllBytes(ofdAddFile.FileName));
                 }
                 catch (IOException)
                 {
@@ -2030,10 +2073,53 @@ namespace SharpGMad
                 {
                     string filename = f.Replace("\\", "/");
 
+                    // Handle adding files without their full in-GMA path on the disk.
+                    // This way, users can just add a file from anywhere.
+                    // If the internal path counterpart is not found, they will be asked.
+                    string internalPath = String.Empty;
+
+                    if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(filename)))
+                        internalPath = Whitelist.GetMatchingString(filename);
+                    else
+                    {
+                        string testPath;
+                        if (tvFolders.SelectedNode.Name == "root")
+                            testPath = Path.GetFileName(filename);
+                        else
+                            testPath = tvFolders.SelectedNode.Name + "/" + Path.GetFileName(filename);
+
+                        if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(testPath)))
+                            internalPath = testPath;
+                        else
+                        {
+                            // Ask the user for a path to use.
+                            DialogResult askPath = MessageBox.Show("You tried to add " + filename + ", but SharpGMad " +
+                                "can't figure out where the file should be going inside the addon.\n" +
+                                "Do you wish to specify the filename by hand?" +
+                                "\n\n(Tip: If you know the folder where the file should be going, open it before adding the " +
+                                "file. We will try to put the file in the currently open folder.)", "Add file",
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                            if (askPath == DialogResult.Yes)
+                            {
+                                AddAs addAs = new AddAs(filename,
+                                    (tvFolders.SelectedNode.Name == "root" ? null : tvFolders.SelectedNode.Name + "/") +
+                                    Path.GetFileName(filename));
+                                DialogResult result = addAs.ShowDialog(this);
+                                string pathAsked = addAs.Filename;
+                                addAs.Dispose();
+
+                                if (result == DialogResult.OK)
+                                    if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(pathAsked)))
+                                        internalPath = Whitelist.GetMatchingString(pathAsked);
+                            }
+                        }
+                    }
+
                     try
                     {
-                        AddonHandle.OpenAddon.CheckRestrictions(Whitelist.GetMatchingString(filename));
-                        AddonHandle.AddFile(Whitelist.GetMatchingString(filename), File.ReadAllBytes(f));
+                        AddonHandle.OpenAddon.CheckRestrictions(internalPath);
+                        AddonHandle.AddFile(internalPath, File.ReadAllBytes(f));
                     }
                     catch (IOException)
                     {
@@ -2064,7 +2150,7 @@ namespace SharpGMad
                 if (addFailures.Count == 0)
                     UpdateStatus("Successfully added " + (filesToParse.Count - addFailures.Count) + " files");
                 else if (addFailures.Count == 1)
-                    UpdateStatus(addFailures[0]);
+                    UpdateStatus(addFailures[0], Color.Red);
                 else if (addFailures.Count > 1)
                 {
                     UpdateStatus(addFailures.Count + " files failed to add out of " + filesToParse.Count);
@@ -2123,6 +2209,8 @@ namespace SharpGMad
             // Recheck the one which was clicked, also set the image of the dropdown.
             ((ToolStripMenuItem)sender).Checked = true;
             tsddbViewOptions.Image = ((ToolStripMenuItem)sender).Image;
+
+            UpdateFileList();
         }
 
         private void tsmiViewShowSubfolders_Click(object sender, EventArgs e)

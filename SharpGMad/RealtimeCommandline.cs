@@ -1182,24 +1182,48 @@ namespace SharpGMad
                 return;
             }
 
+            // Handle adding files without their full in-GMA path on the disk.
+            // This way, users can just add a file from anywhere.
+            // If the internal path counterpart is not found, they will be asked.
+
+            string addPath = filename;
+
+            if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(addPath)))
+                addPath = Whitelist.GetMatchingString(addPath);
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write("You tried to add " + filename + ", but SharpGMad " +
+                    "can't figure out where the file should be going inside the addon.\n" +
+                    "Please specify the filename by hand (leave empty if wish to cancel): ");
+                Console.ResetColor();
+
+                string pathAsked = Console.ReadLine();
+                if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(pathAsked)) && pathAsked.ToLowerInvariant() != "cancel")
+                {
+                    if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(pathAsked)))
+                        addPath = Whitelist.GetMatchingString(pathAsked);
+                }
+            }
+
             Console.WriteLine(filename + " as ");
-            Console.WriteLine("\t" + Whitelist.GetMatchingString(filename));
+            Console.Write("\t" + addPath);
 
             try
             {
-                AddonHandle.AddFile(filename);
+                AddonHandle.AddFile(Whitelist.GetMatchingString(addPath), File.ReadAllBytes(filename));
             }
             catch (FileNotFoundException ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(ex.Message);
+                Console.WriteLine("\n" + ex.Message);
                 Console.ResetColor();
                 return;
             }
             catch (IOException ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Cannot add file. There was an error reading it.");
+                Console.WriteLine("\nCannot add file. There was an error reading it.");
                 Console.ResetColor();
                 Console.WriteLine(ex.Message);
                 return;
@@ -1207,24 +1231,26 @@ namespace SharpGMad
             catch (IgnoredException)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("\t\t[Ignored]");
+                Console.WriteLine("\n\t\t[Ignored]");
                 Console.ResetColor();
                 return;
             }
             catch (WhitelistException)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("\t\t[Not allowed by whitelist]");
+                Console.WriteLine("\n\t\t[Not allowed by whitelist]");
                 Console.ResetColor();
                 return;
             }
             catch (ArgumentException)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("\t\t[A file like this has already been added. Remove it first.]");
+                Console.WriteLine("\n\t\t[A file like this has already been added.]");
                 Console.ResetColor();
                 return;
             }
+
+            Console.WriteLine(" [" + ((int)AddonHandle.GetFile(Whitelist.GetMatchingString(addPath)).Size).HumanReadableSize() + "]");
         }
 
         /// <summary>
