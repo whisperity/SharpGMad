@@ -674,9 +674,9 @@ namespace SharpGMad
             // cmsFileEntry
             // 
             this.cmsFileEntry.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmFileRemove,
-            this.tsmFileExtract,
             this.tsmFileShellExec,
+            this.tsmFileExtract,
+            this.tsmFileRemove,
             this.tssExportSeparator,
             this.tsmFileExportTo,
             this.tsmFilePull,

@@ -845,25 +845,32 @@ namespace SharpGMad
                         {
                             // Export is the file is not exported
                             tsmFileExportTo.Enabled = AddonHandle.CanWrite && !Whitelist.Override;
+
                             tsmFilePull.Enabled = false;
+                            tsmFilePull.Visible = false;
+
                             tsmFileOpenExport.Enabled = false;
+                            tsmFileOpenExport.Visible = false;
+
                             tsmFileDropExport.Enabled = false;
+                            tsmFileDropExport.Visible = false;
                         }
                         else
                         {
                             // Pull (applicable if the file is changed) and drop
                             tsmFileExportTo.Enabled = false;
                             tsmFilePull.Enabled = isExported.First().Modified && AddonHandle.CanWrite && !Whitelist.Override;
+
                             tsmFileOpenExport.Enabled = true;
+                            tsmFileOpenExport.Visible = true;
+
                             tsmFileDropExport.Enabled = true;
+                            tsmFileDropExport.Visible = true;
                         }
 
-                        // But the buttons should be visible
                         tssExportSeparator.Visible = true;
                         tsmFileExportTo.Visible = true;
-                        tsmFileOpenExport.Visible = true;
                         tsmFilePull.Visible = true;
-                        tsmFileDropExport.Visible = true;
                     }
                     else if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.Subfolder)
                     {
@@ -944,6 +951,9 @@ namespace SharpGMad
                 tsmFilePull.Enabled = false;
                 tsmFilePull.Visible = false;
 
+                tsmFileOpenExport.Enabled = false;
+                tsmFileOpenExport.Visible = false;
+
                 tsmFileDropExport.Enabled = false;
                 tsmFileDropExport.Visible = false;
             }
@@ -966,6 +976,9 @@ namespace SharpGMad
 
                 tsmFilePull.Enabled = false;
                 tsmFilePull.Visible = false;
+
+                tsmFileOpenExport.Enabled = false;
+                tsmFileOpenExport.Visible = false;
 
                 tsmFileDropExport.Enabled = false;
                 tsmFileDropExport.Visible = false;
@@ -1010,6 +1023,16 @@ namespace SharpGMad
                         SelectFolderNode(lv.FocusedItem.Name);
                     else if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.File)
                         tsmFileShellExec_Click(sender, e);
+            }
+            else if (e.KeyCode == Keys.Apps)
+            {
+                if (lv.FocusedItem != null)
+                {
+                    cmsFileEntry.Show(lstFiles.PointToScreen(new Point(
+                            lv.FocusedItem.Bounds.Left + (lv.FocusedItem.Bounds.Width / 2),
+                            lv.FocusedItem.Bounds.Top + (lv.FocusedItem.Bounds.Height / 2)
+                        )));
+                }
             }
         }
 
