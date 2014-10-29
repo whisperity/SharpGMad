@@ -98,9 +98,10 @@ namespace SharpGMad
 
                         break;
                     case "add":
+                    case "fadd":
                         try
                         {
-                            AddFile(command[1]);
+                            AddFile(command[1], (command.Length == 3 ? command[2] : null), (command[0][0] != 'f'));
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -112,9 +113,10 @@ namespace SharpGMad
 
                         break;
                     case "addfolder":
+                    case "faddfolder":
                         try
                         {
-                            AddFolder(command[1]);
+                            AddFolder(command[1], (command[0][0] != 'f'));
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -424,7 +426,8 @@ namespace SharpGMad
 
                         break;
                     case "close":
-                        CloseAddon();
+                    case "fclose":
+                        CloseAddon((command[0][0] == 'f'));
                         break;
                     case "push":
                         Push();
@@ -503,7 +506,12 @@ namespace SharpGMad
                             break;
                         }
                         break;
+#if MONO
                     case "ls":
+#endif
+#if WINDOWS
+                    case "dir":
+#endif
                         try
                         {
                             IEnumerable<string> files = Directory.EnumerateFileSystemEntries(Directory.GetCurrentDirectory(),
@@ -609,7 +617,10 @@ namespace SharpGMad
                         {
                             if (AddonHandle.CanWrite && !Whitelist.Override)
                             {
-                                Console.WriteLine("add <filename>             Adds <filename> to the archive");
+                                Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
+                                Console.WriteLine("add <filename> [path]      Adds <filename> (to [path] if specified)");
+
+                                Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
                                 Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
                             }
                             Console.WriteLine("list                       Lists the files in the memory");
@@ -634,13 +645,22 @@ namespace SharpGMad
                                 Console.WriteLine("push                       Writes the changes to the disk");
                             }
                             Console.WriteLine("shellexec <path>           Execute the specified file");
+
+                            Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
                             Console.WriteLine("close                      Closes the addon (dropping all changes)");
+
                             Console.WriteLine("path                       Prints the full path of the current addon.");
                         }
 
                         Console.WriteLine("pwd                        Prints SharpGMad's current working directory");
                         Console.WriteLine("cd <folder>                Changes the current working directory to <folder>");
-                        Console.WriteLine("ls                         List all files in the current directory");
+#if MONO
+                        Console.Write("ls                         ");
+#endif
+#if WINDOWS
+                        Console.Write("dir                        ");
+#endif
+                        Console.WriteLine("List all files in the current directory");
 
                         if (AddonHandle == null || (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
                         {
@@ -656,6 +676,11 @@ namespace SharpGMad
 
                         if (AddonHandle is RealtimeAddon)
                         {
+                            Console.ForegroundColor = ConsoleColor.Magenta;
+                            Console.WriteLine("Commands marked with an f (for example: add, close) can be called as such (fadd, fclose).");
+                            Console.WriteLine("Doing so will run a forced version of the command not prompting the user for error correction.");
+                            Console.ResetColor();
+
                             if (AddonHandle.Modified)
                             {
                                 Console.Write("The addon has been ");
@@ -1156,7 +1181,9 @@ namespace SharpGMad
         /// Adds a file to the open addon.
         /// </summary>
         /// <param name="filename">The path of the file to be added.</param>
-        private static void AddFile(string filename)
+        /// <param name="internalPath">The path where the file should go within the addon.</param>
+        /// <param name="promptPath">Whether the user should be asked if the internal path is not whitelisted.</param>
+        private static void AddFile(string filename, string internalPath, bool promptPath = false)
         {
             if (Whitelist.Override)
             {
@@ -1186,23 +1213,27 @@ namespace SharpGMad
             // This way, users can just add a file from anywhere.
             // If the internal path counterpart is not found, they will be asked.
 
-            string addPath = filename;
+            string addPath = (String.IsNullOrWhiteSpace(internalPath) ? null : internalPath) ?? filename;
 
-            if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(addPath)))
-                addPath = Whitelist.GetMatchingString(addPath);
-            else
+            if (promptPath)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.Write("You tried to add " + filename + ", but SharpGMad " +
-                    "can't figure out where the file should be going inside the addon.\n" +
-                    "Please specify the filename by hand (leave empty if wish to cancel): ");
-                Console.ResetColor();
-
-                string pathAsked = Console.ReadLine();
-                if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(pathAsked)) && pathAsked.ToLowerInvariant() != "cancel")
+                if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(addPath)))
+                    addPath = Whitelist.GetMatchingString(internalPath);
+                else
                 {
-                    if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(pathAsked)))
-                        addPath = Whitelist.GetMatchingString(pathAsked);
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.Write("You tried to add " + filename +
+                        (!String.IsNullOrWhiteSpace(internalPath) ? " (as " + internalPath + ")" : null) + ", but SharpGMad " +
+                        "can't figure out where the file should be going inside the addon.\n" +
+                        "Please specify the filename by hand (leave empty if wish to cancel): ");
+                    Console.ResetColor();
+
+                    string pathAsked = Console.ReadLine();
+                    if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(pathAsked)) && pathAsked.ToLowerInvariant() != "cancel")
+                    {
+                        if (!String.IsNullOrWhiteSpace(Whitelist.GetMatchingString(pathAsked)))
+                            addPath = Whitelist.GetMatchingString(pathAsked);
+                    }
                 }
             }
 
@@ -1257,7 +1288,8 @@ namespace SharpGMad
         /// Adds all files from a specified folder to the addon.
         /// </summary>
         /// <param name="folder">The folder containing the files to be added.</param>
-        private static void AddFolder(string folder)
+        /// <param name="promptPath">Whether the user should be asked to provide a path if a file can't be added automatically.</param>
+        private static void AddFolder(string folder, bool promptPath = false)
         {
             if (Whitelist.Override)
             {
@@ -1285,7 +1317,7 @@ namespace SharpGMad
                 string file = f;
                 file = file.Replace('\\', '/');
 
-                AddFile(file);
+                AddFile(file, String.Empty, promptPath);
             }
         }
 
@@ -1687,13 +1719,22 @@ namespace SharpGMad
         /// <summary>
         /// Closes the currently open addon connection.
         /// </summary>
-        private static void CloseAddon()
+        private static void CloseAddon(bool forced = false)
         {
             if (AddonHandle == null)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No addon is open.");
                 Console.ResetColor();
+                return;
+            }
+
+            if (AddonHandle != null && !forced && AddonHandle.Modified)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("The open addon has been modified!");
+                Console.ResetColor();
+                Console.WriteLine("Please save it (push) or use forced close (fclose) to drop the changes.");
                 return;
             }
 
