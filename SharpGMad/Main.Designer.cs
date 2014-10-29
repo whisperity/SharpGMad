@@ -447,6 +447,7 @@ namespace SharpGMad
             // 
             // txtMetadataDescription
             // 
+            this.txtMetadataDescription.AcceptsTab = true;
             this.txtMetadataDescription.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.txtMetadataDescription.Location = new System.Drawing.Point(20, 153);
             this.txtMetadataDescription.Multiline = true;

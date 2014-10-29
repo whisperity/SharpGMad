@@ -153,7 +153,8 @@ namespace SharpGMad
                 addon = new Addon();
 
                 // Parse the read data
-                Regex regex = new System.Text.RegularExpressions.Regex("\"([A-Za-z_\r\n]*)\"[\\s]*\"(.*)\"", RegexOptions.IgnoreCase);
+                Regex regex = new System.Text.RegularExpressions.Regex("\"([A-Za-z_\r\n]*)\"[\\s]*\"([\\s\\S]*?)\"",
+                    RegexOptions.IgnoreCase | RegexOptions.Multiline);
                 MatchCollection matches = regex.Matches(legacyInfo);
 
                 // info.txt/addon.txt files usually have these values not directly mapped into GMAs as well.
@@ -228,7 +229,7 @@ namespace SharpGMad
                 if (newDescription != "by " && newDescription != "by unknown")
                     // If anything was added to the prettifiction
                     addon.Description = newDescription +
-                        (!String.IsNullOrWhiteSpace(addon.Description) ? '\n' + addon.Description : null);
+                        (!String.IsNullOrWhiteSpace(addon.Description) ? Environment.NewLine + addon.Description : null);
 
                 if (cmbType.SelectedItem != null && Tags.TypeExists(cmbType.SelectedItem.ToString()))
                     addon.Type = cmbType.SelectedItem.ToString();

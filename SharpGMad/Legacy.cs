@@ -202,7 +202,8 @@ namespace SharpGMad
                 addon = new Addon();
 
                 // Parse the read data
-                Regex regex = new System.Text.RegularExpressions.Regex("\"([A-Za-z_\r\n]*)\"[\\s]*\"(.*)\"", RegexOptions.IgnoreCase);
+                Regex regex = new System.Text.RegularExpressions.Regex("\"([A-Za-z_\r\n]*)\"[\\s]*\"([\\s\\S]*?)\"",
+                    RegexOptions.IgnoreCase | RegexOptions.Multiline);
                 MatchCollection matches = regex.Matches(legacyInfo);
 
                 // info.txt/addon.txt files usually have these values not directly mapped into GMAs as well.
@@ -277,10 +278,14 @@ namespace SharpGMad
                 if (newDescription != "by " && newDescription != "by unknown")
                     // If anything was added to the prettifiction
                     addon.Description = newDescription +
-                        (!String.IsNullOrWhiteSpace(addon.Description) ? '\n' + addon.Description : null);
+                        (!String.IsNullOrWhiteSpace(addon.Description) ? Environment.NewLine + addon.Description : null);
 
-                Console.WriteLine("Addon: " + addon.Title);/* + " by " + addon.Author);*/
+                Console.WriteLine("Addon: " + addon.Title);
+                if (newDescription != "by " && newDescription != "by unknown")
+                    Console.WriteLine(newDescription);
+                Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine("You need to set the title, and optionally, the tags for this addon!");
+                Console.ResetColor();
 
                 SetType(addon);
                 SetTags(addon);
@@ -288,7 +293,7 @@ namespace SharpGMad
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Failed to find addon metadata file \"addon.json\" or \"info.txt\"");
+                Console.WriteLine("Failed to find addon metadata file \"addon.json\", \"info.txt\" or \"addon.txt\"");
                 Console.ResetColor();
                 return 1;
             }

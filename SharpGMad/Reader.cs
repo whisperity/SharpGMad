@@ -213,24 +213,9 @@ namespace SharpGMad
             Fileblock = (ulong)reader.BaseStream.Position;
 
             // Try to parse the description
-            using (MemoryStream descStream = new MemoryStream(Encoding.ASCII.GetBytes(Description)))
-            {
-                DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(DescriptionJSON));
-                try
-                {
-                    DescriptionJSON dJSON = (DescriptionJSON)jsonSerializer.ReadObject(descStream);
-
-                    Description = dJSON.Description;
-                    Type = dJSON.Type;
-                    Tags = new List<string>(dJSON.Tags);
-                }
-                catch (SerializationException)
-                {
-                    // The description is a plaintext in the file.
-                    Type = String.Empty;
-                    Tags = new List<string>();
-                }
-            }
+            string type = String.Empty;
+            Description = Json.ParseDescription(Description, ref type, ref Tags);
+            Type = type; // Circumvent "A property, indexer or dynamic member access may not be passed as an out or ref parameter"
         }
 
         /// <summary>

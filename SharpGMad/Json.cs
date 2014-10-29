@@ -59,13 +59,8 @@ namespace SharpGMad
     [Serializable]
     class AddonJSONException : Exception
     {
-        public AddonJSONException() { }
         public AddonJSONException(string message) : base(message) { }
         public AddonJSONException(string message, Exception inner) : base(message, inner) { }
-        protected AddonJSONException(
-          SerializationInfo info,
-          StreamingContext context)
-            : base(info, context) { }
     }
 
     /// <summary>
@@ -171,6 +166,45 @@ namespace SharpGMad
             if (tree.Ignore != null)
                 Ignores.AddRange(tree.Ignore);
         }
+
+        /// <summary>
+        /// Parses a description of an addon and extracts Type and Tags if it was an appropriate JSON string.
+        /// </summary>
+        /// <param name="readDescription">The whole description read from the file.</param>
+        /// <param name="type">The type of the addon.</param>
+        /// <param name="tags">The tag list of the addon.</param>
+        /// <returns>The description part of the readDescription input (if it was JSON) or the whole input.</returns>
+        public static string ParseDescription(string readDescription, ref string type, ref List<string> tags)
+        {
+            string description = readDescription; // By default, the description is the whole we read.
+            string newline = Environment.NewLine.Replace("\r", "\\u000d").Replace("\n", "\\u000a");
+            string descTempReplace = readDescription.Replace("\\n", newline).Replace("\\t", "\\u0009");
+
+            using (MemoryStream descStream = new MemoryStream(Encoding.ASCII.GetBytes(descTempReplace)))
+            {
+                byte[] bytes = new byte[(int)descStream.Length];
+                descStream.Read(bytes, 0, (int)descStream.Length);
+                descStream.Seek(0, SeekOrigin.Begin);
+
+                DataContractJsonSerializer jsonSerializer = new DataContractJsonSerializer(typeof(DescriptionJSON));
+                try
+                {
+                    DescriptionJSON dJSON = (DescriptionJSON)jsonSerializer.ReadObject(descStream);
+
+                    description = dJSON.Description; // If there's a description in the JSON, make it the returned description
+                    type = dJSON.Type;
+                    tags = new List<string>(dJSON.Tags);
+                }
+                catch (SerializationException)
+                {
+                    // The description is a plaintext in the file.
+                    type = String.Empty;
+                    tags = new List<string>();
+                }
+            }
+
+            return description;
+        }
         
         /// <summary>
         /// Creates a JSON string using the properties of the provided Addon.
@@ -230,6 +264,7 @@ namespace SharpGMad
                 byte[] bytes = new byte[stream.Length];
                 stream.Read(bytes, 0, (int)stream.Length);
                 strOutput = Encoding.ASCII.GetString(bytes);
+                strOutput = strOutput.Replace("\\u000d", "").Replace("\\u0009", "\\t").Replace("\\u000a", "\\n");
             }
 
             return strOutput;
