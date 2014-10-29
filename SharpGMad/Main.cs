@@ -278,7 +278,9 @@ namespace SharpGMad
                 Folders.Select(f => f.Split('/').FirstOrDefault()) // The first folder in the path
                 .Distinct().ToList(); // only once.
 
-            RecurseFolders(Folders, rootNode, 1); // We start from the first depth (root level is "0th" depth)
+            // Only start adding folders if there are any.
+            if (foldersOnFirstDepth.Count > 0 && !String.IsNullOrEmpty(foldersOnFirstDepth[0]))
+                RecurseFolders(Folders, rootNode, 1); // We start from the first depth (root level is "0th" depth)
 
             tvFolders.Nodes.Add(rootNode);
         }
@@ -437,12 +439,21 @@ namespace SharpGMad
             UpdateFileList();
         }
 
+        /// <summary>The types of what a file entry (in the lstFiles list) can be</summary>
         private enum FileEntryType : byte
         {
-            ParentFolder,
-            Subfolder,
-            File
+            /// <summary>Indicates that the file is a reference to the parent folder.</summary>
+            ParentFolder = 2,
+            /// <summary>Indicates that the file is a subfolder.</summary>
+            Subfolder = 1,
+            /// <summary>Indicates that the file is a regular file.</summary>
+            File = 0
         }
+
+#if WINDOWS
+        /// <summary>A list of file extensions previously checked by UpdateFileList() for icons and types</summary>
+        private List<string> CheckedExtensions = new List<string>();
+#endif
 
         /// <summary>
         /// Updates the filelist (lstFiles) with the changes administered to the known files.
@@ -542,20 +553,51 @@ namespace SharpGMad
                         item.Tag = FileEntryType.File;
                         item.ImageKey = "file";
 
-                        // If there can be non-whitelisted files, force check if the file is not whitelisted and change the icon if so.
-                        if (Whitelist.Override)
-                            if (!Whitelist.Check(cfile.Path, false))
-                                item.ImageKey = "whitelistfailure";
+                        string extensionNoDot = Path.GetExtension(cfile.Path).TrimStart('.').ToLowerInvariant();
+#if WINDOWS
+                        // Try to get the file's icon and type name from the system if possible (and on Windows)
+                        string iconAssocString = "assocIcon_" + extensionNoDot;
+                        if (!CheckedExtensions.Contains(extensionNoDot))
+                        {
+                            // Load information from the system if the file type hadn't been encountered earlier.
+                            FileAssocation.TypeAndIcon tai = FileAssocation.GetInformation('.' + extensionNoDot);
 
+                            if (tai.LargeIcon != null && !imgIconsLarge.Images.ContainsKey(iconAssocString))
+                                imgIconsLarge.Images.Add(iconAssocString, tai.LargeIcon);
+
+                            if (tai.SmallIcon != null && !imgIconsSmall.Images.ContainsKey(iconAssocString))
+                                imgIconsSmall.Images.Add(iconAssocString, tai.SmallIcon);
+
+                            if (!String.IsNullOrWhiteSpace(tai.Type))
+                                if (Whitelist.FileTypes.ContainsKey(extensionNoDot))
+                                    Whitelist.FileTypes[extensionNoDot] = tai.Type;
+                                else
+                                    Whitelist.FileTypes.Add(extensionNoDot, tai.Type);
+
+                            CheckedExtensions.Add(extensionNoDot);
+                        }
+
+                        item.ImageKey = iconAssocString; // Let the users see the icons known by their computer
+
+                        // I am not sure if there can be a large icon wihtout a small counterpart or vice versa, better safe than sorry.
+                        if (lstFiles.View == View.LargeIcon && !imgIconsLarge.Images.ContainsKey(iconAssocString))
+                            item.ImageKey = "file"; // Reset to default
+
+                        if (lstFiles.View != View.LargeIcon && !imgIconsSmall.Images.ContainsKey(iconAssocString))
+                            item.ImageKey = "file";
+#endif
                         // Add subitems for Details view
                         ListViewItem.ListViewSubItem type = new ListViewItem.ListViewSubItem();
 
                         // Get the extension name from the known list
                         string typestring;
-                        if (Whitelist.FileTypes.ContainsKey(Path.GetExtension(cfile.Path).TrimStart('.').ToLowerInvariant()))
-                            typestring = Whitelist.FileTypes[Path.GetExtension(cfile.Path).TrimStart('.').ToLowerInvariant()];
+                        if (Whitelist.FileTypes.ContainsKey(extensionNoDot))
+                            typestring = Whitelist.FileTypes[extensionNoDot];
                         else
-                            typestring = Path.GetExtension(cfile.Path).TrimStart('.').ToUpperInvariant() + " file";
+                            if (String.IsNullOrWhiteSpace(Path.GetExtension(cfile.Path)))
+                                typestring = "File";
+                            else
+                                typestring = extensionNoDot.ToUpperInvariant() + " file";
 
                         type.Text = typestring;
 
@@ -564,6 +606,11 @@ namespace SharpGMad
 
                         item.SubItems.Add(type);
                         item.SubItems.Add(size);
+
+                        // If there can be non-whitelisted files, force check if the file is not whitelisted and change the icon if so.
+                        if (Whitelist.Override)
+                            if (!Whitelist.Check(cfile.Path, false))
+                                item.ImageKey = "whitelistfailure";
 
                         IEnumerable<FileWatch> watch = AddonHandle.WatchedFiles.Where(f => f.ContentPath == cfile.Path);
                         if (watch.Count() == 1)
