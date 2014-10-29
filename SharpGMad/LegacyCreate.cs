@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Windows.Forms;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 
 namespace SharpGMad
 {
@@ -199,37 +199,39 @@ namespace SharpGMad
                 }
 
                 // Prettify the loaded Description.
-                string newDescription = "by ";
+                string newDescription = String.Empty;
+                bool hasNewDescription = (!String.IsNullOrWhiteSpace(AuthorName) || !String.IsNullOrWhiteSpace(AuthorEmail) ||
+                    !String.IsNullOrWhiteSpace(AuthorURL) || !String.IsNullOrWhiteSpace(Version) ||
+                    !String.IsNullOrWhiteSpace(Date));
+
+                if (hasNewDescription)
+                    newDescription = "## Converted by SharpGMad " + Program.PrettyVersion + " at " +
+                        DateTime.Now.ToString("ddd MM dd hh:mm:ss yyyy",
+                            System.Globalization.CultureInfo.InvariantCulture) +
+                        " (+" + TimeZoneInfo.Local.BaseUtcOffset.ToString("hhmm") + ")";
+
                 if (!String.IsNullOrWhiteSpace(AuthorName))
-                    newDescription += AuthorName;
-                else
-                    newDescription += "unknown";
+                    newDescription += "\n# AuthorName: " + AuthorName;
 
                 if (!String.IsNullOrWhiteSpace(AuthorEmail))
-                    newDescription += " (" + AuthorEmail;
-                else
-                    if (!String.IsNullOrWhiteSpace(AuthorURL))
-                        newDescription += " (";
-
-                if (!String.IsNullOrWhiteSpace(AuthorEmail) && !String.IsNullOrWhiteSpace(AuthorURL))
-                    newDescription += ", ";
+                    newDescription += "\n# AuthorEmail: " + AuthorEmail;
 
                 if (!String.IsNullOrWhiteSpace(AuthorURL))
-                    newDescription += AuthorURL + ")";
-                else
-                    if (!String.IsNullOrWhiteSpace(AuthorEmail))
-                        newDescription += ")";
+                    newDescription += "\n# AuthorURL: " + AuthorURL;
 
                 if (!String.IsNullOrWhiteSpace(Version))
-                    newDescription += " v" + Version;
+                    newDescription += "\n# Version: " + Version;
 
                 if (!String.IsNullOrWhiteSpace(Date))
-                    newDescription += " (" + Date + ")";
+                    newDescription += "\n# Date: " + Date;
 
-                if (newDescription != "by " && newDescription != "by unknown")
+                if (hasNewDescription)
+                {
                     // If anything was added to the prettifiction
+                    newDescription += "\n## End conversion info";
                     addon.Description = newDescription +
                         (!String.IsNullOrWhiteSpace(addon.Description) ? Environment.NewLine + addon.Description : null);
+                }
 
                 if (cmbType.SelectedItem != null && Tags.TypeExists(cmbType.SelectedItem.ToString()))
                     addon.Type = cmbType.SelectedItem.ToString();

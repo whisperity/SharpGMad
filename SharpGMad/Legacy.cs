@@ -248,40 +248,41 @@ namespace SharpGMad
                 }
 
                 // Prettify the loaded Description.
-                string newDescription = "by ";
+                string newDescription = String.Empty;
+                bool hasNewDescription = (!String.IsNullOrWhiteSpace(AuthorName) || !String.IsNullOrWhiteSpace(AuthorEmail) ||
+                    !String.IsNullOrWhiteSpace(AuthorURL) || !String.IsNullOrWhiteSpace(Version) ||
+                    !String.IsNullOrWhiteSpace(Date));
+
+                if (hasNewDescription)
+                    newDescription = "## Converted by SharpGMad " + Program.PrettyVersion + " at " +
+                        DateTime.Now.ToString("yyyy. MM. dd. hh:mm:ss") +
+                        " (+" + TimeZoneInfo.Local.BaseUtcOffset.ToString("hhmm") + ")";
+
                 if (!String.IsNullOrWhiteSpace(AuthorName))
-                    newDescription += AuthorName;
-                else
-                    newDescription += "unknown";
+                    newDescription += "\n# AuthorName: " + AuthorName;
 
                 if (!String.IsNullOrWhiteSpace(AuthorEmail))
-                    newDescription += " (" + AuthorEmail;
-                else
-                    if (!String.IsNullOrWhiteSpace(AuthorURL))
-                        newDescription += " (";
-
-                if (!String.IsNullOrWhiteSpace(AuthorEmail) && !String.IsNullOrWhiteSpace(AuthorURL))
-                    newDescription += ", ";
+                    newDescription += "\n# AuthorEmail: " + AuthorEmail;
 
                 if (!String.IsNullOrWhiteSpace(AuthorURL))
-                    newDescription += AuthorURL + ")";
-                else
-                    if (!String.IsNullOrWhiteSpace(AuthorEmail))
-                        newDescription += ")";
+                    newDescription += "\n# AuthorURL: " + AuthorURL;
 
                 if (!String.IsNullOrWhiteSpace(Version))
-                    newDescription += " v" + Version;
+                    newDescription += "\n# Version: " + Version;
 
                 if (!String.IsNullOrWhiteSpace(Date))
-                    newDescription += " (" + Date + ")";
+                    newDescription += "\n# Date: " + Date;
 
-                if (newDescription != "by " && newDescription != "by unknown")
+                if (hasNewDescription)
+                {
                     // If anything was added to the prettifiction
+                    newDescription += "\n## End conversion info";
                     addon.Description = newDescription +
                         (!String.IsNullOrWhiteSpace(addon.Description) ? Environment.NewLine + addon.Description : null);
+                }
 
                 Console.WriteLine("Addon: " + addon.Title);
-                if (newDescription != "by " && newDescription != "by unknown")
+                if (hasNewDescription)
                     Console.WriteLine(newDescription);
                 Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine("You need to set the title, and optionally, the tags for this addon!");
@@ -456,17 +457,71 @@ namespace SharpGMad
             }
 
             if (gmod12) // Write a legacy info.txt schema
+            {
+                // The description has paramteres if the addon was created by a conversion.
+                // Extract them out.
+
+                Regex regex = new System.Text.RegularExpressions.Regex("^# ([\\s\\S]*?): ([\\s\\S]*?)$",
+                    RegexOptions.IgnoreCase | RegexOptions.Multiline);
+                MatchCollection matches = regex.Matches(addon.Description);
+
+                // info.txt/addon.txt files usually have these values not directly mapped into GMAs as well.
+                string AuthorName = String.Empty;
+                string AuthorEmail = String.Empty;
+                string AuthorURL = String.Empty;
+                string Version = String.Empty;
+                string Date = String.Empty;
+
+                foreach (Match keyMatch in matches)
+                {
+                    if (keyMatch.Groups.Count == 3)
+                    {
+                        // All match should have 2 groups matched (the 0th group is the whole match.)
+                        switch (keyMatch.Groups[1].Value.ToLowerInvariant())
+                        {
+                            case "version":
+                                Version = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                            case "date":
+                                Date = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                            case "authorname":
+                                AuthorName = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                            case "authoremail":
+                                AuthorEmail = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                            case "authorurl":
+                                AuthorURL = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                        }
+                    }
+                }
+
+                string endConversionInfo = "## End conversion info";
+                string description = addon.Description;
+                if (addon.Description.IndexOf(endConversionInfo) > 0)
+                {
+                    description = addon.Description.Substring(addon.Description.IndexOf(endConversionInfo) +
+                        endConversionInfo.Length);
+                    description = description.TrimStart('\r', '\n');
+                }
+
                 File.WriteAllText(strOutPath + "info.txt", "\"AddonInfo\"\n" +
                     "{\n" +
                     "\t" + "\"name\"" + "\t" + "\"" + addon.Title + "\"\n" +
-                    "\t" + "\"version\"" + "\t" + "\"1.0\"\n" +
-                    "\t" + "\"up_date\"" + "\t" + "\"" + addon.Timestamp.ToString() + "\"\n" +
-                    "\t" + "\"author_name\"" + "\t" + "\"unknown\"" + "\"\n" + // addon.Author would be nice
-                    "\t" + "\"author_email\"" + "\t" + "\"\"\n" +
-                    "\t" + "\"author_url\"" + "\t" + "\"\"\n" +
-                    "\t" + "\"info\"" + "\t" + "\"" + addon.Description + "\"\n" +
+                    "\t" + "\"version\"" + "\t" + "\"" + Version + "\"\n" +
+                    "\t" + "\"up_date\"" + "\t" + "\"" + (String.IsNullOrWhiteSpace(Date) ?
+                        addon.Timestamp.ToString("ddd MM dd hh:mm:ss yyyy", System.Globalization.CultureInfo.InvariantCulture) :
+                        DateTime.Now.ToString("ddd MM dd hh:mm:ss yyyy", System.Globalization.CultureInfo.InvariantCulture) +
+                        " (+" + TimeZoneInfo.Local.BaseUtcOffset.ToString("hhmm") + ")") + "\"\n" +
+                    "\t" + "\"author_name\"" + "\t" + "\"" + AuthorName + "\"\n" + // addon.Author would be nice
+                    "\t" + "\"author_email\"" + "\t" + "\"" + AuthorEmail + "\"\n" +
+                    "\t" + "\"author_url\"" + "\t" + "\"" + AuthorURL + "\"\n" +
+                    "\t" + "\"info\"" + "\t" + "\"" + description + "\"\n" +
                     "\t" + "\"override\"" + "\t" + "\"1\"\n" +
                     "}");
+            }
 
             Console.WriteLine("Done!");
             return 0;

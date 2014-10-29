@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace SharpGMad
@@ -99,18 +100,72 @@ namespace SharpGMad
                 }
             }
 
-            if (chkWriteLegacy.Checked)
-                File.WriteAllText(txtFolder.Text + "info.txt", "\"AddonInfo\"\n" +
+            if (chkWriteLegacy.Checked) // Write a legacy info.txt schema
+            {
+                // The description has paramteres if the addon was created by a conversion.
+                // Extract them out.
+
+                Regex regex = new System.Text.RegularExpressions.Regex("^# ([\\s\\S]*?): ([\\s\\S]*?)$",
+                    RegexOptions.IgnoreCase | RegexOptions.Multiline);
+                MatchCollection matches = regex.Matches(addon.Description);
+
+                // info.txt/addon.txt files usually have these values not directly mapped into GMAs as well.
+                string AuthorName = String.Empty;
+                string AuthorEmail = String.Empty;
+                string AuthorURL = String.Empty;
+                string Version = String.Empty;
+                string Date = String.Empty;
+
+                foreach (Match keyMatch in matches)
+                {
+                    if (keyMatch.Groups.Count == 3)
+                    {
+                        // All match should have 2 groups matched (the 0th group is the whole match.)
+                        switch (keyMatch.Groups[1].Value.ToLowerInvariant())
+                        {
+                            case "version":
+                                Version = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                            case "date":
+                                Date = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                            case "authorname":
+                                AuthorName = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                            case "authoremail":
+                                AuthorEmail = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                            case "authorurl":
+                                AuthorURL = keyMatch.Groups[2].Value.TrimEnd('\n', '\r', '\t');
+                                break;
+                        }
+                    }
+                }
+
+                string endConversionInfo = "## End conversion info";
+                string description = addon.Description;
+                if (addon.Description.IndexOf(endConversionInfo) > 0)
+                {
+                    description = addon.Description.Substring(addon.Description.IndexOf(endConversionInfo) +
+                        endConversionInfo.Length);
+                    description = description.TrimStart('\r', '\n');
+                }
+
+                File.WriteAllText(txtFolder.Text + Path.DirectorySeparatorChar +  "info.txt", "\"AddonInfo\"\n" +
                     "{\n" +
                     "\t" + "\"name\"" + "\t" + "\"" + addon.Title + "\"\n" +
-                    "\t" + "\"version\"" + "\t" + "\"1.0\"\n" +
-                    "\t" + "\"up_date\"" + "\t" + "\"" + addon.Timestamp.ToString() + "\"\n" +
-                    "\t" + "\"author_name\"" + "\t" + "\"unknown\"" + "\"\n" + // addon.Author would be nice
-                    "\t" + "\"author_email\"" + "\t" + "\"\"\n" +
-                    "\t" + "\"author_url\"" + "\t" + "\"\"\n" +
-                    "\t" + "\"info\"" + "\t" + "\"" + addon.Description + "\"\n" +
+                    "\t" + "\"version\"" + "\t" + "\"" + Version + "\"\n" +
+                    "\t" + "\"up_date\"" + "\t" + "\"" + (String.IsNullOrWhiteSpace(Date) ?
+                        addon.Timestamp.ToString("ddd MM dd hh:mm:ss yyyy", System.Globalization.CultureInfo.InvariantCulture) :
+                        DateTime.Now.ToString("ddd MM dd hh:mm:ss yyyy", System.Globalization.CultureInfo.InvariantCulture) +
+                        " (+" + TimeZoneInfo.Local.BaseUtcOffset.ToString("hhmm") + ")") + "\"\n" +
+                    "\t" + "\"author_name\"" + "\t" + "\"" + AuthorName + "\"\n" + // addon.Author would be nice
+                    "\t" + "\"author_email\"" + "\t" + "\"" + AuthorEmail + "\"\n" +
+                    "\t" + "\"author_url\"" + "\t" + "\"" + AuthorURL + "\"\n" +
+                    "\t" + "\"info\"" + "\t" + "\"" + description + "\"\n" +
                     "\t" + "\"override\"" + "\t" + "\"1\"\n" +
                     "}");
+            }
 
             if (extractFailures.Count == 0)
                 MessageBox.Show("Successfully extracted the addon.", "Extract addon",
