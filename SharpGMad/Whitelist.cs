@@ -128,19 +128,19 @@ namespace SharpGMad
             // Map files
             FileTypes.Add("bsp", "Source Map file");
             FileTypes.Add("nav", "Navigation mesh");
-            FileTypes.Add("ain", "AI node graph");
-            FileTypes.Add("fgd", "Game definitions");
+            FileTypes.Add("ain", "AI node-graph");
+            FileTypes.Add("fgd", "Hammer game definitions");
 
             // Lua scripts
             FileTypes.Add("lua", "Lua script");
 
             // Materials
-            FileTypes.Add("vmt", "Valve Material File");
-            FileTypes.Add("vtf", "Valve Texture File");
+            FileTypes.Add("vmt", "Material file");
+            FileTypes.Add("vtf", "Texture file");
 
             // Models
             FileTypes.Add("mdl", "Model");
-            FileTypes.Add("vtx", "Hardware-specific material");
+            FileTypes.Add("vtx", "Hardware-specific material compilation");
             FileTypes.Add("phy", "Model physics");
             FileTypes.Add("ani", "Model animations");
             FileTypes.Add("vvd", "Model vertex data");
@@ -157,7 +157,7 @@ namespace SharpGMad
             FileTypes.Add("jpeg", "JPEG image");
 
             // Scenes
-            FileTypes.Add("vcd", "Valve Choreography Data");
+            FileTypes.Add("vcd", "Choreography data");
 
             // Particle effects
             FileTypes.Add("pcf", "Particle effect");

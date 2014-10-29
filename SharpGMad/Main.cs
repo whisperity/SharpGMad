@@ -568,6 +568,14 @@ namespace SharpGMad
                             if (tai.SmallIcon != null && !imgIconsSmall.Images.ContainsKey(iconAssocString))
                                 imgIconsSmall.Images.Add(iconAssocString, tai.SmallIcon);
 
+                            // Windows would override "Model" as .mdl's type if .mdl is now known by it to "MDL File"
+                            // A little circumvension so SharpGMad defaults back to its internal file type names.
+                            // (I pretty much hope noone has associated .SharpGMad with any file format on their PC!)
+                            FileAssocation.TypeAndIcon defaultTai = FileAssocation.GetInformation(".SharpGMad");
+
+                            if (tai.Type == defaultTai.Type.Replace("SHARPGMAD", extensionNoDot.ToUpperInvariant()))
+                                tai.Type = String.Empty;
+
                             if (!String.IsNullOrWhiteSpace(tai.Type))
                                 if (Whitelist.FileTypes.ContainsKey(extensionNoDot))
                                     Whitelist.FileTypes[extensionNoDot] = tai.Type;
