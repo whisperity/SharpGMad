@@ -1399,6 +1399,8 @@ namespace SharpGMad
                 txtMetadataDescription.ReadOnly = true;
 
                 tsbUpdateMetadata.Checked = false;
+                tsbUpdateMetadata.Text = "Update metadata";
+                tsbUpdateMetadata.ToolTipText = "Change the metadata of the addon";
                 tsbDiscardMetadataChanges.Enabled = false;
                 tsbDiscardMetadataChanges.Visible = false;
             }
