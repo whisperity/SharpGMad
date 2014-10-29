@@ -144,6 +144,7 @@ namespace SharpGMad
             this.tsmFileShellExec = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFileExportTo = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFilePull = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmFileOpenExport = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmFileDropExport = new System.Windows.Forms.ToolStripMenuItem();
             this.fbdFileExtractMulti = new System.Windows.Forms.FolderBrowserDialog();
             this.tsFileOperations.SuspendLayout();
@@ -172,6 +173,7 @@ namespace SharpGMad
             this.lstFiles.Location = new System.Drawing.Point(0, 0);
             this.lstFiles.Name = "lstFiles";
             this.lstFiles.ShowGroups = false;
+            this.lstFiles.ShowItemToolTips = true;
             this.lstFiles.Size = new System.Drawing.Size(383, 412);
             this.lstFiles.TabIndex = 0;
             this.lstFiles.TileSize = new System.Drawing.Size(150, 50);
@@ -282,7 +284,7 @@ namespace SharpGMad
             // 
             this.tsmiViewLargeIcons.Image = global::SharpGMad.Properties.Resources.view_largeicons;
             this.tsmiViewLargeIcons.Name = "tsmiViewLargeIcons";
-            this.tsmiViewLargeIcons.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewLargeIcons.Size = new System.Drawing.Size(134, 22);
             this.tsmiViewLargeIcons.Text = "Large Icons";
             this.tsmiViewLargeIcons.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
@@ -290,7 +292,7 @@ namespace SharpGMad
             // 
             this.tsmiViewSmallIcons.Image = global::SharpGMad.Properties.Resources.view_smallicons;
             this.tsmiViewSmallIcons.Name = "tsmiViewSmallIcons";
-            this.tsmiViewSmallIcons.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewSmallIcons.Size = new System.Drawing.Size(134, 22);
             this.tsmiViewSmallIcons.Text = "Small Icons";
             this.tsmiViewSmallIcons.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
@@ -298,7 +300,7 @@ namespace SharpGMad
             // 
             this.tsmiViewDetails.Image = global::SharpGMad.Properties.Resources.view_details;
             this.tsmiViewDetails.Name = "tsmiViewDetails";
-            this.tsmiViewDetails.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewDetails.Size = new System.Drawing.Size(134, 22);
             this.tsmiViewDetails.Text = "Details";
             this.tsmiViewDetails.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
@@ -306,7 +308,7 @@ namespace SharpGMad
             // 
             this.tsmiViewList.Image = global::SharpGMad.Properties.Resources.view_list;
             this.tsmiViewList.Name = "tsmiViewList";
-            this.tsmiViewList.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewList.Size = new System.Drawing.Size(134, 22);
             this.tsmiViewList.Text = "List";
             this.tsmiViewList.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
@@ -314,20 +316,20 @@ namespace SharpGMad
             // 
             this.tsmiViewTiles.Image = global::SharpGMad.Properties.Resources.view_tiles;
             this.tsmiViewTiles.Name = "tsmiViewTiles";
-            this.tsmiViewTiles.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewTiles.Size = new System.Drawing.Size(134, 22);
             this.tsmiViewTiles.Text = "Tiles";
             this.tsmiViewTiles.Click += new System.EventHandler(this.tsmiViewElements_changeView);
             // 
             // tssViewSeparator
             // 
             this.tssViewSeparator.Name = "tssViewSeparator";
-            this.tssViewSeparator.Size = new System.Drawing.Size(149, 6);
+            this.tssViewSeparator.Size = new System.Drawing.Size(131, 6);
             // 
             // tsmiViewShowAllFiles
             // 
             this.tsmiViewShowAllFiles.Image = global::SharpGMad.Properties.Resources.allfiles;
             this.tsmiViewShowAllFiles.Name = "tsmiViewShowAllFiles";
-            this.tsmiViewShowAllFiles.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewShowAllFiles.Size = new System.Drawing.Size(134, 22);
             this.tsmiViewShowAllFiles.Text = "All files";
             this.tsmiViewShowAllFiles.ToolTipText = "Whether or not the file list view should show all files, not just current folder";
             this.tsmiViewShowAllFiles.Click += new System.EventHandler(this.tsmiViewShowAllFiles_Click);
@@ -338,7 +340,7 @@ namespace SharpGMad
             this.tsmiViewShowFolderTree.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tsmiViewShowFolderTree.Image = global::SharpGMad.Properties.Resources.foldertree;
             this.tsmiViewShowFolderTree.Name = "tsmiViewShowFolderTree";
-            this.tsmiViewShowFolderTree.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewShowFolderTree.Size = new System.Drawing.Size(134, 22);
             this.tsmiViewShowFolderTree.Text = "Folder tree";
             this.tsmiViewShowFolderTree.Click += new System.EventHandler(this.tsmiViewShowFolderTree_Click);
             // 
@@ -348,7 +350,7 @@ namespace SharpGMad
             this.tsmiViewShowSubfolders.CheckState = System.Windows.Forms.CheckState.Checked;
             this.tsmiViewShowSubfolders.Image = global::SharpGMad.Properties.Resources.folder_s;
             this.tsmiViewShowSubfolders.Name = "tsmiViewShowSubfolders";
-            this.tsmiViewShowSubfolders.Size = new System.Drawing.Size(152, 22);
+            this.tsmiViewShowSubfolders.Size = new System.Drawing.Size(134, 22);
             this.tsmiViewShowSubfolders.Text = "Subfolders";
             this.tsmiViewShowSubfolders.ToolTipText = "Switch whether the file list should show subfolders or not";
             this.tsmiViewShowSubfolders.Click += new System.EventHandler(this.tsmiViewShowSubfolders_Click);
@@ -667,7 +669,7 @@ namespace SharpGMad
             // tssExportSeparator
             // 
             this.tssExportSeparator.Name = "tssExportSeparator";
-            this.tssExportSeparator.Size = new System.Drawing.Size(139, 6);
+            this.tssExportSeparator.Size = new System.Drawing.Size(149, 6);
             // 
             // cmsFileEntry
             // 
@@ -678,24 +680,24 @@ namespace SharpGMad
             this.tssExportSeparator,
             this.tsmFileExportTo,
             this.tsmFilePull,
+            this.tsmFileOpenExport,
             this.tsmFileDropExport});
             this.cmsFileEntry.Name = "cmsFileEntry";
-            this.cmsFileEntry.Size = new System.Drawing.Size(143, 142);
+            this.cmsFileEntry.Size = new System.Drawing.Size(153, 186);
             // 
             // tsmFileRemove
             // 
             this.tsmFileRemove.Image = global::SharpGMad.Properties.Resources.drop;
             this.tsmFileRemove.Name = "tsmFileRemove";
-            this.tsmFileRemove.Size = new System.Drawing.Size(142, 22);
+            this.tsmFileRemove.Size = new System.Drawing.Size(152, 22);
             this.tsmFileRemove.Text = "Remove";
             this.tsmFileRemove.Click += new System.EventHandler(this.tsmFileRemove_Click);
             // 
             // tsmFileExtract
             // 
-            this.tsmFileExtract.Enabled = false;
             this.tsmFileExtract.Image = global::SharpGMad.Properties.Resources.extract;
             this.tsmFileExtract.Name = "tsmFileExtract";
-            this.tsmFileExtract.Size = new System.Drawing.Size(142, 22);
+            this.tsmFileExtract.Size = new System.Drawing.Size(152, 22);
             this.tsmFileExtract.Text = "Extract";
             this.tsmFileExtract.ToolTipText = "Save the selected file somewhere on your computer";
             this.tsmFileExtract.Click += new System.EventHandler(this.tsmFileExtract_Click);
@@ -704,7 +706,7 @@ namespace SharpGMad
             // 
             this.tsmFileShellExec.Image = global::SharpGMad.Properties.Resources.execute;
             this.tsmFileShellExec.Name = "tsmFileShellExec";
-            this.tsmFileShellExec.Size = new System.Drawing.Size(142, 22);
+            this.tsmFileShellExec.Size = new System.Drawing.Size(152, 22);
             this.tsmFileShellExec.Text = "Shell execute";
             this.tsmFileShellExec.ToolTipText = "Run the selected file like it was opened in Explorer";
             this.tsmFileShellExec.Click += new System.EventHandler(this.tsmFileShellExec_Click);
@@ -713,7 +715,7 @@ namespace SharpGMad
             // 
             this.tsmFileExportTo.Image = global::SharpGMad.Properties.Resources.export;
             this.tsmFileExportTo.Name = "tsmFileExportTo";
-            this.tsmFileExportTo.Size = new System.Drawing.Size(142, 22);
+            this.tsmFileExportTo.Size = new System.Drawing.Size(152, 22);
             this.tsmFileExportTo.Text = "Export to...";
             this.tsmFileExportTo.ToolTipText = "Export the selected file to somewhere on your computer and set up a realtime chan" +
     "ge-watch. Changed files will be purple.";
@@ -723,16 +725,25 @@ namespace SharpGMad
             // 
             this.tsmFilePull.Image = global::SharpGMad.Properties.Resources.pull;
             this.tsmFilePull.Name = "tsmFilePull";
-            this.tsmFilePull.Size = new System.Drawing.Size(142, 22);
+            this.tsmFilePull.Size = new System.Drawing.Size(152, 22);
             this.tsmFilePull.Text = "Update";
             this.tsmFilePull.ToolTipText = "Update this file with the changes from the exported file on your computer";
             this.tsmFilePull.Click += new System.EventHandler(this.tsmFilePull_Click);
+            // 
+            // tsmFileOpenExport
+            // 
+            this.tsmFileOpenExport.Image = global::SharpGMad.Properties.Resources.open_export;
+            this.tsmFileOpenExport.Name = "tsmFileOpenExport";
+            this.tsmFileOpenExport.Size = new System.Drawing.Size(152, 22);
+            this.tsmFileOpenExport.Text = "Open export";
+            this.tsmFileOpenExport.ToolTipText = "Opens the exported file from your filesystem";
+            this.tsmFileOpenExport.Click += new System.EventHandler(this.tsmFileOpenExport_Click);
             // 
             // tsmFileDropExport
             // 
             this.tsmFileDropExport.Image = global::SharpGMad.Properties.Resources.drop_export;
             this.tsmFileDropExport.Name = "tsmFileDropExport";
-            this.tsmFileDropExport.Size = new System.Drawing.Size(142, 22);
+            this.tsmFileDropExport.Size = new System.Drawing.Size(152, 22);
             this.tsmFileDropExport.Text = "Drop export";
             this.tsmFileDropExport.ToolTipText = "Delete the exported file from your computer";
             this.tsmFileDropExport.Click += new System.EventHandler(this.tsmFileDropExport_Click);
@@ -836,6 +847,7 @@ namespace SharpGMad
         private System.Windows.Forms.ColumnHeader chSize;
         private System.Windows.Forms.ToolStripMenuItem tsmiViewShowFolderTree;
         private System.Windows.Forms.ToolStripMenuItem tsmiViewShowAllFiles;
+        private System.Windows.Forms.ToolStripMenuItem tsmFileOpenExport;
 
 
 

@@ -343,6 +343,16 @@ namespace SharpGMad.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap open_export {
+            get {
+                object obj = ResourceManager.GetObject("open_export", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap parentfolder {
             get {
                 object obj = ResourceManager.GetObject("parentfolder", resourceCulture);

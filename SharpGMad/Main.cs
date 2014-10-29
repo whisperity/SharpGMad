@@ -565,12 +565,14 @@ namespace SharpGMad
                             tsbDropAll.Enabled = true; // At least one file is exported
                             item.ForeColor = Color.Blue;
                             item.ImageKey = "exported";
+                            item.ToolTipText = "This file has been exported to your local filesystem.";
 
                             if (watch.First().Modified)
                             {
                                 tsbPullAll.Enabled = AddonHandle.CanWrite; // At least one file is modified externally
                                 item.ForeColor = Color.Indigo;
                                 item.ImageKey = "pullable";
+                                item.ToolTipText = "This file's export has changed and the changes can be pulled.";
                             }
                         }
 
@@ -838,6 +840,7 @@ namespace SharpGMad
                             // Export is the file is not exported
                             tsmFileExportTo.Enabled = AddonHandle.CanWrite && !Whitelist.Override;
                             tsmFilePull.Enabled = false;
+                            tsmFileOpenExport.Enabled = false;
                             tsmFileDropExport.Enabled = false;
                         }
                         else
@@ -845,12 +848,14 @@ namespace SharpGMad
                             // Pull (applicable if the file is changed) and drop
                             tsmFileExportTo.Enabled = false;
                             tsmFilePull.Enabled = isExported.First().Modified && AddonHandle.CanWrite && !Whitelist.Override;
+                            tsmFileOpenExport.Enabled = true;
                             tsmFileDropExport.Enabled = true;
                         }
 
                         // But the buttons should be visible
                         tssExportSeparator.Visible = true;
                         tsmFileExportTo.Visible = true;
+                        tsmFileOpenExport.Visible = true;
                         tsmFilePull.Visible = true;
                         tsmFileDropExport.Visible = true;
                     }
@@ -873,6 +878,9 @@ namespace SharpGMad
 
                         tsmFileExportTo.Enabled = false;
                         tsmFileExportTo.Visible = false;
+
+                        tsmFileOpenExport.Enabled = false;
+                        tsmFileOpenExport.Visible = false;
 
                         tsmFilePull.Enabled = false;
                         tsmFilePull.Visible = false;
@@ -897,6 +905,9 @@ namespace SharpGMad
 
                         tsmFileExportTo.Enabled = false;
                         tsmFileExportTo.Visible = false;
+
+                        tsmFileOpenExport.Enabled = false;
+                        tsmFileOpenExport.Visible = false;
 
                         tsmFilePull.Enabled = false;
                         tsmFilePull.Visible = false;
@@ -1503,6 +1514,23 @@ namespace SharpGMad
             UpdateFileList();
             this.Invoke((MethodInvoker)delegate { UpdateStatus("The file " + e.Name + " changed externally.", Color.Purple); });
         }
+
+        private void tsmFileOpenExport_Click(object sender, EventArgs e)
+        {
+            if (lstFiles.FocusedItem != null)
+                if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.File)
+                {
+                    FileWatch export = AddonHandle.WatchedFiles.Where(f => f.ContentPath == lstFiles.FocusedItem.Name).FirstOrDefault();
+
+                    if (export != null && !String.IsNullOrEmpty(export.FilePath))
+                        // Shell execute the exported file
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(export.FilePath)
+                        {
+                            UseShellExecute = true,
+                        });
+                }
+        }
+
 
         private void tsmFileDropExport_Click(object sender, EventArgs e)
         {
