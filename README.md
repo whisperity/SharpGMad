@@ -83,8 +83,8 @@ The so-called _loose_ addon structures used in Garry's Mod 12 (subfolders
 of the `addons` folder containing each and every file of the addon on the
 hard disk) are also supported for conversion.
 
-SharpGMad will use an existing `info.txt` file to load the metadata of the
-addon. Any missing metadata will be asked from the user.
+SharpGMad will use an existing `info.txt` or `addon.txt`ÿfile to load the
+metadata of the addon. Any missing metadata will be asked from the user.
 
 When converting from a folder, SharpGMad auto-discovers whether it is an
 old structure or a "new", gmad-compatible structure.

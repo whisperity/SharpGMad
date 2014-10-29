@@ -150,14 +150,14 @@ namespace SharpGMad
             {
                 // Use addon.json for metadata if it exists
 
-                if (File.Exists(strFolder + Path.DirectorySeparatorChar + "info.txt"))
+                if (File.Exists(strFolder + Path.DirectorySeparatorChar + "info.txt") ||
+                    File.Exists(strFolder + Path.DirectorySeparatorChar + "addon.txt"))
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("Both addon.json and info.txt found in source folder.");
+                    Console.WriteLine("Both addon.json and legacy info.txt/addon.txt found in source folder.");
                     Console.WriteLine("addon.json takes priority");
                     Console.ResetColor();
                 }
-
 
                 //
                 // Load the Addon Info file
@@ -177,14 +177,18 @@ namespace SharpGMad
 
                 addon = new Addon(addonInfo);
             }
-            else if (File.Exists(strFolder + Path.DirectorySeparatorChar + "info.txt"))
+            else if (File.Exists(strFolder + Path.DirectorySeparatorChar + "info.txt") ||
+                    File.Exists(strFolder + Path.DirectorySeparatorChar + "addon.txt"))
             {
-                // Load the addon metadata from the old file structure: info.txt
+                // Load the addon metadata from the old file structure: info.txt/addon.txt
 
-                string legacyInfo;
+                string legacyInfo = String.Empty;
                 try
                 {
-                    legacyInfo = File.ReadAllText(strFolder + Path.DirectorySeparatorChar + "info.txt");
+                    if (File.Exists(strFolder + Path.DirectorySeparatorChar + "info.txt"))
+                        legacyInfo = File.ReadAllText(strFolder + Path.DirectorySeparatorChar + "info.txt");
+                    else if (File.Exists(strFolder + Path.DirectorySeparatorChar + "addon.txt"))
+                        legacyInfo = File.ReadAllText(strFolder + Path.DirectorySeparatorChar + "addon.txt");
                 }
                 catch (Exception ex)
                 {
@@ -198,19 +202,82 @@ namespace SharpGMad
                 addon = new Addon();
 
                 // Parse the read data
-                Regex regex = new System.Text.RegularExpressions.Regex("\"([A-Za-z_\r\n])*\"", RegexOptions.IgnoreCase);
+                Regex regex = new System.Text.RegularExpressions.Regex("\"([A-Za-z_\r\n]*)\"[\\s]*\"(.*)\"", RegexOptions.IgnoreCase);
                 MatchCollection matches = regex.Matches(legacyInfo);
+
+                // info.txt/addon.txt files usually have these values not directly mapped into GMAs as well.
+                string AuthorName = String.Empty;
+                string AuthorEmail = String.Empty;
+                string AuthorURL = String.Empty;
+                string Version = String.Empty;
+                string Date = String.Empty;
 
                 foreach (Match keyMatch in matches)
                 {
-                    if (keyMatch.Value.ToLowerInvariant() == "\"name\"")
-                        addon.Title = keyMatch.NextMatch().Value.TrimStart('"').TrimEnd('"');
-                    else if (keyMatch.Value.ToLowerInvariant() == "\"info\"")
-                        addon.Description = keyMatch.NextMatch().Value.TrimStart('"').TrimEnd('"');
-                    /*else if (keyMatch.Value.ToLowerInvariant() == "\"author_name\"")
-                        addon.Author = keyMatch.NextMatch().Value.TrimStart('"').TrimEnd('"');*/
-                    // Current GMAD writer only writes "Author Name", not real value
+                    if (keyMatch.Groups.Count == 3)
+                    {
+                        // All match should have 2 groups matched (the 0th group is the whole match.)
+                        switch (keyMatch.Groups[1].Value.ToLowerInvariant())
+                        {
+                            case "name":
+                                addon.Title = keyMatch.Groups[2].Value;
+                                break;
+                            case "version":
+                                Version = keyMatch.Groups[2].Value;
+                                break;
+                            case "up_date":
+                                Date = keyMatch.Groups[2].Value;
+                                break;
+                            case "author_name":
+                                //addon.Author = keyMatch.Groups[2].Value;
+                                // GMAD writer only writes "Author Name" right now...
+                                AuthorName = keyMatch.Groups[2].Value;
+                                break;
+                            case "author_email":
+                                AuthorEmail = keyMatch.Groups[2].Value;
+                                break;
+                            case "author_url":
+                                AuthorURL = keyMatch.Groups[2].Value;
+                                break;
+                            case "info":
+                                addon.Description = keyMatch.Groups[2].Value;
+                                break;
+                        }
+                    }
                 }
+
+                // Prettify the loaded Description.
+                string newDescription = "by ";
+                if (!String.IsNullOrWhiteSpace(AuthorName))
+                    newDescription += AuthorName;
+                else
+                    newDescription += "unknown";
+
+                if (!String.IsNullOrWhiteSpace(AuthorEmail))
+                    newDescription += " (" + AuthorEmail;
+                else
+                    if (!String.IsNullOrWhiteSpace(AuthorURL))
+                        newDescription += " (";
+
+                if (!String.IsNullOrWhiteSpace(AuthorEmail) && !String.IsNullOrWhiteSpace(AuthorURL))
+                    newDescription += ", ";
+
+                if (!String.IsNullOrWhiteSpace(AuthorURL))
+                    newDescription += AuthorURL + ")";
+                else
+                    if (!String.IsNullOrWhiteSpace(AuthorEmail))
+                        newDescription += ")";
+
+                if (!String.IsNullOrWhiteSpace(Version))
+                    newDescription += " v" + Version;
+
+                if (!String.IsNullOrWhiteSpace(Date))
+                    newDescription += " (" + Date + ")";
+
+                if (newDescription != "by " && newDescription != "by unknown")
+                    // If anything was added to the prettifiction
+                    addon.Description = newDescription +
+                        (!String.IsNullOrWhiteSpace(addon.Description) ? '\n' + addon.Description : null);
 
                 Console.WriteLine("Addon: " + addon.Title);/* + " by " + addon.Author);*/
                 Console.WriteLine("You need to set the title, and optionally, the tags for this addon!");
