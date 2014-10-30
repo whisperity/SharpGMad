@@ -6,6 +6,8 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{D3953BB9-01D2-43BA-8457-1E4492200EA0}</ProjectGuid>
+    <StartupObject>SharpGMad.Program</StartupObject>
+    <ApplicationIcon>Resources\gma.ico</ApplicationIcon>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SharpGMad</RootNamespace>
@@ -31,12 +33,6 @@
     <DefineConstants>TRACE;WINDOWS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>SharpGMad.Program</StartupObject>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationIcon>Resources\gma.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug Mono|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -71,51 +67,50 @@
       <DependentUpon>AddAs.cs</DependentUpon>
     </Compile>
     <Compile Include="Addon.cs" />
-    <Compile Include="RealtimeAddon.cs" />
-    <Compile Include="LegacyExtract.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="LegacyExtract.Designer.cs">
-      <DependentUpon>LegacyExtract.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Extensions.cs" />
+    <Compile Include="Legacy.cs" />
     <Compile Include="LegacyCreate.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="LegacyCreate.Designer.cs">
       <DependentUpon>LegacyCreate.cs</DependentUpon>
     </Compile>
+    <Compile Include="LegacyExtract.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LegacyExtract.Designer.cs">
+      <DependentUpon>LegacyExtract.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Json.cs" />
     <Compile Include="Main.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Main.Designer.cs">
       <DependentUpon>Main.cs</DependentUpon>
     </Compile>
-    <Compile Include="Legacy.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Program.cs" />
     <Compile Include="Reader.cs" />
+    <Compile Include="RealtimeAddon.cs" />
+    <Compile Include="RealtimeCommandline.cs" />
     <Compile Include="Tags.cs" />
     <Compile Include="Whitelist.cs" />
     <Compile Include="Writer.cs" />
-    <Compile Include="Json.cs" />
-    <Compile Include="RealtimeCommandline.cs" />
-    <Compile Include="CRC32.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AddAs.resx">
       <DependentUpon>AddAs.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="LegacyExtract.resx">
-      <DependentUpon>LegacyExtract.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="LegacyCreate.resx">
       <DependentUpon>LegacyCreate.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LegacyExtract.resx">
+      <DependentUpon>LegacyExtract.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Main.resx">
       <DependentUpon>Main.cs</DependentUpon>
@@ -127,53 +122,51 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\add.png" />
-    <None Include="Resources\create.png" />
-    <None Include="Resources\extract.png" />
-    <None Include="Resources\legacy.png" />
-    <None Include="Resources\metadata.png" />
-    <None Include="Resources\newaddon.png" />
-    <None Include="Resources\open.png" />
-    <None Include="Resources\remove.png" />
-    <None Include="Resources\save.png" />
+    <None Include="Resources\allfiles.png" />
     <None Include="Resources\create.ico" />
-    <None Include="Resources\extract.ico" />
-    <None Include="Resources\drop.png" />
-    <None Include="Resources\export.png" />
-    <None Include="Resources\pull.png" />
-    <None Include="Resources\pull_all.png" />
-    <None Include="Resources\execute.png" />
+    <None Include="Resources\create.png" />
     <None Include="Resources\discard.png" />
+    <None Include="Resources\drop.png" />
+    <None Include="Resources\drop_all.png" />
+    <None Include="Resources\drop_export.png" />
     <None Include="Resources\emptyfolder_16x16.png" />
     <None Include="Resources\emptyfolder_32x32.png" />
+    <None Include="Resources\execute.png" />
+    <None Include="Resources\export.png" />
+    <None Include="Resources\exported_16x16.png" />
+    <None Include="Resources\exported_32x32.png" />
+    <None Include="Resources\extract.ico" />
+    <None Include="Resources\extract.png" />
     <None Include="Resources\file_16x16.png" />
     <None Include="Resources\file_32x32.png" />
     <None Include="Resources\folder_16x16.png" />
     <None Include="Resources\folder_32x32.png" />
+    <None Include="Resources\foldertree.png" />
+    <None Include="Resources\gma.ico" />
+    <None Include="Resources\gma_16x16.png" />
+    <None Include="Resources\gma_32x32.png" />
+    <None Include="Resources\legacy.png" />
+    <None Include="Resources\metadata.png" />
+    <None Include="Resources\newaddon.png" />
+    <None Include="Resources\open.png" />
+    <None Include="Resources\open_export.png" />
+    <None Include="Resources\parentfolder_16x16.png" />
+    <None Include="Resources\parentfolder_32x32.png" />
+    <None Include="Resources\parentgma_16x16.png" />
+    <None Include="Resources\parentgma_32x32.png" />
+    <None Include="Resources\pull.png" />
+    <None Include="Resources\pull_all.png" />
+    <None Include="Resources\pullable_16x16.png" />
+    <None Include="Resources\pullable_32x32.png" />
+    <None Include="Resources\remove.png" />
+    <None Include="Resources\save.png" />
     <None Include="Resources\view_details.png" />
     <None Include="Resources\view_largeicons.png" />
     <None Include="Resources\view_list.png" />
     <None Include="Resources\view_smallicons.png" />
     <None Include="Resources\view_tiles.png" />
-    <None Include="Resources\drop_all.png" />
-    <None Include="Resources\drop_export.png" />
-    <None Include="Resources\gma.ico" />
-    <None Include="Resources\gma_16x16.png" />
-    <None Include="Resources\gma_32x32.png" />
-    <None Include="Resources\parentfolder_16x16.png" />
-    <None Include="Resources\parentfolder_32x32.png" />
-    <None Include="Resources\allfiles.png" />
-    <None Include="Resources\foldertree.png" />
-    <None Include="Resources\exported_16x16.png" />
-    <None Include="Resources\exported_32x32.png" />
-    <None Include="Resources\pullable_16x16.png" />
-    <None Include="Resources\pullable_32x32.png" />
     <None Include="Resources\whitelistfailure_16x16.png" />
     <None Include="Resources\whitelistfailure_32x32.png" />
-    <None Include="Resources\open_export.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\parentgma_16x16.png" />
-    <None Include="Resources\parentgma_32x32.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
