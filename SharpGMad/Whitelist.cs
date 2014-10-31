@@ -11,7 +11,9 @@ namespace SharpGMad
     [Serializable]
     class WhitelistException : Exception
     {
+        public WhitelistException() { }
         public WhitelistException(string message) : base(message) { }
+        public WhitelistException(string message, Exception inner) : base(message, inner) { }
     }
 
     /// <summary>
@@ -27,7 +29,7 @@ namespace SharpGMad
         /// <summary>
         /// A list of string patterns of allowed files.
         /// </summary>
-        private static string[] Wildcard = new string[]{
+        private static readonly string[] Wildcard = new string[]{
 			"lua/*.lua",
 			"scenes/*.vcd",
 			"particles/*.pcf",
@@ -108,7 +110,7 @@ namespace SharpGMad
         public static Dictionary<string, string> FileTypes = new Dictionary<string, string>();
 
         /// <summary>
-        /// Static constructor
+        /// Static constructor initializing the associations.
         /// </summary>
         static Whitelist()
         {

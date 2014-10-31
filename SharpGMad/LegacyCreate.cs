@@ -205,7 +205,7 @@ namespace SharpGMad
                     !String.IsNullOrWhiteSpace(Date));
 
                 if (hasNewDescription)
-                    newDescription = "## Converted by SharpGMad " + Program.PrettyVersion + " at " +
+                    newDescription = "## Converted by SharpGMad " + VersionExtensions.Pretty() + " at " +
                         DateTime.Now.ToString("ddd MM dd hh:mm:ss yyyy",
                             System.Globalization.CultureInfo.InvariantCulture) +
                         " (+" + TimeZoneInfo.Local.BaseUtcOffset.ToString("hhmm") + ")";

@@ -59,6 +59,7 @@ namespace SharpGMad
     [Serializable]
     class AddonJSONException : Exception
     {
+        public AddonJSONException() { }
         public AddonJSONException(string message) : base(message) { }
         public AddonJSONException(string message, Exception inner) : base(message, inner) { }
     }

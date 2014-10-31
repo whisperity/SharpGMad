@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace SharpGMad
 {
-    public partial class AddAs : Form
+    partial class AddAs : Form
     {
         public string Filename;
 

@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Json;
-using System.Text;
 
 namespace SharpGMad
 {
@@ -17,11 +14,8 @@ namespace SharpGMad
         public ReaderException() { }
         public ReaderException(string message) : base(message) { }
         public ReaderException(string message, Exception inner) : base(message, inner) { }
-        protected ReaderException(
-          SerializationInfo info,
-          StreamingContext context)
-            : base(info, context) { }
     }
+
     /// <summary>
     /// Provides methods for reading a compiled GMA file.
     /// </summary>
@@ -154,24 +148,18 @@ namespace SharpGMad
         private void Parse()
         {
             if (Buffer.Length == 0)
-            {
                 throw new ReaderException("Attempted to read from empty buffer.");
-            }
 
             Buffer.Seek(0, SeekOrigin.Begin);
             BinaryReader reader = new BinaryReader(Buffer);
 
             // Ident
             if (String.Join(String.Empty, reader.ReadChars(Addon.Ident.Length)) != Addon.Ident)
-            {
                 throw new ReaderException("Header mismatch.");
-            }
 
             FormatVersion = reader.ReadChar();
             if (FormatVersion > Addon.Version)
-            {
                 throw new ReaderException("Can't parse version " + Convert.ToString(FormatVersion) + " addons.");
-            }
 
             /*SteamID = */reader.ReadUInt64(); // SteamID (long)
             Timestamp = new DateTime(1970, 1, 1, 0, 0, 0).ToLocalTime().
@@ -219,7 +207,7 @@ namespace SharpGMad
         }
 
         /// <summary>
-        /// Rereads and parses the addon data from the specified file once more.
+        /// Rereads and reparses the addon data from the specified file once more.
         /// </summary>
         /// <exception cref="ReaderException">Parsing errors.</exception>
         public void Reparse()

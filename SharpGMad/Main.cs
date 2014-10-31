@@ -38,6 +38,11 @@ namespace SharpGMad
             tsbCreateAddon.Enabled = !Whitelist.Override;
         }
 
+        /// <summary>
+        /// Loads the main GUI with the specified arguments and optionally, the whitelist overridden.
+        /// </summary>
+        /// <param name="args">The program arguments</param>
+        /// <param name="whitelistOverride">Whether to auto-override the whitelist</param>
         public Main(string[] args, bool whitelistOverride = false)
             : this()
         {
@@ -61,9 +66,18 @@ namespace SharpGMad
 
         // Visual Studio tends to crap up the good-looking icons when a saved project is reloaded...
         // So we don't rely on it, instead, we "runtime-create" the image lists.
+        /// <summary>
+        /// An ImageList containing small (16x16 pixel) icons for the filelist elements.
+        /// </summary>
         private ImageList imgIconsLarge;
+        /// <summary>
+        /// An ImageList containing large (32x32 pixel) icons for the filelist elements.
+        /// </summary>
         private ImageList imgIconsSmall;
 
+        /// <summary>
+        /// Initializes the icon lists from the project resources.
+        /// </summary>
         private void InitializeIcons()
         {
             // Form icon itself
@@ -139,7 +153,7 @@ namespace SharpGMad
                 if (this.Status == "Restrictions disabled by user's request.") // Remove this line from saved status as its expired.
                     this.Status = "Ready to work. :)";
                 UpdateStatus(this.Status);
-                this.Text = "SharpGMad " + Program.PrettyVersion;
+                this.Text = "SharpGMad " + VersionExtensions.Pretty();
                 tsbAddFile.Enabled = !Whitelist.Override;
                 tsbUpdateMetadata.Enabled = !Whitelist.Override;
             }
@@ -192,7 +206,7 @@ namespace SharpGMad
                     {
                         Whitelist.Override = true;
                         tsbCreateAddon.Enabled = !Whitelist.Override;
-                        this.Text = "! - SharpGMad " + Program.PrettyVersion;
+                        this.Text = "! - SharpGMad " + VersionExtensions.Pretty();
                         UpdateStatus("Restrictions disabled by user's request.");
 
                         shouldOverrideReload = true;
@@ -258,7 +272,7 @@ namespace SharpGMad
                 this.Text = Path.GetFileName(AddonHandle.AddonPath) + (Whitelist.Override ? "!" : null) +
                     (AddonHandle.CanWrite ? null : " (read-only)") +
                     (AddonHandle.Modified ? "*" : null) + " - SharpGMad " +
-                    Program.PrettyVersion;
+                    VersionExtensions.Pretty();
 
                 tsbSaveAddon.Enabled = AddonHandle.CanWrite && AddonHandle.Modified && (!Whitelist.Override);
             }
@@ -735,7 +749,7 @@ namespace SharpGMad
             tsbCreateAddon.Enabled = !Whitelist.Override;
 
             UpdateStatus("Addon unloaded.");
-            this.Text = "SharpGMad " + Program.PrettyVersion;
+            this.Text = "SharpGMad " + VersionExtensions.Pretty();
         }
 
         // Dock the txtDescription text box.
@@ -778,9 +792,8 @@ namespace SharpGMad
             {
                 string filter = String.Empty;
                 foreach (KeyValuePair<string, string[]> filetype in Whitelist.WildcardFileTypes)
-                {
                     filter += filetype.Key + "|" + String.Join(";", filetype.Value) + "|";
-                }
+
                 filter += "All files|*.*";
 
                 ofdAddFile.Filter = filter;
@@ -1067,28 +1080,21 @@ namespace SharpGMad
             ListView lv = (ListView)sender;
 
             if (e.KeyCode == Keys.Delete)
-            {
                 if (lv.FocusedItem != null)
                         tsmFileRemove_Click(sender, e);
-            }
             else if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Return)
-            {
                 if (lv.FocusedItem != null)
                     if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.ParentFolder || (FileEntryType)lv.FocusedItem.Tag == FileEntryType.Subfolder)
                         SelectFolderNode(lv.FocusedItem.Name);
                     else if ((FileEntryType)lv.FocusedItem.Tag == FileEntryType.File)
                         tsmFileShellExec_Click(sender, e);
-            }
             else if (e.KeyCode == Keys.Apps)
-            {
                 if (lv.FocusedItem != null)
-                {
+                    // Show the right-click menu on APPLICATION key press
                     cmsFileEntry.Show(lstFiles.PointToScreen(new Point(
                             lv.FocusedItem.Bounds.Left + (lv.FocusedItem.Bounds.Width / 2),
                             lv.FocusedItem.Bounds.Top + (lv.FocusedItem.Bounds.Height / 2)
                         )));
-                }
-            }
         }
 
         private void tsmFileRemove_Click(object sender, EventArgs e)
@@ -1467,9 +1473,7 @@ namespace SharpGMad
             }
 
             if (AddonHandle is RealtimeAddon)
-            {
                 UnloadAddon();
-            }
 
 #if MONO
             // Mono tends not to hide the form when it is loaded from the realtime console with the "gui" command.
@@ -2131,19 +2135,15 @@ namespace SharpGMad
             List<string> files = ((String[])e.Data.GetData(DataFormats.FileDrop)).ToList();
 
             if (files.Count == 0)
-            {
                 return;
-            }
             else if (files.Count == 1 && files[0].EndsWith(".gma"))
             {
                 if (files[0].EndsWith(".gma"))
                 {
                     DialogResult dropChanges = new DialogResult();
                     if (AddonHandle is RealtimeAddon && AddonHandle.Modified)
-                    {
                         dropChanges = MessageBox.Show("Do you want to open another addon without saving the current first?",
                             "An addon is already open", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    }
 
                     if (dropChanges == DialogResult.Yes || AddonHandle == null ||
                         (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
@@ -2175,9 +2175,7 @@ namespace SharpGMad
                     {
                         // The file is in fact a directory, parse the files within and add them
                         foreach (string subfile in Directory.GetFiles(f, "*", SearchOption.AllDirectories))
-                        {
                             filesToParse.Add(subfile);
-                        }
 
                         filesToParse.Remove(f);
                     }

@@ -53,9 +53,7 @@ namespace SharpGMad
             // If an out path hasn't been provided, make our own
             //
             if (txtFolder.Text == String.Empty)
-            {
                 txtFolder.Text = Path.GetFileNameWithoutExtension(txtFile.Text);
-            }
 
             //
             // Remove slash, add slash (enforces a slash)
@@ -90,9 +88,7 @@ namespace SharpGMad
                 try
                 {
                     using (FileStream file = new FileStream(txtFolder.Text + entry.Path, FileMode.Create, FileAccess.Write))
-                    {
                         file.Write(entry.Content, 0, (int)entry.Size);
-                    }
                 }
                 catch (Exception)
                 {

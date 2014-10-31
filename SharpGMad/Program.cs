@@ -65,7 +65,7 @@ namespace SharpGMad
                     // There is no console window or this is a debug run.
                     // Start the main form
 
-                    Application.Run(new Main(args));
+                    Application.Run(new Main(args, false));
                 else
                 {
                     // There is a console the program is running in.
@@ -86,30 +86,5 @@ namespace SharpGMad
 
             return 0;
         }
-
-        /// <summary>
-        /// Gets the version of the executing assembly with omitting the trailing zeros.
-        /// </summary>
-        static public string PrettyVersion
-        {
-            get
-            {
-                Version ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-                int fieldCount = 0;
-
-                // Increment the required fields until there is a value (this emits the trailing zeros)
-                if (ver.Major != 0)
-                    fieldCount = 1;
-                if (ver.Minor != 0)
-                    fieldCount = 2;
-                if (ver.Build != 0)
-                    fieldCount = 3;
-                if (ver.Revision != 0)
-                    fieldCount = 4;
-
-                return "v" + ver.ToString(fieldCount);
-            }
-        }
-
     }
 }

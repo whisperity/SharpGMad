@@ -40,6 +40,42 @@ namespace System
                 size < 0 ? "-" : null, normSize, suffices[unit]);
         }
     }
+
+    /// <summary>
+    /// Contains extensions for Version.
+    /// </summary>
+    static class VersionExtensions
+    {
+        /// <summary>
+        /// Gets the version of the executing assembly with omitting the trailing zeros.
+        /// </summary>
+        static public string Pretty()
+        {
+            return Pretty(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+        }
+
+        /// <summary>
+        /// Gets the specified version's string with omitting the trailing zeros.
+        /// </summary>
+        /// <param name="ver">A version</param>
+        /// <returns>The version's string prettyfied</returns>
+        static public string Pretty(this Version ver)
+        {
+                int fieldCount = 0;
+
+                // Increment the required fields until there is a value (this emits the trailing zeros)
+                if (ver.Major != 0)
+                    fieldCount = 1;
+                if (ver.Minor != 0)
+                    fieldCount = 2;
+                if (ver.Build != 0)
+                    fieldCount = 3;
+                if (ver.Revision != 0)
+                    fieldCount = 4;
+
+                return "v" + ver.ToString(fieldCount);
+        }
+    }
 }
 
 namespace System.Cryptography
@@ -94,13 +130,9 @@ namespace System.Cryptography
                 for (int j = 8; j > 0; --j)
                 {
                     if ((temp & 1) == 1)
-                    {
                         temp = (uint)((temp >> 1) ^ poly);
-                    }
                     else
-                    {
                         temp >>= 1;
-                    }
                 }
                 table[i] = temp;
             }
@@ -181,14 +213,21 @@ namespace System.IO
 #if WINDOWS
 namespace SharpGMad
 {
+    /// <summary>
+    /// Provides methods to retrieve information for file associations
+    /// </summary>
     static class FileAssocation
     {
         /// <summary>Contains the type name and icons of a file.</summary>
-        public struct TypeAndIcon
+        internal struct TypeAndIcon
         {
+            /// <summary>The path of the file</summary>
             public string Filename;
+            /// <summary>The file's type string (like: Text Document)</summary>
             public string Type;
+            /// <summary>The file's small (16x16 pixel) icon</summary>
             public Icon SmallIcon;
+            /// <summary>The file's large (32x32 pixel) icon</summary>
             public Icon LargeIcon;
         }
 
@@ -282,30 +321,33 @@ namespace SharpGMad
             public string szTypeName;
         }
 
+        /// <summary>
+        /// A list of attributes that can be used to fine tune ShGetFileInfo().
+        /// </summary>
         [Flags]
         private enum ShGetFileInfoAttributes : uint
         {
             /// <summary>Populate ShFileInfo.hIcon with the file's icon's handle and ShFileInfo.iIcon with its index.</summary>
             Icon = 0x000000100,
             /// <summary>Put the file's display name into ShFileInfo.szDisplayName.</summary>
-            DisplayName = 0x000000200,
+            //DisplayName = 0x000000200,
             /// <summary>Retrieve the file's type string in ShFileInfo.szTypeName.</summary>
             TypeName = 0x000000400,
             /// <summary>Retrieve the item's attributes into ShFileInfo.dwAttributes.</summary>
-            Attributes = 0x000000800,
+            //Attributes = 0x000000800,
             /// <summary>Get the name of the file where the icon is stored (for example: Notepad.exe for .txt files) into ShFileInfo.szDisplayName
             /// This will also retrieve the icon's index into ShFileInfo.iIcon.</summary>
-            IconLocation = 0x000001000,
+            //IconLocation = 0x000001000,
             /// <summary>Get the type of executable if the file is an executable. (?)</summary>
-            ExeType = 0x000002000,
+            //ExeType = 0x000002000,
             /// <summary>Retrieves the index of a system image list icon. If successful, ShFileInfo.iIcon is populated with the value.</summary>
             SysIconIndex = 0x000004000,
             /// <summary>Adds the little file link arrow overlaid on the icon if Icon is set.</summary>
-            LinkOverlay = 0x000008000,
+            //LinkOverlay = 0x000008000,
             /// <summary>If Icon is set, the returned icon will be blended with the highlight colour as if it would be selected.</summary>
-            Selected = 0x000010000,
+            //Selected = 0x000010000,
             /// <summary>Indicate that the ShFileInfo.dwAttributes contain specific attributes. (?)</summary>
-            Attr_Specified = 0x000020000,
+            //Attr_Specified = 0x000020000,
             /// <summary>If Icon is set, the retrieved icon will be a large (32x32) icon.</summary>
             LargeIcon = 0x000000000,
             /// <summary>If Icon is set, the retrieved icon will be a small (16x16) icon.
@@ -314,42 +356,32 @@ namespace SharpGMad
             /// <summary>If Icon is set, the file's open icon will be retrieved.
             /// (like ZIP files? AFAIK, only folders have open icons :D)
             /// If SysIconIndex is set, the call will return the handle to the system image list. (?)</summary>
-            OpenIcon = 0x000000002,
+            //OpenIcon = 0x000000002,
             /// <summary>If Icon is set, a Shell-sized icon will be retrieved. (?)</summary>
-            ShellIconSize = 0x000000004,
+            //ShellIconSize = 0x000000004,
             /// <summary>The file path passed is not a file path, but a pointer to an ItemIDList. (?)</summary>
-            PIDL = 0x000000008,
+            //PIDL = 0x000000008,
             /// <summary>If set, the call will not attempt to access the file at the specified path.
             /// Instead, it will act like the file path given exists with the attributes given in dwFileAttributes.</summary>
             UseFileAttributes = 0x000000010,
             /// <summary>Whether certain overlays (like TortoiseSVN's status icons?) should be applied to the icon.</summary>
-            AddOverlays = 0x000000020,
+            //AddOverlays = 0x000000020,
             /// <summary>If Icon is set, call returns the value of the overlaid icon's index in the upper eight bits of iIcon.</summary>
-            OverlayIndex = 0x000000040,
+            //OverlayIndex = 0x000000040,
         }
 
         /// <summary>
         /// Calls the external SHGetFileInfo method of Shell32.dll to retrieve information about a file.
         /// </summary>
         /// <param name="pszPath">The file to retrieve information about.</param>
-        /// <param name="dwFileAttributes">?</param>
+        /// <param name="dwFileAttributes">File attribute flags (?, unused)</param>
         /// <param name="psfi">The structure where certain values will be populated accordingly.</param>
         /// <param name="cbFileInfo">The size of the structure passed at psfi.</param>
         /// <param name="uFlags">Flags from SHGetFileInfoAttributes fine-tuning the behaviour of the call.</param>
         /// <returns>Some sort of a pointer... (?)</returns>
         [DllImport("shell32.dll", EntryPoint = "SHGetFileInfo", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr ShGetFileInfo(
-            // The path of the file
-            string pszPath,
-            // File attribute flags (unused)
-            uint dwFileAttributes,
-            // The ShFileInfo struct that should be populated with the return values.
-            ref ShFileInfo psfi,
-            // The size of the ShFileInfo structure.
-            uint cbFileInfo,
-            // Various flags (SHGetFileInfoAttributes) indicating what and how should be retrieved.
-            uint uFlags
-            );
+        private static extern IntPtr ShGetFileInfo(string pszPath, uint dwFileAttributes, ref ShFileInfo psfi,
+            uint cbFileInfo, uint uFlags);
     }
 }
 #endif

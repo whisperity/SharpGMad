@@ -14,10 +14,6 @@ namespace SharpGMad
         public IgnoredException() { }
         public IgnoredException(string message) : base(message) { }
         public IgnoredException(string message, Exception inner) : base(message, inner) { }
-        protected IgnoredException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context)
-            : base(info, context) { }
     }
 
     /// <summary>
@@ -26,7 +22,7 @@ namespace SharpGMad
     class Addon
     {
         /// <summary>
-        /// The identation (first few characters) of GMA files.
+        /// The identification (first few characters) of GMA files.
         /// </summary>
         public const string Ident = "GMAD";
         /// <summary>
@@ -352,6 +348,7 @@ namespace SharpGMad
                 Files.Remove(toRemove.First());
         }
     }
+
 
     /// <summary>
     /// Represents a file entry to an Addon instance.

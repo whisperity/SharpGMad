@@ -43,14 +43,12 @@ namespace SharpGMad
             while (true)
             {
                 if (AddonHandle == null)
-                {
 #if WINDOWS
                     Console.Write("SharpGMad> ");
 #endif
 #if MONO
                     Console.Write("$ ");
 #endif
-                }
                 else if (AddonHandle is RealtimeAddon)
                 {
                     Console.Write(Path.GetFileName(AddonHandle.AddonPath) + (Whitelist.Override ? "!" : null) +
@@ -209,9 +207,7 @@ namespace SharpGMad
                         try
                         {
                             for (int i = 2; i < command.Length; i++)
-                            {
                                 eparam[i - 2] = command[i];
-                            }
                         }
                         catch (IndexOutOfRangeException)
                         {
@@ -256,20 +252,16 @@ namespace SharpGMad
                         catch (IndexOutOfRangeException)
                         {
                             if (AddonHandle.WatchedFiles.Count == 0)
-                            {
                                 Console.WriteLine("No files are exported.");
-                            }
                             else
                             {
 
                                 Console.WriteLine(AddonHandle.WatchedFiles.Count + " files currently exported:");
                                 int i = 0;
                                 foreach (FileWatch watch in AddonHandle.WatchedFiles)
-                                {
                                     Console.WriteLine(++i +
                                         ((watch.Modified) ? "* " : " ") +
                                         watch.ContentPath + " at " + watch.FilePath);
-                                }
                             }
                         }
 
@@ -290,16 +282,12 @@ namespace SharpGMad
                         catch (IndexOutOfRangeException)
                         {
                             if (AddonHandle.WatchedFiles.Count == 0)
-                            {
                                 Console.WriteLine("No files are exported.");
-                            }
                             else
                             {
                                 Console.WriteLine("Pulling " + AddonHandle.WatchedFiles.Count + " files:");
                                 foreach (FileWatch watch in AddonHandle.WatchedFiles)
-                                {
                                     PullFile(watch.ContentPath);
-                                }
                             }
                         }
 
@@ -476,9 +464,7 @@ namespace SharpGMad
                             {
                                 string[] param = new string[command.Length - 1];
                                 for (int i = 1; i < command.Length; i++)
-                                {
                                     param[i - 1] = command[i];
-                                }
 
                                 path = String.Join(" ", param);
                             }
@@ -561,9 +547,7 @@ namespace SharpGMad
                         break;
                     case "gui":
                         if (AddonHandle == null)
-                        {
-                            System.Windows.Forms.Application.Run(new Main(new string[] { }));
-                        }
+                            System.Windows.Forms.Application.Run(new Main(new string[] { }, false));
                         else if (AddonHandle is RealtimeAddon)
                         {
                             if (AddonHandle.Modified)
@@ -582,7 +566,7 @@ namespace SharpGMad
 
                                 // Save whether the addon required a whitelist override.
                                 bool whitelistOverride = Whitelist.Override;
-                                CloseAddon();
+                                CloseAddon(false);
 
                                 // Reenable the override, if it was enabled. (CloseAddon() automatically disables it.)
                                 Whitelist.Override = whitelistOverride;
@@ -602,7 +586,7 @@ namespace SharpGMad
                     case "?":
                     case "help":
                         Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("SharpGMad " + Program.PrettyVersion);
+                        Console.WriteLine("SharpGMad " + VersionExtensions.Pretty());
                         Console.WriteLine("Available commands:");
                         Console.ResetColor();
 
@@ -625,9 +609,7 @@ namespace SharpGMad
                             }
                             Console.WriteLine("list                       Lists the files in the memory");
                             if (AddonHandle.CanWrite && !Whitelist.Override)
-                            {
                                 Console.WriteLine("remove <filename>          Removes <filename> from the archive");
-                            }
                             Console.WriteLine("extract <filename> [path]  Extract <filename> (to [path] if specified)");
                             Console.WriteLine("mget <folder> <f1> [f2...] Extract all specified files to <folder>");
                             if (AddonHandle.CanWrite && !Whitelist.Override)
@@ -663,16 +645,12 @@ namespace SharpGMad
                         Console.WriteLine("List all files in the current directory");
 
                         if (AddonHandle == null || (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
-                        {
                             Console.WriteLine("gui                        Load the GUI");
-                        }
 
                         Console.WriteLine("help                       Show the list of available commands");
 
                         if (AddonHandle == null)
-                        {
                             Console.WriteLine("exit                       Exits");
-                        }
 
                         if (AddonHandle is RealtimeAddon)
                         {
@@ -1308,9 +1286,7 @@ namespace SharpGMad
             }
 
             if (folder == String.Empty)
-            {
                 folder = Directory.GetCurrentDirectory();
-            }
 
             foreach (string f in Directory.GetFiles(folder, "*", SearchOption.AllDirectories))
             {

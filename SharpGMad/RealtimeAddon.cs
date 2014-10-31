@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using System.Text;
+using System.Linq;
 
 namespace SharpGMad
 {
@@ -362,17 +361,13 @@ namespace SharpGMad
         public void ExtractFile(string path, string to = null)
         {
             if (to == null || to == String.Empty)
-            {
                 to = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(path);
-            }
             else
             {
                 string dir = Path.GetDirectoryName(to);
 
                 if (dir == String.Empty)
-                {
                     to = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(to);
-                }
             }
 
             ContentFile file = null;
@@ -419,17 +414,13 @@ namespace SharpGMad
         public void ExportFile(string path, string to)
         {
             if (to == null || to == String.Empty)
-            {
                 to = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(path);
-            }
             else
             {
                 string dir = Path.GetDirectoryName(to);
 
                 if (dir == String.Empty)
-                {
                     to = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + Path.GetFileName(to);
-                }
             }
 
             if (WatchedFiles.Where(f => f.ContentPath == path).Count() != 0)
@@ -655,17 +646,13 @@ namespace SharpGMad
                 }
             }
             else
-            {
                 AddonReader.Reparse();
-            }
 
             // Convert all files in the open addon to addon-backed content storages
             // So after save, the application knows the file is now in the addon.
             // This also updates the fileIDs in case of a file was reordered when Sort() happened.
             foreach (Reader.IndexEntry entry in AddonReader.Index)
-            {
                 OpenAddon.Files.Where(f => f.Path == entry.Path).First().SwitchToAddonInstance(AddonReader, entry);
-            }
         }
 
         /// <summary>
@@ -675,9 +662,7 @@ namespace SharpGMad
         public void Close()
         {
             foreach (FileWatch watch in WatchedFiles)
-            {
                 watch.Watcher.Dispose();
-            }
             WatchedFiles.Clear();
 
             AddonStream.Close();
