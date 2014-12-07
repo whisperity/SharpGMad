@@ -82,7 +82,6 @@ namespace SharpGMad
             //
             if (strCommand == "extract")
             {
-                Whitelist.Override = true;
                 string strFile;
                 try
                 {
@@ -416,6 +415,7 @@ namespace SharpGMad
             Addon addon;
             try
             {
+                Whitelist.Override = true;
                 FileStream fs = new FileStream(strFile, FileMode.Open, FileAccess.Read, FileShare.None);
                 addon = new Addon(new Reader(fs));
             }
@@ -426,6 +426,10 @@ namespace SharpGMad
                 Console.ResetColor();
                 Console.WriteLine(ex.Message);
                 return 1;
+            }
+            finally
+            {
+                Whitelist.Override = false;
             }
 
             Console.WriteLine("Extracting Files:");

@@ -63,6 +63,7 @@ namespace SharpGMad
             Addon addon;
             try
             {
+                Whitelist.Override = true;
                 FileStream fs = new FileStream(txtFile.Text, FileMode.Open, FileAccess.ReadWrite);
                 addon = new Addon(new Reader(fs));
             }
@@ -71,6 +72,10 @@ namespace SharpGMad
                 MessageBox.Show("Can't open the selected file.\nError happened: " + ex.Message,
                     "Failed to extract addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
+            }
+            finally
+            {
+                Whitelist.Override = false;
             }
 
             foreach (ContentFile entry in addon.Files)
