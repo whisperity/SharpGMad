@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpGMad", "SharpGMad\SharpGMad.csproj", "{D3953BB9-01D2-43BA-8457-1E4492200EA0}"
 EndProject
 Global

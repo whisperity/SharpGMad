@@ -5,6 +5,190 @@ using System.Linq;
 
 namespace SharpGMad
 {
+    abstract class Argument
+    {
+        public string Name { get; protected set; }
+        protected object Value;
+        protected string StringValue;
+        public bool Mandatory { get; set; }
+        protected Func<string, object> Projector;
+        protected string BindErrorMessage;
+        public Type ResultType { get; protected set; }
+        protected Action<string> TypedSetValueDelegate;
+
+        protected Argument()
+        {
+            this.Name = String.Empty;
+            this.Mandatory = false;
+            this.Projector = ((s) => { return s; });
+            this.BindErrorMessage = String.Empty;
+            this.ResultType = String.Empty.GetType();
+            this.TypedSetValueDelegate = ((s) => this.BluntSetValue(s));
+
+            Reset();
+        }
+
+        private void BluntSetValue(object value)
+        {
+            this.Value = value;
+            this.StringValue = value.ToString();
+        }
+
+        public object GetValue()
+        {
+            return this.Value;
+        }
+        
+        public void SetValue(string value)
+        {
+            this.TypedSetValueDelegate(value);
+        }
+
+        public void Reset()
+        {
+            this.Value = null;
+            this.StringValue = String.Empty;
+        }
+    }
+
+    class Argument<T> : Argument
+    {
+        private Func<string, T> TypedProjector;
+
+        public Argument(string name, Func<string, T> proj, string bindErrMsg = "") : base()
+        {
+            base.Name = name;
+            this.TypedProjector = proj;
+            base.ResultType = proj.Method.ReturnType;
+            base.BindErrorMessage = bindErrMsg;
+            base.TypedSetValueDelegate = ((s) => this.TypedSetValue(s));
+        }
+
+        public Argument(string name, string value, Func<string, T> proj, string bindErrMsg = "") : this(name, proj, bindErrMsg)
+        {
+            if (proj == null)
+                throw new ArgumentNullException("proj", "Projection delegate must be set. " +
+                    "If you intend a string argument, use the base type Argument.");
+            try
+            {
+                base.Value = proj(value);
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException(bindErrMsg, "value", e);
+            }
+
+            base.StringValue = value;
+        }
+
+        public Argument(string name, T value)
+        {
+            base.Name = name;
+            base.Value = value;
+            base.StringValue = value.ToString();
+            base.ResultType = value.GetType();
+        }
+
+        public void TypedSetValue(string value)
+        {
+            try
+            {
+                this.Value = this.TypedProjector(value);
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException(this.BindErrorMessage, e);
+            }
+
+            this.StringValue = value;
+        }
+    }
+
+    // TODO: support for accessibility
+    [Flags]
+    enum CommandAvailability : byte
+    {
+        Default = 0,
+
+    }
+
+    class Command
+    {
+        public string Verb { get; private set; }
+        public string Description;
+        public List<Argument> Arguments;
+        public Dictionary<string, Argument> ArgumentsByName { get { return Arguments.ToDictionary(a => a.Name); } }
+        private Action<Command> Dispatch;
+
+        protected Command()
+        {
+            this.Arguments = new List<Argument>();
+        }
+
+        public Command(string verb, Action<Command> dispatch) : this()
+        {
+            this.Verb = verb;
+            this.Dispatch = dispatch;
+        }
+
+        public void Invoke(string[] args)
+        {
+            RealtimeCommandline.WriteColor("Invoking command " + this.Verb +
+                " with command-line arguments \"" + String.Join(";", args) + "\".", ConsoleColor.Yellow, true);
+            // Bind all shell arguments to their values
+            int i = 0;
+            foreach (Argument arg in this.Arguments)
+            {
+                string stringArg = String.Empty;
+                try
+                {
+                    stringArg = args[i++];
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    if (arg.Mandatory)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("missing argument " + arg.Name);
+                        Console.ResetColor();
+                        Console.Write("Usage: " + this.Verb + " ");
+                        foreach (Argument _arg in this.Arguments)
+                            Console.Write((_arg.Mandatory ? "<" : "[") + _arg.Name + (_arg.Mandatory ? ">" : "]") + " ");
+                        Console.WriteLine();
+
+                        return; // Don't parse further
+                    }
+                }
+
+                try
+                {
+                    arg.SetValue(stringArg);
+                }
+                catch (Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write("invalid value for " + arg.Name);
+                    Console.ResetColor();
+
+                    if (String.IsNullOrWhiteSpace(e.Message) && e.InnerException != null 
+                        && !String.IsNullOrWhiteSpace(e.InnerException.Message))
+                        Console.WriteLine(" " + e.InnerException.Message);
+                    else
+                        Console.WriteLine(" " + e.Message);
+
+                    return;
+                }
+            }
+
+            // Call the associated method
+            this.Dispatch(this);
+
+            // Reset the arguments
+            foreach (Argument arg in this.Arguments)
+                arg.Reset();
+        }
+    }
+
     /// <summary>
     /// Provides an interface for handling realtime functionality from the commandline.
     /// </summary>
@@ -15,8 +199,434 @@ namespace SharpGMad
         /// </summary>
         static RealtimeAddon AddonHandle;
 
+        private static List<Command> Commands;
+
         /// <summary>
-        /// The main method and entry point for command-line operation.
+        /// The shell's current working directory within the open addon
+        /// </summary>
+        private static string CurrentWorkingDirectory;
+
+        static RealtimeCommandline()
+        {
+            // Register the commands available in this shell
+            Commands = new List<Command>();
+
+            Command comm;
+
+            // Create a new addon
+            comm = new Command("new", (self) => {
+                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                NewAddon(filename);
+            });
+            comm.Description = "Create a new, empty addon named <filename>";
+            comm.Arguments.Add(new Argument<string>("filename",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filename was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            Commands.Add(comm);
+
+            // Load an addon
+            comm = new Command("load", (self) =>
+            {
+                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                LoadAddon(filename);
+            });
+            comm.Description = "Loads <filename> addon into the memory";
+            comm.Arguments.Add(new Argument<string>("filename",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filename was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            Commands.Add(comm);
+
+            // Add a file to the open addon
+            comm = new Command("add", (self) => {
+                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                string path = (string)self.ArgumentsByName["path"].GetValue();
+                AddFile(filename, path, true); // TODO: true becomes false if forced add
+            });
+            comm.Description = "Adds <filename> (as [path] if specified)";
+            comm.Arguments.Add(new Argument<string>("filename",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filename was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            comm.Arguments.Add(new Argument<string>("path", (s) => { return s; }));
+            Commands.Add(comm);
+
+            // Add a whole folder
+            comm = new Command("addfolder", (self) =>
+            {
+                string folder = (string)self.ArgumentsByName["folder"].GetValue();
+                AddFolder(folder, true); // TODO: true becomes false if forced add
+            });
+            comm.Description = "Adds all files from <folder> to the archive";
+            comm.Arguments.Add(new Argument<string>("folder",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The folder was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            Commands.Add(comm);
+
+            // List files
+            comm = new Command("list", (self) => { ListFiles(); });
+            comm.Description = "Lists the files in the memory";
+            Commands.Add(comm);
+
+            // Remove a file
+            comm = new Command("remove", (self) =>
+            {
+                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                RemoveFile(filename);
+            });
+            comm.Description = "Removes <filename> from the archive";
+            comm.Arguments.Add(new Argument<string>("filename",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filename was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            Commands.Add(comm);
+
+            // Extract
+            comm = new Command("extract", (self) =>
+            {
+                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                string path = (string)self.ArgumentsByName["path"].GetValue();
+                ExtractFile(filename, path);
+            });
+            comm.Description = "Extract <filename> (to [path] if specified)";
+            comm.Arguments.Add(new Argument<string>("filename",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filename was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            comm.Arguments.Add(new Argument<string>("path", (s) => { return s; }));
+            Commands.Add(comm);
+
+            // Extract multiple files
+            // TODO: support infinite number of arguments (like params)
+
+            // Export
+            // TODO: support overloading ...
+
+            // Drop an export
+            comm = new Command("drop", (self) =>
+            {
+                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                DropExport(filename);
+            });
+            comm.Description = "Drops the export for <filename>";
+            comm.Arguments.Add(new Argument<string>("filename",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filename was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            Commands.Add(comm);
+
+            // Get a metadata
+            // Set a metadata
+
+            // Write changes to the disk
+            comm = new Command("push", (self) => { Push(); });
+            comm.Description = "Writes the changes to the disk";
+            Commands.Add(comm);
+
+            // Shell execute a file
+            comm = new Command("shellexec", (self) =>
+            {
+                string path = (string)self.ArgumentsByName["filename"].GetValue();
+                ShellExecute(path);
+            });
+            comm.Description = "Execute the specified <filename>";
+            comm.Arguments.Add(new Argument<string>("filename",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filename was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            Commands.Add(comm);
+
+            // Close the addon
+            comm = new Command("close", (self) => { CloseAddon(false); }); // TODO: false becomes true if forced
+            comm.Description = "Closes the addon (dropping all changes)";
+            Commands.Add(comm);
+
+            // Path of the open addon
+            comm = new Command("path", (self) => {
+                if (AddonHandle == null)
+                    WriteColor("No addon is open.", ConsoleColor.Red, true); // TODO: support for accessibility
+                else
+                    Console.WriteLine(AddonHandle.AddonPath);
+            });
+            comm.Description = "Prints the full path of the current addon";
+            Commands.Add(comm);
+
+            // pwd
+            comm = new Command("pwd", (self) => { Console.WriteLine(Directory.GetCurrentDirectory()); });
+            comm.Description = "Prints SharpGMad's current working directory";
+            Commands.Add(comm);
+
+            // cd
+
+            // List files in the working directory (outside)
+            Action<Command> ls_dir_action = (self) =>
+            {
+                try
+                {
+                    IEnumerable<string> files = Directory.EnumerateFileSystemEntries(Directory.GetCurrentDirectory(),
+                        "*", SearchOption.TopDirectoryOnly);
+
+                    if (files.Count() == 0)
+                    {
+                        Console.WriteLine("0 files.");
+                        return;
+                    }
+                    else
+                        Console.WriteLine(files.Count() + " files:");
+
+                    foreach (string f in files)
+                    {
+                        FileSystemInfo fi;
+                        fi = new FileInfo(f);
+
+                        try
+                        {
+                            Console.WriteLine(
+                                String.Format("{0,10} {1,20} {2,30}", ((int)((FileInfo)fi).Length).HumanReadableSize(),
+                                fi.LastWriteTime.ToString(), fi.Name)
+                            );
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            // Noop. The entry is a folder.
+                            fi = new DirectoryInfo(f);
+                            Console.WriteLine(
+                                String.Format("{0,10} {1,20} {2,30}", "[DIR]",
+                                fi.LastWriteTime.ToString(), fi.Name)
+                            );
+                            continue;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("There was a problem listing the files.");
+                    Console.ResetColor();
+                    Console.WriteLine(e.Message);
+                    return;
+                }
+            };
+#if MONO
+            comm = new Command("ls", ls_dir_action);
+#endif
+#if WINDOWS
+            comm = new Command("dir", ls_dir_action);
+#endif
+            comm.Description = "List all files in the current directory";
+            Commands.Add(comm);
+
+            // Switch to GUI mode
+            comm = new Command("gui", (self) =>
+            {
+                if (AddonHandle == null)
+                    System.Windows.Forms.Application.Run(new Main(new string[] { }, false));
+                else if (AddonHandle is RealtimeAddon)
+                {
+                    if (AddonHandle.Modified)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Your addon is modified.");
+                        Console.ResetColor();
+                        Console.WriteLine("The GUI cannot be opened until the addon is saved.");
+                        return;
+                    }
+                    else
+                    {
+                        Console.WriteLine("The addon will close in the console and will be reopened by the GUI.");
+                        // Save the addon path and close it in the console.
+                        string addonpath = AddonHandle.AddonPath;
+
+                        // Save whether the addon required a whitelist override.
+                        bool whitelistOverride = Whitelist.Override;
+                        CloseAddon(false);
+
+                        // Reenable the override, if it was enabled. (CloseAddon() automatically disables it.)
+                        Whitelist.Override = whitelistOverride;
+
+                        // Open the GUI with the path. The addon will automatically reload.
+                        System.Windows.Forms.Application.Run(new Main(new string[] { addonpath }, whitelistOverride));
+
+                        // Set the override status again. (Closing the form disables the override again.)
+                        Whitelist.Override = whitelistOverride;
+
+                        // This thread will hang until the GUI is closed.
+                        Console.WriteLine("GUI was closed. Reopening the addon...");
+                        LoadAddon(addonpath, whitelistOverride);
+                    }
+                }
+            });
+            comm.Description = "Load the GUI";
+            Commands.Add(comm);
+
+            // Print available commands
+            Action<Command> help_action = (self) =>
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("SharpGMad " + VersionExtensions.Pretty());
+                Console.WriteLine("Available commands:");
+                Console.ResetColor();
+
+                if (AddonHandle == null)
+                {
+                    Console.WriteLine("load <filename>            Loads <filename> addon into the memory");
+                    if (!Whitelist.Override)
+                        Console.WriteLine("new <filename>             Create a new, empty addon named <filename>");
+                }
+
+                if (AddonHandle is RealtimeAddon)
+                {
+                    if (AddonHandle.CanWrite && !Whitelist.Override)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
+                        Console.WriteLine("add <filename> [path]      Adds <filename> (to [path] if specified)");
+
+                        Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
+                        Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
+                    }
+                    Console.WriteLine("list                       Lists the files in the memory");
+                    if (AddonHandle.CanWrite && !Whitelist.Override)
+                        Console.WriteLine("remove <filename>          Removes <filename> from the archive");
+                    Console.WriteLine("extract <filename> [path]  Extract <filename> (to [path] if specified)");
+                    Console.WriteLine("mget <folder> <f1> [f2...] Extract all specified files to <folder>");
+                    if (AddonHandle.CanWrite && !Whitelist.Override)
+                    {
+                        Console.WriteLine("export                     View the list of exported files");
+                        Console.WriteLine("export <filename> [path]   Export <filename> for editing (to [path] if specified)");
+                        Console.WriteLine("pull                       Pull changes from all exported files");
+                        Console.WriteLine("pull <filename>            Pull the changes of exported <filename>");
+                        Console.WriteLine("drop <filename>            Drops the export for <filename>");
+                    }
+                    Console.WriteLine("get <parameter>            Prints the value of metadata <parameter>");
+                    if (AddonHandle.CanWrite && !Whitelist.Override)
+                    {
+                        Console.WriteLine("set <parameter> [value]    Sets metadata <parameter> to the specified [value]");
+                        Console.WriteLine("push                       Writes the changes to the disk");
+                    }
+                    Console.WriteLine("shellexec <path>           Execute the specified file");
+
+                    Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
+                    Console.WriteLine("close                      Closes the addon (dropping all changes)");
+
+                    Console.WriteLine("path                       Prints the full path of the current addon.");
+                }
+
+                Console.WriteLine("pwd                        Prints SharpGMad's current working directory");
+                Console.WriteLine("cd <folder>                Changes the current working directory to <folder>");
+#if MONO
+                        Console.Write("ls                         ");
+#endif
+#if WINDOWS
+                Console.Write("dir                        ");
+#endif
+                Console.WriteLine("List all files in the current directory");
+
+                if (AddonHandle == null || (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
+                    Console.WriteLine("gui                        Load the GUI");
+
+                Console.WriteLine("help                       Show the list of available commands");
+
+                if (AddonHandle == null)
+                    Console.WriteLine("exit                       Exits");
+
+                if (AddonHandle is RealtimeAddon)
+                {
+                    Console.ForegroundColor = ConsoleColor.Magenta;
+                    Console.WriteLine("Commands marked with an f (for example: add, close) can be called as such (fadd, fclose).");
+                    Console.WriteLine("Doing so will run a forced version of the command not prompting the user for error correction.");
+                    Console.ResetColor();
+
+                    if (AddonHandle.Modified)
+                    {
+                        Console.Write("The addon has been ");
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.Write("modified");
+                        Console.ResetColor();
+                        Console.WriteLine(". Execute `push` to save changes to the disk.");
+                    }
+
+                    if (AddonHandle.Pullable)
+                    {
+                        Console.Write("There are exported files which have been changed. ");
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine("These changes are pullable.");
+                        Console.ResetColor();
+                        Console.WriteLine("`export` lists all exports or type `pull` to pull the changes.");
+                    }
+                }
+
+                if (Whitelist.Override)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
+                    Console.ResetColor();
+                }
+            };
+            comm = new Command("help", help_action);
+            comm.Description = "Show the list of available commands";
+            Commands.Add(comm);
+            
+            // TODO: support aliasing
+            comm = new Command("?", help_action);
+            comm.Description = "Show the list of available commands";
+            Commands.Add(comm);
+
+            // Exit
+        }
+
+        public static void WriteColor(object value, ConsoleColor color = default(ConsoleColor), bool newLine = true)
+        {
+            Console.ForegroundColor = color;
+            Console.Write(value);
+            if (newLine)
+                Console.WriteLine();
+            Console.ResetColor();
+        }
+
+        /// <summary>
+        /// Entry point for realtime command-line
         /// </summary>
         public static int Main(string[] args)
         {
@@ -65,107 +675,24 @@ namespace SharpGMad
                 string input = Console.ReadLine();
                 string[] command = input.Split(' ');
 
+                if (String.IsNullOrWhiteSpace(command[0]))
+                    continue;
+
+                IEnumerable<Command> com = Commands.Where(c => c.Verb == command[0]);
+                if (com.Count() == 0)
+                {
+                    WriteColor("Unknown command", ConsoleColor.Red);
+                }
+                else
+                {
+                    com.First().Invoke(command.Skip(1).ToArray());
+                    continue;
+                }
+
+                WriteColor("Attempting from the known legacy commands...", ConsoleColor.Yellow, true);
                 switch (command[0].ToLowerInvariant())
                 {
-                    case "new":
-                        try
-                        {
-                            NewAddon(command[1]);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The filename was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        break;
-                    case "load":
-                        try
-                        {
-                            LoadAddon(command[1]);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The filename was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        break;
-                    case "add":
-                    case "fadd":
-                        try
-                        {
-                            AddFile(command[1], (command.Length == 3 ? command[2] : null), (command[0][0] != 'f'));
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The file path was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        break;
-                    case "addfolder":
-                    case "faddfolder":
-                        try
-                        {
-                            AddFolder(command[1], (command[0][0] != 'f'));
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The folder was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        break;
-                    case "list":
-                        ListFiles();
-                        break;
-                    case "remove":
-                        try
-                        {
-                            RemoveFile(command[1]);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The filename was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        break;
-                    case "extract":
-                        string extractPath = String.Empty;
-                        try
-                        {
-                            extractPath = command[2];
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            // Noop.
-                        }
-
-                        try
-                        {
-                            ExtractFile(command[1], extractPath);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The filename was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        break;
+                    // TODO: make this a Command
                     case "mget":
                         string folder;
                         try
@@ -292,20 +819,6 @@ namespace SharpGMad
                         }
 
                         break;
-                    case "drop":
-                        try
-                        {
-                            DropExport(command[1]);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The filename was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        break;
                     case "get":
                         string parameter;
                         try
@@ -413,49 +926,6 @@ namespace SharpGMad
                         }
 
                         break;
-                    case "close":
-                    case "fclose":
-                        CloseAddon((command[0][0] == 'f'));
-                        break;
-                    case "push":
-                        Push();
-                        break;
-                    case "shellexec":
-                        if (AddonHandle == null)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("No addon is open.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        try
-                        {
-                            ShellExecute(command[1]);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The parameter was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-                        break;
-                    case "path":
-                        if (AddonHandle == null)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("No addon is open.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        Console.WriteLine(AddonHandle.AddonPath);
-
-                        break;
-                    case "pwd":
-                        Console.WriteLine(Directory.GetCurrentDirectory());
-                        break;
                     case "cd":
                         try
                         {
@@ -491,200 +961,6 @@ namespace SharpGMad
                             Console.WriteLine(e.Message);
                             break;
                         }
-                        break;
-#if MONO
-                    case "ls":
-#endif
-#if WINDOWS
-                    case "dir":
-#endif
-                        try
-                        {
-                            IEnumerable<string> files = Directory.EnumerateFileSystemEntries(Directory.GetCurrentDirectory(),
-                                "*", SearchOption.TopDirectoryOnly);
-
-                            if (files.Count() == 0)
-                            {
-                                Console.WriteLine("0 files.");
-                                break;
-                            }
-                            else
-                                Console.WriteLine(files.Count() + " files:");
-
-                            foreach (string f in files)
-                            {
-                                FileSystemInfo fi;
-                                fi = new FileInfo(f);
-
-                                try
-                                {
-                                    Console.WriteLine(
-                                        String.Format("{0,10} {1,20} {2,30}", ((int)((FileInfo)fi).Length).HumanReadableSize(),
-                                        fi.LastWriteTime.ToString(), fi.Name)
-                                    );
-                                }
-                                catch (FileNotFoundException)
-                                {
-                                    // Noop. The entry is a folder.
-                                    fi = new DirectoryInfo(f);
-                                    Console.WriteLine(
-                                        String.Format("{0,10} {1,20} {2,30}", "[DIR]",
-                                        fi.LastWriteTime.ToString(), fi.Name)
-                                    );
-                                    continue;
-                                }
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("There was a problem listing the files.");
-                            Console.ResetColor();
-                            Console.WriteLine(e.Message);
-                            break;
-                        }
-
-                        break;
-                    case "gui":
-                        if (AddonHandle == null)
-                            System.Windows.Forms.Application.Run(new Main(new string[] { }, false));
-                        else if (AddonHandle is RealtimeAddon)
-                        {
-                            if (AddonHandle.Modified)
-                            {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine("Your addon is modified.");
-                                Console.ResetColor();
-                                Console.WriteLine("The GUI cannot be opened until the addon is saved.");
-                                break;
-                            }
-                            else
-                            {
-                                Console.WriteLine("The addon will close in the console and will be reopened by the GUI.");
-                                // Save the addon path and close it in the console.
-                                string addonpath = AddonHandle.AddonPath;
-
-                                // Save whether the addon required a whitelist override.
-                                bool whitelistOverride = Whitelist.Override;
-                                CloseAddon(false);
-
-                                // Reenable the override, if it was enabled. (CloseAddon() automatically disables it.)
-                                Whitelist.Override = whitelistOverride;
-
-                                // Open the GUI with the path. The addon will automatically reload.
-                                System.Windows.Forms.Application.Run(new Main(new string[] { addonpath }, whitelistOverride));
-
-                                // Set the override status again. (Closing the form disables the override again.)
-                                Whitelist.Override = whitelistOverride;
-
-                                // This thread will hang until the GUI is closed.
-                                Console.WriteLine("GUI was closed. Reopening the addon...");
-                                LoadAddon(addonpath, whitelistOverride);
-                            }
-                        }
-                        break;
-                    case "?":
-                    case "help":
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("SharpGMad " + VersionExtensions.Pretty());
-                        Console.WriteLine("Available commands:");
-                        Console.ResetColor();
-
-                        if (AddonHandle == null)
-                        {
-                            Console.WriteLine("load <filename>            Loads <filename> addon into the memory");
-                            if (!Whitelist.Override)
-                                Console.WriteLine("new <filename>             Create a new, empty addon named <filename>");
-                        }
-
-                        if (AddonHandle is RealtimeAddon)
-                        {
-                            if (AddonHandle.CanWrite && !Whitelist.Override)
-                            {
-                                Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
-                                Console.WriteLine("add <filename> [path]      Adds <filename> (to [path] if specified)");
-
-                                Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
-                                Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
-                            }
-                            Console.WriteLine("list                       Lists the files in the memory");
-                            if (AddonHandle.CanWrite && !Whitelist.Override)
-                                Console.WriteLine("remove <filename>          Removes <filename> from the archive");
-                            Console.WriteLine("extract <filename> [path]  Extract <filename> (to [path] if specified)");
-                            Console.WriteLine("mget <folder> <f1> [f2...] Extract all specified files to <folder>");
-                            if (AddonHandle.CanWrite && !Whitelist.Override)
-                            {
-                                Console.WriteLine("export                     View the list of exported files");
-                                Console.WriteLine("export <filename> [path]   Export <filename> for editing (to [path] if specified)");
-                                Console.WriteLine("pull                       Pull changes from all exported files");
-                                Console.WriteLine("pull <filename>            Pull the changes of exported <filename>");
-                                Console.WriteLine("drop <filename>            Drops the export for <filename>");
-                            }
-                            Console.WriteLine("get <parameter>            Prints the value of metadata <parameter>");
-                            if (AddonHandle.CanWrite && !Whitelist.Override)
-                            {
-                                Console.WriteLine("set <parameter> [value]    Sets metadata <parameter> to the specified [value]");
-                                Console.WriteLine("push                       Writes the changes to the disk");
-                            }
-                            Console.WriteLine("shellexec <path>           Execute the specified file");
-
-                            Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
-                            Console.WriteLine("close                      Closes the addon (dropping all changes)");
-
-                            Console.WriteLine("path                       Prints the full path of the current addon.");
-                        }
-
-                        Console.WriteLine("pwd                        Prints SharpGMad's current working directory");
-                        Console.WriteLine("cd <folder>                Changes the current working directory to <folder>");
-#if MONO
-                        Console.Write("ls                         ");
-#endif
-#if WINDOWS
-                        Console.Write("dir                        ");
-#endif
-                        Console.WriteLine("List all files in the current directory");
-
-                        if (AddonHandle == null || (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
-                            Console.WriteLine("gui                        Load the GUI");
-
-                        Console.WriteLine("help                       Show the list of available commands");
-
-                        if (AddonHandle == null)
-                            Console.WriteLine("exit                       Exits");
-
-                        if (AddonHandle is RealtimeAddon)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Magenta;
-                            Console.WriteLine("Commands marked with an f (for example: add, close) can be called as such (fadd, fclose).");
-                            Console.WriteLine("Doing so will run a forced version of the command not prompting the user for error correction.");
-                            Console.ResetColor();
-
-                            if (AddonHandle.Modified)
-                            {
-                                Console.Write("The addon has been ");
-                                Console.ForegroundColor = ConsoleColor.Green;
-                                Console.Write("modified");
-                                Console.ResetColor();
-                                Console.WriteLine(". Execute `push` to save changes to the disk.");
-                            }
-
-                            if (AddonHandle.Pullable)
-                            {
-                                Console.Write("There are exported files which have been changed. ");
-                                Console.ForegroundColor = ConsoleColor.Yellow;
-                                Console.WriteLine("These changes are pullable.");
-                                Console.ResetColor();
-                                Console.WriteLine("`export` lists all exports or type `pull` to pull the changes.");
-                            }
-                        }
-
-                        if (Whitelist.Override)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Due to opening a whitelist non compliant addon, the restrictions and addon modification capability has been disabled.");
-                            Console.ResetColor();
-                        }
-
                         break;
                     case "exit":
                         if (AddonHandle is RealtimeAddon)
@@ -1653,6 +1929,14 @@ namespace SharpGMad
         /// <param name="path">The path of the file WITHIN the addon.</param>
         private static void ShellExecute(string path)
         {
+            if (AddonHandle == null)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("No addon is open.");
+                Console.ResetColor();
+                return;
+            }
+
             string temppath;
             try
             {
