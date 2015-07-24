@@ -2,17 +2,47 @@
 
 namespace SharpGMad.Shell
 {
+    /// <summary>
+    /// The abstract base class to represent a command's argument
+    /// </summary>
     abstract class Argument
     {
+        /// <summary>
+        /// The name of the argument
+        /// </summary>
         public string Name { get; protected set; }
+        /// <summary>
+        /// The value of the argument
+        /// </summary>
         protected object Value;
-        protected string StringValue;
+
+        /// <summary>
+        /// Whether the argument is mandatory - if yes, it must be assigned a value before executing the command
+        /// </summary>
         public bool Mandatory { get; set; }
+        /// <summary>
+        /// Marks the argument to act as a "params parameter". Every value will be parsed into a typed array
+        /// </summary>
         public bool MultiParams { get; protected set; }
-        protected Func<string, object> Projector;
-        protected string BindErrorMessage;
+
+        /// <summary>
+        /// The real type of the argument's value
+        /// </summary>
         public Type ResultType { get; protected set; }
+
+        /// <summary>
+        /// The error message to give if setting the value fails
+        /// </summary>
+        protected string BindErrorMessage;
+
+        // These are needed to access the generics inherited from this base class
+        /// <summary>
+        /// The delegate over which the value can be set
+        /// </summary>
         protected Action<string> TypedSetValueDelegate;
+        /// <summary>
+        /// The delegate over which it can be determined if a value exists
+        /// </summary>
         protected Func<bool> TypedHasValueDelegate;
 
         protected Argument()
@@ -20,7 +50,6 @@ namespace SharpGMad.Shell
             this.Name = String.Empty;
             this.Mandatory = false;
             this.MultiParams = false;
-            this.Projector = ((s) => { return s; });
             this.BindErrorMessage = String.Empty;
             this.ResultType = String.Empty.GetType();
             this.TypedSetValueDelegate = ((s) => this.BluntSetValue(s));
@@ -32,7 +61,6 @@ namespace SharpGMad.Shell
         private void BluntSetValue(object value)
         {
             this.Value = value;
-            this.StringValue = value.ToString();
         }
 
         private bool BluntHasValue()
@@ -40,29 +68,56 @@ namespace SharpGMad.Shell
             return this.Value != null;
         }
 
+        /// <summary>
+        /// True if a value is bound to this argument
+        /// </summary>
         public bool HasValue { get { return this.TypedHasValueDelegate(); } }
 
+        /// <summary>
+        /// Get the value bound to this argument
+        /// </summary>
+        /// <returns>The value boxed as an Object.
+        /// The executing command must make sure to cast the value to its real type.</returns>
         public object GetValue()
         {
             return this.Value;
         }
 
+        /// <summary>
+        /// Bind the given value to this argument
+        /// </summary>
+        /// <param name="value">The value as a string to be parsed</param>
         public void SetValue(string value)
         {
             this.TypedSetValueDelegate(value);
         }
 
+        /// <summary>
+        /// Unbind the argument's value
+        /// </summary>
         public void Reset()
         {
             this.Value = null;
-            this.StringValue = String.Empty;
         }
     }
 
+    /// <summary>
+    /// A command's argument of arbitrary type
+    /// </summary>
+    /// <typeparam name="T">type of argument</typeparam>
     class Argument<T> : Argument
     {
+        /// <summary>
+        /// A function which converts the shell-given string value to the argument's real type
+        /// </summary>
         private Func<string, T> TypedProjector;
 
+        /// <summary>
+        /// Create a new argument
+        /// </summary>
+        /// <param name="name">The name of the argument</param>
+        /// <param name="proj">A function that converts a String value to the type of this argument</param>
+        /// <param name="bindErrMsg">An error message to show if the conversion by proj fails</param>
         public Argument(string name, Func<string, T> proj, string bindErrMsg = "")
             : base()
         {
@@ -73,33 +128,11 @@ namespace SharpGMad.Shell
             base.TypedSetValueDelegate = ((s) => this.TypedSetValue(s));
         }
 
-        public Argument(string name, string value, Func<string, T> proj, string bindErrMsg = "")
-            : this(name, proj, bindErrMsg)
-        {
-            if (proj == null)
-                throw new ArgumentNullException("proj", "Projection delegate must be set. " +
-                    "If you intend a string argument, use the base type Argument.");
-            try
-            {
-                base.Value = proj(value);
-            }
-            catch (Exception e)
-            {
-                throw new ArgumentException(bindErrMsg, "value", e);
-            }
-
-            base.StringValue = value;
-        }
-
-        public Argument(string name, T value)
-        {
-            base.Name = name;
-            base.Value = value;
-            base.StringValue = value.ToString();
-            base.ResultType = value.GetType();
-        }
-
-        public void TypedSetValue(string value)
+        /// <summary>
+        /// Bind the given value to this argument
+        /// </summary>
+        /// <param name="value">The value as a string to be parsed</param>
+        private void TypedSetValue(string value)
         {
             try
             {
@@ -109,15 +142,27 @@ namespace SharpGMad.Shell
             {
                 throw new ArgumentException(this.BindErrorMessage, e);
             }
-
-            this.StringValue = value;
         }
     }
 
+    /// <summary>
+    /// An arbitrary type command argument having MultiParams set.
+    /// These arguments hold the bound values in an array T[] instead of having only one value bound.
+    /// </summary>
+    /// <typeparam name="T">type of argument</typeparam>
     class ParamsArgument<T> : Argument
     {
+        /// <summary>
+        /// A function which converts the shell-given string value to the argument's real type
+        /// </summary>
         private Func<string, T> TypedProjector;
 
+        /// <summary>
+        /// Create a new "params-like" argument
+        /// </summary>
+        /// <param name="name">The name of the argument</param>
+        /// <param name="proj">A function that converts a String value to the type of this argument</param>
+        /// <param name="bindErrMsg">An error message to show if the conversion by proj fails</param>
         public ParamsArgument(string name, Func<string, T> proj, string bindErrMsg = "")
             : base()
         {
@@ -131,30 +176,12 @@ namespace SharpGMad.Shell
             base.MultiParams = true;
         }
 
-        public ParamsArgument(string name, string value, Func<string, T> proj, string bindErrMsg = "")
-            : this(name, proj, bindErrMsg)
-        {
-            if (proj == null)
-                throw new ArgumentNullException("proj", "Projection delegate must be set. " +
-                    "If you intend a string argument, use the base type Argument.");
-            try
-            {
-                base.Value = new T[] { proj(value) };
-            }
-            catch (Exception e)
-            {
-                throw new ArgumentException(bindErrMsg, "value", e);
-            }
-        }
-
-        public ParamsArgument(string name, T[] value)
-        {
-            base.Name = name;
-            base.Value = value;
-            base.ResultType = value.GetType();
-        }
-
-        public void AddValue(string value)
+        /// <summary>
+        /// Bind the given value to this argument.
+        /// Because this is a MultiParams argument, the bound value will be added to the array of values.
+        /// </summary>
+        /// <param name="value">The value as a string to be parsed</param>
+        private void AddValue(string value)
         {
             try
             {
@@ -175,6 +202,9 @@ namespace SharpGMad.Shell
             }
         }
 
+        /// <summary>
+        /// Returns whether the MultiParams argument has at least one value bound
+        /// </summary>
         private bool ParamsHasValue()
         {
             if (this.Value == null)

@@ -6,14 +6,6 @@ using SharpGMad.Shell;
 
 namespace SharpGMad
 {
-    // TODO: support for accessibility
-    [Flags]
-    enum CommandAvailability : byte
-    {
-        Default = 0,
-
-    }
-
     /// <summary>
     /// Provides an interface for handling realtime functionality from the commandline.
     /// </summary>
@@ -24,6 +16,9 @@ namespace SharpGMad
         /// </summary>
         static RealtimeAddon AddonHandle;
 
+        /// <summary>
+        /// A list of commands available in this shell
+        /// </summary>
         private static CommandRegistry Commands;
 
         /// <summary>
@@ -44,7 +39,7 @@ namespace SharpGMad
                 NewAddon(filename);
             });
             comm.Description = "Create a new, empty addon named <filename>";
-            comm.Arguments.Add(new Argument<string>("filename",
+            comm.AddArgument(new Argument<string>("filename",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -62,7 +57,7 @@ namespace SharpGMad
                 LoadAddon(filename);
             });
             comm.Description = "Loads <filename> addon into the memory";
-            comm.Arguments.Add(new Argument<string>("filename",
+            comm.AddArgument(new Argument<string>("filename",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -80,7 +75,7 @@ namespace SharpGMad
                 AddFile(filename, path, true); // TODO: true becomes false if forced add
             });
             comm.Description = "Adds <filename> (as [path] if specified)";
-            comm.Arguments.Add(new Argument<string>("filename",
+            comm.AddArgument(new Argument<string>("filename",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -89,7 +84,7 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
-            comm.Arguments.Add(new Argument<string>("path", (s) => { return s; }));
+            comm.AddArgument(new Argument<string>("path", (s) => { return s; }));
             Commands.Add(comm);
 
             // Add a whole folder
@@ -99,7 +94,7 @@ namespace SharpGMad
                 AddFolder(folder, true); // TODO: true becomes false if forced add
             });
             comm.Description = "Adds all files from <folder> to the archive";
-            comm.Arguments.Add(new Argument<string>("folder",
+            comm.AddArgument(new Argument<string>("folder",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -122,7 +117,7 @@ namespace SharpGMad
                 RemoveFile(filename);
             });
             comm.Description = "Removes <filename> from the archive";
-            comm.Arguments.Add(new Argument<string>("filename",
+            comm.AddArgument(new Argument<string>("filename",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -141,7 +136,7 @@ namespace SharpGMad
                 ExtractFile(filename, path);
             });
             comm.Description = "Extract <filename> (to [path] if specified)";
-            comm.Arguments.Add(new Argument<string>("filename",
+            comm.AddArgument(new Argument<string>("filename",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -150,7 +145,7 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
-            comm.Arguments.Add(new Argument<string>("path", (s) => { return s; }));
+            comm.AddArgument(new Argument<string>("path", (s) => { return s; }));
             Commands.Add(comm);
 
             // Extract multiple files
@@ -180,7 +175,7 @@ namespace SharpGMad
                 }
             });
             comm.Description = "Extract all specified files to <folder>";
-            comm.Arguments.Add(new Argument<string>("folder",
+            comm.AddArgument(new Argument<string>("folder",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -189,7 +184,7 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
-            comm.Arguments.Add(new ParamsArgument<string>("filenames",
+            comm.AddArgument(new ParamsArgument<string>("filenames",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -201,7 +196,57 @@ namespace SharpGMad
             Commands.Add(comm);
 
             // Export
-            // TODO: support overloading ...
+            CommandOverload export = new CommandOverload("export");
+            comm = new Command("export", (self) =>
+            {
+                if (!AddonHandle.CanWrite)
+                {
+                    ConsoleExtensions.WriteColor("Addon read-only. Use `extract` to unpack files from it.", ConsoleColor.Yellow);
+                    return;
+                }
+
+                if (AddonHandle.WatchedFiles.Count == 0)
+                    Console.WriteLine("No files are exported.");
+                else
+                {
+
+                    Console.WriteLine(AddonHandle.WatchedFiles.Count + " files currently exported:");
+                    int i = 0;
+                    foreach (FileWatch watch in AddonHandle.WatchedFiles)
+                        Console.WriteLine(++i +
+                            ((watch.Modified) ? "* " : " ") +
+                            watch.ContentPath + " at " + watch.FilePath);
+                }
+            });
+            comm.Description = "View the list of exported files";
+            export.Add("export_ViewList", comm);
+
+            comm = new Command("export", (self) =>
+            {
+                if (!AddonHandle.CanWrite)
+                {
+                    ConsoleExtensions.WriteColor("Addon read-only. Use `extract` to unpack files from it.", ConsoleColor.Yellow);
+                    return;
+                }
+
+                string filename = (string)self.GetArgument("filename").GetValue();
+                string path = (string)self.GetArgument("path").GetValue();
+                ExportFile(filename, path);
+            });
+            comm.Description = "Export <filename> for editing (to [path] if specified)";
+            comm.AddArgument(new Argument<string>("filename",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filename was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            comm.AddArgument(new Argument<string>("path", (s) => { return s; }));
+            export.Add("export_ExportFile", comm);
+
+            Commands.Add(export);
 
             // Drop an export
             comm = new Command("drop", (self) =>
@@ -210,7 +255,7 @@ namespace SharpGMad
                 DropExport(filename);
             });
             comm.Description = "Drops the export for <filename>";
-            comm.Arguments.Add(new Argument<string>("filename",
+            comm.AddArgument(new Argument<string>("filename",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -236,7 +281,7 @@ namespace SharpGMad
                 ShellExecute(path);
             });
             comm.Description = "Execute the specified <filename>";
-            comm.Arguments.Add(new Argument<string>("filename",
+            comm.AddArgument(new Argument<string>("filename",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -282,7 +327,7 @@ namespace SharpGMad
                 }
             });
             comm.Description = "Changes the current working directory to <folder>";
-            comm.Arguments.Add(new Argument<string>("folder",
+            comm.AddArgument(new Argument<string>("folder",
                 (s) =>
                 {
                     if (String.IsNullOrWhiteSpace(s))
@@ -466,10 +511,10 @@ namespace SharpGMad
 
                 if (AddonHandle is RealtimeAddon)
                 {
-                    Console.ForegroundColor = ConsoleColor.Magenta;
-                    Console.WriteLine("Commands marked with an f (for example: add, close) can be called as such (fadd, fclose).");
-                    Console.WriteLine("Doing so will run a forced version of the command not prompting the user for error correction.");
-                    Console.ResetColor();
+                    //Console.ForegroundColor = ConsoleColor.Magenta;
+                    //Console.WriteLine("Commands marked with an f (for example: add, close) can be called as such (fadd, fclose).");
+                    //Console.WriteLine("Doing so will run a forced version of the command not prompting the user for error correction.");
+                    //Console.ResetColor();
 
                     if (AddonHandle.Modified)
                     {
@@ -501,7 +546,7 @@ namespace SharpGMad
             comm.Description = "Show the list of available commands";
             Commands.Add(comm);
 
-            Commands.AddAlias("?", "help");
+            Commands.AddAlias("help", "?");
 
             // Exit
         }
@@ -571,46 +616,6 @@ namespace SharpGMad
                 switch (command[0].ToLowerInvariant())
                 {
                     // TODO: make this a Command
-                    case "export":
-                        if (!AddonHandle.CanWrite)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("Addon read-only. Use `extract` to unpack files from it.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        string exportPath = String.Empty;
-                        try
-                        {
-                            exportPath = command[2];
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            // Noop.
-                        }
-
-                        try
-                        {
-                            ExportFile(command[1], exportPath);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            if (AddonHandle.WatchedFiles.Count == 0)
-                                Console.WriteLine("No files are exported.");
-                            else
-                            {
-
-                                Console.WriteLine(AddonHandle.WatchedFiles.Count + " files currently exported:");
-                                int i = 0;
-                                foreach (FileWatch watch in AddonHandle.WatchedFiles)
-                                    Console.WriteLine(++i +
-                                        ((watch.Modified) ? "* " : " ") +
-                                        watch.ContentPath + " at " + watch.FilePath);
-                            }
-                        }
-
-                        break;
                     case "pull":
                         if (!AddonHandle.CanWrite)
                         {

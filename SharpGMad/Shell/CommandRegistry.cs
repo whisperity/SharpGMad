@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace SharpGMad.Shell
 {
+    /// <summary>
+    /// Holds a set of commands.
+    /// </summary>
     class CommandRegistry
     {
         private List<Command> Commands;
@@ -22,7 +25,12 @@ namespace SharpGMad.Shell
             this.Commands.Add(com);
         }
 
-        public void AddAlias(string aliasVerb, string realVerb)
+        /// <summary>
+        /// Creates an alias for the command realVerb as aliasVerb. Running aliasVerb will execute realVerb.
+        /// </summary>
+        /// <param name="realVerb">The command to provide alias for</param>
+        /// <param name="aliasVerb">The alias to register</param>
+        public void AddAlias(string realVerb, string aliasVerb)
         {
             CommandAlias alias = new CommandAlias(aliasVerb, realVerb, this);
             this.Commands.Add(alias);
