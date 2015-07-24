@@ -542,6 +542,23 @@ namespace SharpGMad
                     Console.ResetColor();
                 }
             };
+
+            help_action = (self) =>
+                {
+                    // Get a list of commands by winding out the overloads.
+                    List<Command> commands = Commands.Enumerate().Where(c => !c.IsAlias && !c.IsGroup && !c.IsOverload).ToList();
+
+                    // Add the overload group members to this list too
+                    foreach (Command overload in Commands.Enumerate().Where(c => c.IsOverload))
+                        commands.AddRange(((CommandOverload)overload).GetCommands().Values);
+
+                    int longestDescLength =
+                        Command.CalculateLongestFittingDescriptionLength(commands);
+
+                    foreach (Command com in Commands.Enumerate().Where(c => !c.IsAlias && !c.IsGroup))
+                        Console.WriteLine(com.UsageMedium(longestDescLength).TrimEnd('\r', '\n'));
+                };
+
             comm = new Command("help", help_action);
             comm.Description = "Show the list of available commands";
             Commands.Add(comm);

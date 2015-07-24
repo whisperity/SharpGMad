@@ -33,7 +33,16 @@ namespace SharpGMad.Shell
         /// <summary>
         /// The list of arguments the command can have
         /// </summary>
-        public List<Argument> Arguments { get { return _Arguments.AsReadOnly().ToList(); } }
+        public List<Argument> Arguments
+        {
+            get
+            {
+                if (_Arguments != null)
+                    return _Arguments.AsReadOnly().ToList();
+                else
+                    return null;
+            }
+        }
         /// <summary>
         /// The action to execute when the command is ran
         /// </summary>
@@ -42,9 +51,9 @@ namespace SharpGMad.Shell
         /// </summary>
         protected Action<Command> Dispatch;
 
-        protected bool IsAlias;
-        protected bool IsGroup;
-        protected bool IsOverload;
+        public bool IsAlias { get; protected set; }
+        public bool IsGroup { get; protected set; } // TODO: command groups - not yet implemented
+        public bool IsOverload { get; protected set; }
 
         protected Command()
         {
@@ -68,19 +77,109 @@ namespace SharpGMad.Shell
         /// <summary>
         /// Generate a short usage string (the list of arguments) for this command
         /// </summary>
-        public string ShortUsageString()
+        public virtual string UsageShort()
         {
-            System.Text.StringBuilder sb = new System.Text.StringBuilder(this.Verb + " ");
-            foreach (Argument arg in this.Arguments)
-                sb.Append(
-                    (arg.Mandatory ? "<" : "[")
-                    + arg.Name
-                    + (arg.MultiParams ? "..." : String.Empty)
-                    + (arg.Mandatory ? ">" : "]")
-                    + " "
-                );
+            if (IsOverload)
+                return ((CommandOverload)this).UsageShort();
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(this.Verb);
+
+            if (this.Arguments != null)
+                if (this.Arguments.Count > 0)
+                {
+                    sb.Append(' ');
+                    foreach (Argument arg in this.Arguments)
+                        sb.Append(
+                            (arg.Mandatory ? "<" : "[")
+                            + arg.Name
+                            + (arg.MultiParams ? "..." : String.Empty)
+                            + (arg.Mandatory ? ">" : "]")
+                            + " "
+                        );
+                }
+
+            return sb.ToString().TrimEnd(' ');
+        }
+
+        /// <summary>
+        /// Generate a medium usage string (the list of arguments and short description) for this command
+        /// </summary>
+        /// <param name="longestDescriptionLength">The length of the longest description of the printed commands
+        /// (when printing multiple commands), the output is aligned to a nice table of one-line rows if possible.</param>
+        public virtual string UsageMedium(int longestDescriptionLength)
+        {
+            if (IsOverload)
+                return ((CommandOverload)this).UsageMedium(longestDescriptionLength);
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.Append(this.UsageShort());
+            if (this.Description.Length <= longestDescriptionLength)
+            {
+                sb.Append(new String(' ', Console.BufferWidth - this.UsageShort().Length - longestDescriptionLength - 1));
+                sb.Append(this.Description);
+            }
+            else
+            {
+                sb.AppendLine();
+                sb.Append("\t" + this.Description);
+            }
 
             return sb.ToString();
+        }
+
+        public static int CalculateLongestFittingDescriptionLength(IEnumerable<Command> commands)
+        {
+            if (commands.Count() == 0)
+                return Console.BufferWidth;
+
+            // First, get the commands with the longest short usage string
+            List<Command> cByArgshelpLength = commands
+                .OrderByDescending(c => c.UsageShort().Length).ToList();
+            //foreach (Command com in cByArgshelpLength)
+            //{
+            //    Console.WriteLine(com.UsageShort());
+            //}
+
+            int longestShort = cByArgshelpLength[0].UsageShort().Length;
+            int maxDescLength = Console.BufferWidth - 1 - longestShort;
+
+            // Find the longest description that could fit in one line with the longest UsageShort() output
+            IEnumerable<Command> longestFittingDesc = commands
+                .Where(c => !String.IsNullOrWhiteSpace(c.Description))
+                .Where(c => c.Description.Length <= maxDescLength)
+                .OrderByDescending(c => c.Description.Length);
+
+            if (longestFittingDesc.Count() > 0)
+                maxDescLength = longestFittingDesc.First().Description.Length - 1;
+
+
+            if (longestFittingDesc.Count() > 0)
+                return longestFittingDesc.First().Description.Length;
+            else
+                return Console.BufferWidth;
+        }
+
+        /// <summary>
+        /// Add the given argument to the arguments of this command
+        /// </summary>
+        public void AddArgument(Argument arg)
+        {
+            if (this._Arguments.Count(a => a.Name == arg.Name) != 0)
+                throw new ArgumentException("An argument with the name " + arg.Name + " already exists.");
+
+            // The argument list should be that mandatory arguments are first
+            // and only one MultiParams argument can exist, and it must be last
+            if (this._Arguments.Count > 0)
+            {
+                if (arg.Mandatory && !this._Arguments[this._Arguments.Count - 1].Mandatory)
+                    throw new ArgumentException("Mandatory arguments must precede all non-mandatory ones.");
+
+                if (this._Arguments[this._Arguments.Count - 1].MultiParams)
+                    throw new ArgumentException("The MultiParams argument of the command must be the last one" +
+                        (arg.MultiParams ? ", and only one such argument can exist" : String.Empty) + ".");
+            }
+
+            this._Arguments.Add(arg);
         }
 
         /// <summary>
@@ -268,7 +367,7 @@ namespace SharpGMad.Shell
                         if (arg.Mandatory && !arg.HasValue)
                         {
                             ConsoleExtensions.WriteColor("missing argument " + arg.Name, ConsoleColor.Red);
-                            Console.WriteLine("Usage: " + this.ShortUsage());
+                            Console.WriteLine("Usage: " + this.UsageShort());
 
                             return; // Don't parse further
                         }
@@ -344,7 +443,7 @@ namespace SharpGMad.Shell
 
             base.Verb = aliasedVerb;
             this.RealVerb = realVerb;
-            base.Description = "Alias for command " + realVerb;
+            base.Description = null;
             base.IsAlias = true;
             base._Arguments = null;
 
@@ -380,6 +479,7 @@ namespace SharpGMad.Shell
         public CommandOverload(string verb)
         {
             this.Commands = new Dictionary<string, Command>();
+            base.Description = null;
             base.Verb = verb;
             base.IsOverload = true;
             base._Arguments = null;
@@ -462,6 +562,39 @@ namespace SharpGMad.Shell
             this.Commands.Add(uniqueName, com);
         }
 
+        public Dictionary<string, Command> GetCommands()
+        {
+            return new Dictionary<string, Command>(this.Commands);
+        }
+
+        /// <summary>
+        /// Generate a short usage (arguments only) string
+        /// </summary>
+        public override string UsageShort()
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+            foreach (Command com in this.Commands.Values)
+                sb.AppendLine(com.UsageShort());
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Generate a medium usage (arguments and short description) string
+        /// </summary>
+        /// <param name="longestDescriptionLength">The length of the longest description in the group,
+        /// the output is aligned to a nice table of one-line rows if possible.</param>
+        public override string UsageMedium(int longestDescriptionLength)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+            foreach (Command com in this.Commands.Values)
+                sb.AppendLine(com.UsageMedium(longestDescriptionLength));
+
+            return sb.ToString();
+        }
+
         /// <summary>
         /// Run the command with the given arguments.
         /// The overload will be resolved and the real command will be ran.
@@ -522,12 +655,8 @@ namespace SharpGMad.Shell
             else
             {
                 ConsoleExtensions.WriteColor("Cannot match the given count of arguments to a particular command.", ConsoleColor.Red);
-                Console.WriteLine("The following commands exist:");
-                foreach (Command com in this.Commands.Values)
-                {
-                    Console.WriteLine(this.Verb + (com.Arguments.Count > 0 ? " " : "")
-                        + com.ShortUsage() + "\t" + com.Description);
-                }
+                Console.WriteLine("The following commands are available:");
+                Console.WriteLine(this.UsageMedium(Command.CalculateLongestFittingDescriptionLength(this.Commands.Values)));
             }
         }
     }

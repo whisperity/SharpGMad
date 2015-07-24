@@ -56,5 +56,11 @@ namespace SharpGMad.Shell
 
             return search.First();
         }
+
+        public IEnumerable<Command> Enumerate()
+        {
+            foreach (Command com in this.Commands)
+                yield return com;
+        }
     }
 }
