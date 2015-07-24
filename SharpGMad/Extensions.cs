@@ -9,6 +9,27 @@ using System.Runtime.InteropServices;
 namespace System
 {
     /// <summary>
+    /// Contains extensions for the Console operations.
+    /// </summary>
+    static class ConsoleExtensions
+    {
+        /// <summary>
+        /// Write a coloured line to the console.
+        /// </summary>
+        /// <param name="value">the value to write</param>
+        /// <param name="color">the foreground colour the value should have</param>
+        /// <param name="newLine">true to automatically insert newline at the end</param>
+        public static void WriteColor(object value, ConsoleColor color = default(ConsoleColor), bool newLine = true)
+        {
+            Console.ForegroundColor = color;
+            Console.Write(value);
+            if (newLine)
+                Console.WriteLine();
+            Console.ResetColor();
+        }
+    }
+
+    /// <summary>
     /// Constains extensions for Int32 (int).
     /// </summary>
     static class Int32Extensions

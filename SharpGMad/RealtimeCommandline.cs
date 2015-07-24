@@ -154,7 +154,51 @@ namespace SharpGMad
             Commands.Add(comm);
 
             // Extract multiple files
-            // TODO: support infinite number of arguments (like params)
+            comm = new Command("mget", (self) =>
+            {
+                string folder = (string)self.GetArgument("folder").GetValue();
+                string[] filenames = (string[])self.GetArgument("filenames").GetValue();
+
+                if (!Directory.Exists(folder))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(folder);
+                    }
+                    catch (IOException)
+                    {
+                        ConsoleExtensions.WriteColor("There was a problem creating the output directory '" + folder + "'.",
+                            ConsoleColor.Red);
+                        return;
+                    }
+                }
+
+                foreach (string path in filenames)
+                {
+                    string outpath = folder + Path.DirectorySeparatorChar + Path.GetFileName(path);
+                    ExtractFile(path, outpath);
+                }
+            });
+            comm.Description = "Extract all specified files to <folder>";
+            comm.Arguments.Add(new Argument<string>("folder",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The folder was not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            comm.Arguments.Add(new ParamsArgument<string>("filenames",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filenames were not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            Commands.Add(comm);
 
             // Export
             // TODO: support overloading ...
@@ -211,7 +255,7 @@ namespace SharpGMad
             // Path of the open addon
             comm = new Command("path", (self) => {
                 if (AddonHandle == null)
-                    WriteColor("No addon is open.", ConsoleColor.Red, true); // TODO: support for accessibility
+                    ConsoleExtensions.WriteColor("No addon is open.", ConsoleColor.Red, true); // TODO: support for accessibility
                 else
                     Console.WriteLine(AddonHandle.AddonPath);
             });
@@ -224,6 +268,30 @@ namespace SharpGMad
             Commands.Add(comm);
 
             // cd
+            comm = new Command("cd", (self) =>
+            {
+                string folder = (string)self.GetArgument("folder").GetValue();
+                try
+                {
+                    Directory.SetCurrentDirectory(folder);
+                }
+                catch (IOException e)
+                {
+                    ConsoleExtensions.WriteColor("There was a problem switching to the given folder:");
+                    Console.WriteLine(e.Message);
+                }
+            });
+            comm.Description = "Changes the current working directory to <folder>";
+            comm.Arguments.Add(new Argument<string>("folder",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filenames were not specified.");
+                    return s;
+                })
+                { Mandatory = true }
+            );
+            Commands.Add(comm);
 
             // List files in the working directory (outside)
             Action<Command> ls_dir_action = (self) =>
@@ -438,15 +506,6 @@ namespace SharpGMad
             // Exit
         }
 
-        public static void WriteColor(object value, ConsoleColor color = default(ConsoleColor), bool newLine = true)
-        {
-            Console.ForegroundColor = color;
-            Console.Write(value);
-            if (newLine)
-                Console.WriteLine();
-            Console.ResetColor();
-        }
-
         /// <summary>
         /// Entry point for realtime command-line
         /// </summary>
@@ -502,76 +561,16 @@ namespace SharpGMad
 
                 if (Commands.Exists(command[0]))
                 {
-                    Commands.Get(command[0]).Invoke(command.Skip(1).ToArray());
+                    Commands.Get(command[0]).Invoke(String.Join(" ", command.Skip(1).ToArray()));
                     continue;
                 }
                 else
-                    WriteColor("Unknown command", ConsoleColor.Red);
+                    ConsoleExtensions.WriteColor("Unknown command", ConsoleColor.Red);
 
-                WriteColor("Attempting from the known legacy commands...", ConsoleColor.Yellow, true);
+                ConsoleExtensions.WriteColor("Attempting from the known legacy commands...", ConsoleColor.Yellow, true);
                 switch (command[0].ToLowerInvariant())
                 {
                     // TODO: make this a Command
-                    case "mget":
-                        string folder;
-                        try
-                        {
-                            folder = command[1];
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The folder was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        if (!Directory.Exists(folder))
-                        {
-                            try
-                            {
-                                Directory.CreateDirectory(folder);
-                            }
-                            catch (IOException)
-                            {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine("There was a problem creating the output directory.");
-                                Console.ResetColor();
-                                break;
-                            }
-                        }
-
-                        if (command.Length < 3)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The filename was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        string[] eparam = new string[command.Length - 2];
-                        try
-                        {
-                            for (int i = 2; i < command.Length; i++)
-                                eparam[i - 2] = command[i];
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            // Noop.
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("There was an error parsing the filelist.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        foreach (string path in eparam)
-                        {
-                            string outpath = folder + Path.DirectorySeparatorChar + Path.GetFileName(path);
-
-                            ExtractFile(path, outpath);
-                        }
-
-                        break;
                     case "export":
                         if (!AddonHandle.CanWrite)
                         {
@@ -744,42 +743,6 @@ namespace SharpGMad
                                 break;
                         }
 
-                        break;
-                    case "cd":
-                        try
-                        {
-                            string path;
-                            try
-                            {
-                                string[] param = new string[command.Length - 1];
-                                for (int i = 1; i < command.Length; i++)
-                                    param[i - 1] = command[i];
-
-                                path = String.Join(" ", param);
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                                // Noop.
-                                path = String.Empty;
-                            }
-
-                            Directory.SetCurrentDirectory(path);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("The folder was not specified.");
-                            Console.ResetColor();
-                            break;
-                        }
-                        catch (IOException e)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("There was a problem switching to that folder.");
-                            Console.ResetColor();
-                            Console.WriteLine(e.Message);
-                            break;
-                        }
                         break;
                     case "exit":
                         if (AddonHandle is RealtimeAddon)
