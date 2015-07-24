@@ -2,191 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SharpGMad.Shell;
 
 namespace SharpGMad
 {
-    abstract class Argument
-    {
-        public string Name { get; protected set; }
-        protected object Value;
-        protected string StringValue;
-        public bool Mandatory { get; set; }
-        protected Func<string, object> Projector;
-        protected string BindErrorMessage;
-        public Type ResultType { get; protected set; }
-        protected Action<string> TypedSetValueDelegate;
-
-        protected Argument()
-        {
-            this.Name = String.Empty;
-            this.Mandatory = false;
-            this.Projector = ((s) => { return s; });
-            this.BindErrorMessage = String.Empty;
-            this.ResultType = String.Empty.GetType();
-            this.TypedSetValueDelegate = ((s) => this.BluntSetValue(s));
-
-            Reset();
-        }
-
-        private void BluntSetValue(object value)
-        {
-            this.Value = value;
-            this.StringValue = value.ToString();
-        }
-
-        public object GetValue()
-        {
-            return this.Value;
-        }
-        
-        public void SetValue(string value)
-        {
-            this.TypedSetValueDelegate(value);
-        }
-
-        public void Reset()
-        {
-            this.Value = null;
-            this.StringValue = String.Empty;
-        }
-    }
-
-    class Argument<T> : Argument
-    {
-        private Func<string, T> TypedProjector;
-
-        public Argument(string name, Func<string, T> proj, string bindErrMsg = "") : base()
-        {
-            base.Name = name;
-            this.TypedProjector = proj;
-            base.ResultType = proj.Method.ReturnType;
-            base.BindErrorMessage = bindErrMsg;
-            base.TypedSetValueDelegate = ((s) => this.TypedSetValue(s));
-        }
-
-        public Argument(string name, string value, Func<string, T> proj, string bindErrMsg = "") : this(name, proj, bindErrMsg)
-        {
-            if (proj == null)
-                throw new ArgumentNullException("proj", "Projection delegate must be set. " +
-                    "If you intend a string argument, use the base type Argument.");
-            try
-            {
-                base.Value = proj(value);
-            }
-            catch (Exception e)
-            {
-                throw new ArgumentException(bindErrMsg, "value", e);
-            }
-
-            base.StringValue = value;
-        }
-
-        public Argument(string name, T value)
-        {
-            base.Name = name;
-            base.Value = value;
-            base.StringValue = value.ToString();
-            base.ResultType = value.GetType();
-        }
-
-        public void TypedSetValue(string value)
-        {
-            try
-            {
-                this.Value = this.TypedProjector(value);
-            }
-            catch (Exception e)
-            {
-                throw new ArgumentException(this.BindErrorMessage, e);
-            }
-
-            this.StringValue = value;
-        }
-    }
-
     // TODO: support for accessibility
     [Flags]
     enum CommandAvailability : byte
     {
         Default = 0,
 
-    }
-
-    class Command
-    {
-        public string Verb { get; private set; }
-        public string Description;
-        public List<Argument> Arguments;
-        public Dictionary<string, Argument> ArgumentsByName { get { return Arguments.ToDictionary(a => a.Name); } }
-        private Action<Command> Dispatch;
-
-        protected Command()
-        {
-            this.Arguments = new List<Argument>();
-        }
-
-        public Command(string verb, Action<Command> dispatch) : this()
-        {
-            this.Verb = verb;
-            this.Dispatch = dispatch;
-        }
-
-        public void Invoke(string[] args)
-        {
-            RealtimeCommandline.WriteColor("Invoking command " + this.Verb +
-                " with command-line arguments \"" + String.Join(";", args) + "\".", ConsoleColor.Yellow, true);
-            // Bind all shell arguments to their values
-            int i = 0;
-            foreach (Argument arg in this.Arguments)
-            {
-                string stringArg = String.Empty;
-                try
-                {
-                    stringArg = args[i++];
-                }
-                catch (IndexOutOfRangeException)
-                {
-                    if (arg.Mandatory)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("missing argument " + arg.Name);
-                        Console.ResetColor();
-                        Console.Write("Usage: " + this.Verb + " ");
-                        foreach (Argument _arg in this.Arguments)
-                            Console.Write((_arg.Mandatory ? "<" : "[") + _arg.Name + (_arg.Mandatory ? ">" : "]") + " ");
-                        Console.WriteLine();
-
-                        return; // Don't parse further
-                    }
-                }
-
-                try
-                {
-                    arg.SetValue(stringArg);
-                }
-                catch (Exception e)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write("invalid value for " + arg.Name);
-                    Console.ResetColor();
-
-                    if (String.IsNullOrWhiteSpace(e.Message) && e.InnerException != null 
-                        && !String.IsNullOrWhiteSpace(e.InnerException.Message))
-                        Console.WriteLine(" " + e.InnerException.Message);
-                    else
-                        Console.WriteLine(" " + e.Message);
-
-                    return;
-                }
-            }
-
-            // Call the associated method
-            this.Dispatch(this);
-
-            // Reset the arguments
-            foreach (Argument arg in this.Arguments)
-                arg.Reset();
-        }
     }
 
     /// <summary>
@@ -199,23 +24,23 @@ namespace SharpGMad
         /// </summary>
         static RealtimeAddon AddonHandle;
 
-        private static List<Command> Commands;
+        private static CommandRegistry Commands;
 
         /// <summary>
         /// The shell's current working directory within the open addon
         /// </summary>
-        private static string CurrentWorkingDirectory;
+        //private static string CurrentWorkingDirectory;
 
         static RealtimeCommandline()
         {
             // Register the commands available in this shell
-            Commands = new List<Command>();
+            Commands = new CommandRegistry();
 
             Command comm;
 
             // Create a new addon
             comm = new Command("new", (self) => {
-                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                string filename = (string)self.GetArgument("filename").GetValue();
                 NewAddon(filename);
             });
             comm.Description = "Create a new, empty addon named <filename>";
@@ -233,7 +58,7 @@ namespace SharpGMad
             // Load an addon
             comm = new Command("load", (self) =>
             {
-                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                string filename = (string)self.GetArgument("filename").GetValue();
                 LoadAddon(filename);
             });
             comm.Description = "Loads <filename> addon into the memory";
@@ -250,8 +75,8 @@ namespace SharpGMad
 
             // Add a file to the open addon
             comm = new Command("add", (self) => {
-                string filename = (string)self.ArgumentsByName["filename"].GetValue();
-                string path = (string)self.ArgumentsByName["path"].GetValue();
+                string filename = (string)self.GetArgument("filename").GetValue();
+                string path = (string)self.GetArgument("path").GetValue();
                 AddFile(filename, path, true); // TODO: true becomes false if forced add
             });
             comm.Description = "Adds <filename> (as [path] if specified)";
@@ -270,7 +95,7 @@ namespace SharpGMad
             // Add a whole folder
             comm = new Command("addfolder", (self) =>
             {
-                string folder = (string)self.ArgumentsByName["folder"].GetValue();
+                string folder = (string)self.GetArgument("folder").GetValue();
                 AddFolder(folder, true); // TODO: true becomes false if forced add
             });
             comm.Description = "Adds all files from <folder> to the archive";
@@ -293,7 +118,7 @@ namespace SharpGMad
             // Remove a file
             comm = new Command("remove", (self) =>
             {
-                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                string filename = (string)self.GetArgument("filename").GetValue();
                 RemoveFile(filename);
             });
             comm.Description = "Removes <filename> from the archive";
@@ -311,8 +136,8 @@ namespace SharpGMad
             // Extract
             comm = new Command("extract", (self) =>
             {
-                string filename = (string)self.ArgumentsByName["filename"].GetValue();
-                string path = (string)self.ArgumentsByName["path"].GetValue();
+                string filename = (string)self.GetArgument("filename").GetValue();
+                string path = (string)self.GetArgument("path").GetValue();
                 ExtractFile(filename, path);
             });
             comm.Description = "Extract <filename> (to [path] if specified)";
@@ -337,7 +162,7 @@ namespace SharpGMad
             // Drop an export
             comm = new Command("drop", (self) =>
             {
-                string filename = (string)self.ArgumentsByName["filename"].GetValue();
+                string filename = (string)self.GetArgument("filename").GetValue();
                 DropExport(filename);
             });
             comm.Description = "Drops the export for <filename>";
@@ -363,7 +188,7 @@ namespace SharpGMad
             // Shell execute a file
             comm = new Command("shellexec", (self) =>
             {
-                string path = (string)self.ArgumentsByName["filename"].GetValue();
+                string path = (string)self.GetArgument("filename").GetValue();
                 ShellExecute(path);
             });
             comm.Description = "Execute the specified <filename>";
@@ -607,11 +432,8 @@ namespace SharpGMad
             comm = new Command("help", help_action);
             comm.Description = "Show the list of available commands";
             Commands.Add(comm);
-            
-            // TODO: support aliasing
-            comm = new Command("?", help_action);
-            comm.Description = "Show the list of available commands";
-            Commands.Add(comm);
+
+            Commands.AddAlias("?", "help");
 
             // Exit
         }
@@ -678,16 +500,13 @@ namespace SharpGMad
                 if (String.IsNullOrWhiteSpace(command[0]))
                     continue;
 
-                IEnumerable<Command> com = Commands.Where(c => c.Verb == command[0]);
-                if (com.Count() == 0)
+                if (Commands.Exists(command[0]))
                 {
-                    WriteColor("Unknown command", ConsoleColor.Red);
-                }
-                else
-                {
-                    com.First().Invoke(command.Skip(1).ToArray());
+                    Commands.Get(command[0]).Invoke(command.Skip(1).ToArray());
                     continue;
                 }
+                else
+                    WriteColor("Unknown command", ConsoleColor.Red);
 
                 WriteColor("Attempting from the known legacy commands...", ConsoleColor.Yellow, true);
                 switch (command[0].ToLowerInvariant())

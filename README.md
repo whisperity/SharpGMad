@@ -11,7 +11,7 @@ time, it was given an extended set of functionality, most notably the
 graphical interface and realtime access.
 
 (The current version implements and complies with
-[`a121a70`](http://github.com/garrynewman/gmad/tree/a121a70e298ab6e07fa77a5e4f72018c7480f758).)
+[`377f345`](http://github.com/garrynewman/gmad/tree/377f3458bf1ecb8a1a2217c2194773e3c2a2dea0).)
 
 Usage
 -----

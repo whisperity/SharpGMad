@@ -98,6 +98,9 @@
     <Compile Include="Reader.cs" />
     <Compile Include="RealtimeAddon.cs" />
     <Compile Include="RealtimeCommandline.cs" />
+    <Compile Include="Shell\Argument.cs" />
+    <Compile Include="Shell\Command.cs" />
+    <Compile Include="Shell\CommandRegistry.cs" />
     <Compile Include="Tags.cs" />
     <Compile Include="Whitelist.cs" />
     <Compile Include="Writer.cs" />
