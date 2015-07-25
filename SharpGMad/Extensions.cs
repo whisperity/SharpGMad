@@ -72,29 +72,40 @@ namespace System
         /// </summary>
         static public string Pretty()
         {
-            return Pretty(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            System.Reflection.AssemblyInformationalVersionAttribute[] informalVersions =
+                (System.Reflection.AssemblyInformationalVersionAttribute[])(System.Reflection.Assembly
+                .GetEntryAssembly()
+                .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false));
+
+            System.Reflection.AssemblyInformationalVersionAttribute info = null;
+            if (informalVersions.Length == 1) // There can be only one informal version for an assembly
+                info = informalVersions[0];
+
+            Version ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            return Pretty(ver, info.InformationalVersion);
         }
 
         /// <summary>
         /// Gets the specified version's string with omitting the trailing zeros.
         /// </summary>
         /// <param name="ver">A version</param>
+        /// <param name="info">The informal version to suffix the string with</param>
         /// <returns>The version's string prettyfied</returns>
-        static public string Pretty(this Version ver)
+        static public string Pretty(this Version ver, string info = null)
         {
-                int fieldCount = 0;
+            int fieldCount = 0;
 
-                // Increment the required fields until there is a value (this emits the trailing zeros)
-                if (ver.Major != 0)
-                    fieldCount = 1;
-                if (ver.Minor != 0)
-                    fieldCount = 2;
-                if (ver.Build != 0)
-                    fieldCount = 3;
-                if (ver.Revision != 0)
-                    fieldCount = 4;
+            // Increment the required fields until there is a value (this emits the trailing zeros)
+            if (ver.Major != 0)
+                fieldCount = 1;
+            if (ver.Minor != 0)
+                fieldCount = 2;
+            if (ver.Build != 0)
+                fieldCount = 3;
+            if (ver.Revision != 0)
+                fieldCount = 4;
 
-                return "v" + ver.ToString(fieldCount);
+            return "v" + ver.ToString(fieldCount) + (!String.IsNullOrWhiteSpace(info) ? "-" + info : String.Empty);
         }
     }
 }

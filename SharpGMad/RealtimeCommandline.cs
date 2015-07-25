@@ -48,6 +48,12 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
+            // if AddonHandle == null && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonUnloaded,
+                Exclude = Availability.WhitelistOverridden
+            });
             Commands.Add(comm);
 
             // Load an addon
@@ -66,6 +72,11 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
+            // if AddonHandle == null
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonUnloaded
+            });
             Commands.Add(comm);
 
             // Add a file to the open addon
@@ -85,6 +96,12 @@ namespace SharpGMad
                 { Mandatory = true }
             );
             comm.AddArgument(new Argument<string>("path", (s) => { return s; }));
+            // if AddonHandle != null && AddonHandle.CanWrite && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded | Availability.AddonWriteable,
+                Exclude = Availability.WhitelistOverridden
+            });
             Commands.Add(comm);
 
             // Add a whole folder
@@ -103,11 +120,22 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
+            // if AddonHandle != null && AddonHandle.CanWrite && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded | Availability.AddonWriteable,
+                Exclude = Availability.WhitelistOverridden
+            });
             Commands.Add(comm);
 
             // List files
             comm = new Command("list", (self) => { ListFiles(); });
             comm.Description = "Lists the files in the memory";
+            // if AddonHandle != null
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded
+            });
             Commands.Add(comm);
 
             // Remove a file
@@ -126,6 +154,12 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
+            // if AddonHandle != null && AddonHandle.CanWrite && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded | Availability.AddonWriteable,
+                Exclude = Availability.WhitelistOverridden
+            });
             Commands.Add(comm);
 
             // Extract
@@ -146,6 +180,11 @@ namespace SharpGMad
                 { Mandatory = true }
             );
             comm.AddArgument(new Argument<string>("path", (s) => { return s; }));
+            // if AddonHandle != null
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded
+            });
             Commands.Add(comm);
 
             // Extract multiple files
@@ -193,6 +232,11 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
+            // if AddonHandle != null
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded
+            });
             Commands.Add(comm);
 
             // Export
@@ -219,6 +263,12 @@ namespace SharpGMad
                 }
             });
             comm.Description = "View the list of exported files";
+            // if AddonHandle != null && AddonHandle.CanWrite && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded | Availability.AddonWriteable,
+                Exclude = Availability.WhitelistOverridden
+            });
             export.Add("export_ViewList", comm);
 
             comm = new Command("export", (self) =>
@@ -244,9 +294,73 @@ namespace SharpGMad
                 { Mandatory = true }
             );
             comm.AddArgument(new Argument<string>("path", (s) => { return s; }));
+            // if AddonHandle != null && AddonHandle.CanWrite && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded | Availability.AddonWriteable,
+                Exclude = Availability.WhitelistOverridden
+            });
             export.Add("export_ExportFile", comm);
 
             Commands.Add(export);
+
+            // Pull exports or an export
+            CommandOverload pull = new CommandOverload("pull");
+            comm = new Command("pull", (self) =>
+            {
+                if (!AddonHandle.CanWrite)
+                {
+                    ConsoleExtensions.WriteColor("Cannot modify a read-only addon.", ConsoleColor.Red);
+                    return;
+                }
+
+                if (AddonHandle.WatchedFiles.Count == 0)
+                    Console.WriteLine("No files are exported.");
+                else
+                {
+                    Console.WriteLine("Pulling " + AddonHandle.WatchedFiles.Count + " files:");
+                    foreach (FileWatch watch in AddonHandle.WatchedFiles)
+                        PullFile(watch.ContentPath);
+                }
+            });
+            comm.Description = "Pull changes from all exported files";
+            // if AddonHandle != null && AddonHandle.CanWrite && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded | Availability.AddonWriteable,
+                Exclude = Availability.WhitelistOverridden
+            });
+            pull.Add("pull_PullAll", comm);
+
+            comm = new Command("pull", (self) =>
+            {
+                if (!AddonHandle.CanWrite)
+                {
+                    ConsoleExtensions.WriteColor("Cannot modify a read-only addon.", ConsoleColor.Red);
+                    return;
+                }
+
+                string filename = (string)self.GetArgument("filename").GetValue();
+                PullFile(filename);
+            });
+            comm.Description = "Pull the changes of exported <filename>";
+            comm.AddArgument(new Argument<string>("filename",
+                (s) =>
+                {
+                    if (String.IsNullOrWhiteSpace(s))
+                        throw new ArgumentException("The filename was not specified.");
+                    return s;
+                }) { Mandatory = true }
+            );
+            // if AddonHandle != null && AddonHandle.CanWrite && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded | Availability.AddonWriteable,
+                Exclude = Availability.WhitelistOverridden
+            });
+            pull.Add("pull_OneFile", comm);
+
+            Commands.Add(pull);
 
             // Drop an export
             comm = new Command("drop", (self) =>
@@ -264,6 +378,12 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
+            // if AddonHandle != null && AddonHandle.CanWrite && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded | Availability.AddonWriteable,
+                Exclude = Availability.WhitelistOverridden
+            });
             Commands.Add(comm);
 
             // Get a metadata
@@ -272,6 +392,12 @@ namespace SharpGMad
             // Write changes to the disk
             comm = new Command("push", (self) => { Push(); });
             comm.Description = "Writes the changes to the disk";
+            // if AddonHandle != null && AddonHandle.CanWrite && !Whitelist.Override
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded | Availability.AddonWriteable,
+                Exclude = Availability.WhitelistOverridden
+            });
             Commands.Add(comm);
 
             // Shell execute a file
@@ -290,11 +416,21 @@ namespace SharpGMad
                 })
                 { Mandatory = true }
             );
+            // if AddonHandle != null
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded
+            });
             Commands.Add(comm);
 
             // Close the addon
             comm = new Command("close", (self) => { CloseAddon(false); }); // TODO: false becomes true if forced
             comm.Description = "Closes the addon (dropping all changes)";
+            // if AddonHandle != null
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded
+            });
             Commands.Add(comm);
 
             // Path of the open addon
@@ -305,6 +441,11 @@ namespace SharpGMad
                     Console.WriteLine(AddonHandle.AddonPath);
             });
             comm.Description = "Prints the full path of the current addon";
+            // if AddonHandle != null
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded
+            });
             Commands.Add(comm);
 
             // pwd
@@ -437,78 +578,47 @@ namespace SharpGMad
                 }
             });
             comm.Description = "Load the GUI";
+            // if AddonHandle == null
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonUnloaded
+            });
+            // if AddonHandle != null && !AddonHandle.Modified
+            comm.Availability.Add(new AvailabilityRule()
+            {
+                Include = Availability.AddonLoaded,
+                Exclude = Availability.AddonModified
+            });
             Commands.Add(comm);
 
             // Print available commands
-            Action<Command> help_action = (self) =>
+            // Some legacy help methods
+            Action<Command> help_head = (self) =>
             {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("SharpGMad " + VersionExtensions.Pretty());
-                Console.WriteLine("Available commands:");
-                Console.ResetColor();
-
-                if (AddonHandle == null)
-                {
-                    Console.WriteLine("load <filename>            Loads <filename> addon into the memory");
-                    if (!Whitelist.Override)
-                        Console.WriteLine("new <filename>             Create a new, empty addon named <filename>");
-                }
+                ConsoleExtensions.WriteColor("SharpGMad " + VersionExtensions.Pretty(), ConsoleColor.Green);
+                ConsoleExtensions.WriteColor("Available commands:", ConsoleColor.Green);
 
                 if (AddonHandle is RealtimeAddon)
                 {
                     if (AddonHandle.CanWrite && !Whitelist.Override)
                     {
-                        Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
-                        Console.WriteLine("add <filename> [path]      Adds <filename> (to [path] if specified)");
-
-                        Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
-                        Console.WriteLine("addfolder <folder>         Adds all files from <folder> to the archive");
-                    }
-                    Console.WriteLine("list                       Lists the files in the memory");
-                    if (AddonHandle.CanWrite && !Whitelist.Override)
-                        Console.WriteLine("remove <filename>          Removes <filename> from the archive");
-                    Console.WriteLine("extract <filename> [path]  Extract <filename> (to [path] if specified)");
-                    Console.WriteLine("mget <folder> <f1> [f2...] Extract all specified files to <folder>");
-                    if (AddonHandle.CanWrite && !Whitelist.Override)
-                    {
-                        Console.WriteLine("export                     View the list of exported files");
-                        Console.WriteLine("export <filename> [path]   Export <filename> for editing (to [path] if specified)");
-                        Console.WriteLine("pull                       Pull changes from all exported files");
-                        Console.WriteLine("pull <filename>            Pull the changes of exported <filename>");
-                        Console.WriteLine("drop <filename>            Drops the export for <filename>");
+                        //ConsoleExtensions.WriteColor("f", ConsoleColor.Magenta, false);
+                        //Console.WriteLine("add <filename> [path]      FORCED version of add (TBI)");
+                        //ConsoleExtensions.WriteColor("f", ConsoleColor.Magenta, false);
+                        //Console.WriteLine("addfolder <folder>         FORCED version of addfolder (TBI)");
                     }
                     Console.WriteLine("get <parameter>            Prints the value of metadata <parameter>");
                     if (AddonHandle.CanWrite && !Whitelist.Override)
-                    {
                         Console.WriteLine("set <parameter> [value]    Sets metadata <parameter> to the specified [value]");
-                        Console.WriteLine("push                       Writes the changes to the disk");
-                    }
-                    Console.WriteLine("shellexec <path>           Execute the specified file");
 
-                    Console.ForegroundColor = ConsoleColor.Magenta; Console.Write("f"); Console.ResetColor();
-                    Console.WriteLine("close                      Closes the addon (dropping all changes)");
-
-                    Console.WriteLine("path                       Prints the full path of the current addon.");
+                    //ConsoleExtensions.WriteColor("f", ConsoleColor.Magenta, false);
+                    //Console.WriteLine("close                      FORCED version of close dropping all changes (TBI)");
                 }
+            };
 
-                Console.WriteLine("pwd                        Prints SharpGMad's current working directory");
-                Console.WriteLine("cd <folder>                Changes the current working directory to <folder>");
-#if MONO
-                        Console.Write("ls                         ");
-#endif
-#if WINDOWS
-                Console.Write("dir                        ");
-#endif
-                Console.WriteLine("List all files in the current directory");
-
-                if (AddonHandle == null || (AddonHandle is RealtimeAddon && !AddonHandle.Modified))
-                    Console.WriteLine("gui                        Load the GUI");
-
-                Console.WriteLine("help                       Show the list of available commands");
-
-                if (AddonHandle == null)
-                    Console.WriteLine("exit                       Exits");
-
+            Action<Command> help_foot = (self) =>
+            {
                 if (AddonHandle is RealtimeAddon)
                 {
                     //Console.ForegroundColor = ConsoleColor.Magenta;
@@ -543,21 +653,35 @@ namespace SharpGMad
                 }
             };
 
-            help_action = (self) =>
+            Action<Command> help_action = (self) =>
+            {
+                help_head(self);
+
+                // Get a list of commands by winding out the overloads.
+                List<Command> commands = Commands.Enumerate().Where(c => !c.IsAlias && !c.IsGroup && !c.IsOverload).ToList();
+
+                // Add the overload group members to this list too
+                foreach (Command overload in Commands.Enumerate().Where(c => c.IsOverload))
+                    commands.AddRange(((CommandOverload)overload).GetCommands().Values);
+
+                int longestDescLength = 
+                    Command.CalculateLongestFittingDescriptionLength(commands);
+
+                foreach (Command com in Commands.Enumerate().Where(c => !c.IsAlias && !c.IsGroup))
                 {
-                    // Get a list of commands by winding out the overloads.
-                    List<Command> commands = Commands.Enumerate().Where(c => !c.IsAlias && !c.IsGroup && !c.IsOverload).ToList();
+                    if (com.IsOverload)
+                    {
+                        foreach (Command comInOverload in ((CommandOverload)com).GetCommands().Values)
+                            if (Command.AvailableInContext(comInOverload, GetCurrentContext()))
+                                Console.WriteLine(comInOverload.UsageMedium(longestDescLength).TrimEnd('\r', '\n'));
+                    }
+                    else
+                        if (Command.AvailableInContext(com, GetCurrentContext()))
+                            Console.WriteLine(com.UsageMedium(longestDescLength).TrimEnd('\r', '\n'));
+                }
 
-                    // Add the overload group members to this list too
-                    foreach (Command overload in Commands.Enumerate().Where(c => c.IsOverload))
-                        commands.AddRange(((CommandOverload)overload).GetCommands().Values);
-
-                    int longestDescLength =
-                        Command.CalculateLongestFittingDescriptionLength(commands);
-
-                    foreach (Command com in Commands.Enumerate().Where(c => !c.IsAlias && !c.IsGroup))
-                        Console.WriteLine(com.UsageMedium(longestDescLength).TrimEnd('\r', '\n'));
-                };
+                help_foot(self);
+            };
 
             comm = new Command("help", help_action);
             comm.Description = "Show the list of available commands";
@@ -566,6 +690,16 @@ namespace SharpGMad
             Commands.AddAlias("help", "?");
 
             // Exit
+            comm = new Command("exit", (self) =>
+            {
+                ConsoleExtensions.WriteColor("Dummy command, exit is handled by Main()!", ConsoleColor.Yellow);
+            });
+            // if AddonHandle == null
+            comm.Availability.Add(new AvailabilityRule()
+                {
+                    Include = Availability.AddonUnloaded
+                });
+            Commands.Add(comm);
         }
 
         /// <summary>
@@ -621,44 +755,34 @@ namespace SharpGMad
                 if (String.IsNullOrWhiteSpace(command[0]))
                     continue;
 
-                if (Commands.Exists(command[0]))
+                if (command[0] != "exit" && Commands.Exists(command[0]))
                 {
-                    Commands.Get(command[0]).Invoke(String.Join(" ", command.Skip(1).ToArray()));
+                    string argText = String.Join(" ", command.Skip(1).ToArray());
+
+                    if (!Commands.Get(command[0]).CanInvoke(argText, GetCurrentContext()))
+                        ConsoleExtensions.WriteColor("This command cannot be executed right now", ConsoleColor.Red);
+                    else
+                        Commands.Get(command[0]).Invoke(argText);
+
                     continue;
                 }
                 else
-                    ConsoleExtensions.WriteColor("Unknown command", ConsoleColor.Red);
+                {
+                    if (command[0] == "exit")
+                    {
+                        if (AddonHandle is RealtimeAddon)
+                            ConsoleExtensions.WriteColor("Cannot exit. An addon is open!", ConsoleColor.Red);
+                        else
+                            return 0;
+                    }
+                    else
+                        ConsoleExtensions.WriteColor("Unknown command", ConsoleColor.Red);
+                }
 
                 ConsoleExtensions.WriteColor("Attempting from the known legacy commands...", ConsoleColor.Yellow, true);
                 switch (command[0].ToLowerInvariant())
                 {
                     // TODO: make this a Command
-                    case "pull":
-                        if (!AddonHandle.CanWrite)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Cannot modify a read-only addon.");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        try
-                        {
-                            PullFile(command[1]);
-                        }
-                        catch (IndexOutOfRangeException)
-                        {
-                            if (AddonHandle.WatchedFiles.Count == 0)
-                                Console.WriteLine("No files are exported.");
-                            else
-                            {
-                                Console.WriteLine("Pulling " + AddonHandle.WatchedFiles.Count + " files:");
-                                foreach (FileWatch watch in AddonHandle.WatchedFiles)
-                                    PullFile(watch.ContentPath);
-                            }
-                        }
-
-                        break;
                     case "get":
                         string parameter;
                         try
@@ -766,17 +890,6 @@ namespace SharpGMad
                         }
 
                         break;
-                    case "exit":
-                        if (AddonHandle is RealtimeAddon)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Cannot exit. An addon is open!");
-                            Console.ResetColor();
-                            break;
-                        }
-
-                        return 0;
-                        //break;
                     default:
                         if (!String.IsNullOrWhiteSpace(command[0]))
                         {
@@ -788,6 +901,36 @@ namespace SharpGMad
                         break;
                 }
             }
+        }
+
+        private static Availability GetCurrentContext()
+        {
+            Availability cc = Availability.AlwaysAvailable;
+            if (AddonHandle == null)
+                cc |= Availability.AddonUnloaded;
+            else if (AddonHandle is RealtimeAddon)
+                cc |= Availability.AddonLoaded;
+
+            if (Whitelist.Override)
+                cc |= Availability.WhitelistOverridden;
+
+            if (AddonHandle is RealtimeAddon)
+            {
+                if (AddonHandle.CanWrite)
+                    cc |= Availability.AddonWriteable;
+
+                if (AddonHandle.Modified)
+                    cc |= Availability.AddonModified;
+
+                if (AddonHandle.WatchedFiles.Count > 0)
+                {
+                    cc |= Availability.ExportExists;
+                    if (AddonHandle.Pullable)
+                        cc |= Availability.ExportPullable;
+                }
+            }
+
+            return cc;
         }
 
         /// <summary>

@@ -4,14 +4,6 @@ using System.Linq;
 
 namespace SharpGMad.Shell
 {
-    // TODO: support for accessibility
-    [Flags]
-    enum CommandAvailability : byte
-    {
-        Default = 0,
-
-    }
-
     /// <summary>
     /// A command-line command
     /// </summary>
@@ -26,6 +18,10 @@ namespace SharpGMad.Shell
         /// </summary>
         public string Description;
         public string LongDescription;
+        /// <summary>
+        /// The availability contexts in which the command is available
+        /// </summary>
+        public List<AvailabilityRule> Availability;
         /// <summary>
         /// The list of arguments the command can have
         /// </summary>
@@ -51,12 +47,29 @@ namespace SharpGMad.Shell
         /// </summary>
         protected Action<Command> Dispatch;
 
+        public static bool AvailableInContext(Command com, Availability context)
+        {
+            bool available = false;
+
+            if (com.Availability.Count == 0)
+                return true;
+
+            for (int i = 0; i < com.Availability.Count && !available; ++i)
+            {
+                // The command is marked available if the context matches at least one availability
+                available |= com.Availability[i].CheckContext(context);
+            }
+
+            return available;
+        }
+
         public bool IsAlias { get; protected set; }
         public bool IsGroup { get; protected set; } // TODO: command groups - not yet implemented
         public bool IsOverload { get; protected set; }
 
         protected Command()
         {
+            this.Availability = new List<AvailabilityRule>();
             this._Arguments = new List<Argument>();
             this.IsAlias = false;
             this.IsOverload = false;
@@ -113,15 +126,77 @@ namespace SharpGMad.Shell
 
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             sb.Append(this.UsageShort());
-            if (this.Description.Length <= longestDescriptionLength)
+            if (!String.IsNullOrWhiteSpace(this.Description))
+                if (this.Description.Length <= longestDescriptionLength)
+                {
+                    sb.Append(new String(' ', Console.BufferWidth - this.UsageShort().Length - longestDescriptionLength - 1));
+                    sb.Append(this.Description);
+                }
+                else
+                {
+                    sb.AppendLine();
+                    sb.Append("\t" + this.Description);
+                }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Generate a long usage string (arguments, short and long description)
+        /// </summary>
+        public virtual string UsageLong()
+        {
+            if (IsOverload)
+                return ((CommandOverload)this).UsageLong();
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendLine(this.UsageShort());
+            if (!String.IsNullOrWhiteSpace(this.Description))
+                sb.AppendLine(this.Description);
+
+            if (this.Availability.Count > 0)
             {
-                sb.Append(new String(' ', Console.BufferWidth - this.UsageShort().Length - longestDescriptionLength - 1));
-                sb.Append(this.Description);
+                sb.Append("The command can be ran if: \nEither ");
+                List<string> sb2 = new List<string>();
+                foreach (AvailabilityRule av in this.Availability)
+                {
+                    System.Text.StringBuilder sb3 = new System.Text.StringBuilder();
+                    if (av.Include != 0)
+                    {
+                        // This line checks if the flag is a whole power of two, as in it just one flag set
+                        if ((av.Include != 0) && ((av.Include & (~av.Include + 1)) == av.Include))
+                            sb3.Append(av.Include + " is true");
+                        else
+                            sb3.Append(av.Include + " are ALL true");
+                    }
+
+                    if (av.Include != 0 && av.Exclude != 0)
+                        sb3.Append(" but ");
+
+                    if (av.Exclude != 0)
+                    {
+                        if ((av.Exclude != 0) && ((av.Exclude & (~av.Exclude + 1)) == av.Exclude))
+                            sb3.Append(av.Exclude + " is NOT true");
+                        else
+                            sb3.Append("NONE of " + av.Exclude + " are true");
+                    }
+
+                    sb2.Add(sb3.ToString());
+                }
+
+                sb.Append(String.Join("\n    OR ", sb2.ToArray()));
             }
-            else
+
+            if (!String.IsNullOrWhiteSpace(this.LongDescription))
+                sb.AppendLine(this.Description);
+
+            if (this._Arguments.Count > 0)
             {
                 sb.AppendLine();
-                sb.Append("\t" + this.Description);
+                sb.AppendLine("Arguments: ");
+
+                foreach (Argument arg in this._Arguments)
+                    sb.AppendLine(arg.Name + "\t" + arg.Description);
             }
 
             return sb.ToString();
@@ -310,6 +385,14 @@ namespace SharpGMad.Shell
             return argumentParts.ToArray();
         }
 
+        public virtual bool CanInvoke(string argText, Availability context)
+        {
+            if (this.IsOverload)
+                return ((CommandOverload)this).CanInvoke(argText, context);
+
+            return Command.AvailableInContext(this, context);
+        }
+
         /// <summary>
         /// Run the command with the given arguments
         /// </summary>
@@ -446,6 +529,7 @@ namespace SharpGMad.Shell
             base.Description = null;
             base.IsAlias = true;
             base._Arguments = null;
+            base.Availability = realCommand.Availability;
 
             this.ContextRegistry = context;
             this.Dispatch = (self) =>
@@ -596,18 +680,33 @@ namespace SharpGMad.Shell
         }
 
         /// <summary>
-        /// Run the command with the given arguments.
-        /// The overload will be resolved and the real command will be ran.
+        /// Generate a long usage string (arguments, short and long description)
         /// </summary>
-        /// <param name="argText">The full command-line (without the command's name) containing the possible argument values</param>
-        public new void Invoke(string argText)
+        public override string UsageLong()
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+            foreach (Command com in this.Commands.Values)
+                sb.AppendLine(com.UsageLong());
+
+            return sb.ToString();
+        }
+
+        public override bool CanInvoke(string argText, Availability context)
         {
             if (this.Commands.Count == 0)
-            {
-                ConsoleExtensions.WriteColor("Cannot execute command '" + this.Verb + "', no known targets exist.", ConsoleColor.Red);
-                return;
-            }
+                return false;
 
+            Command commandToRun = this.SelectCommandToInvoke(argText);
+            if (commandToRun != null)
+                if (Command.AvailableInContext(commandToRun, context))
+                    return true;
+
+            return false;
+        }
+
+        private Command SelectCommandToInvoke(string argText)
+        {
             int argc = 0;
             try
             {
@@ -618,7 +717,7 @@ namespace SharpGMad.Shell
                 ConsoleExtensions.WriteColor("Unable to parse the given command.", ConsoleColor.Red);
                 if (!String.IsNullOrWhiteSpace(e.Message))
                     Console.WriteLine(e.Message);
-                return;
+                return null;
             }
 
             Command commandToRun = null;
@@ -645,10 +744,41 @@ namespace SharpGMad.Shell
                 if (maxArgCount > 0)
                     // Check if there's a MultiParams argument in the command with the most arguments
                     if (maxArgCommand.Arguments[maxArgCommand.Arguments.Count - 1].MultiParams)
+                    {
                         if (argc >= maxArgCommand.Arguments.Where(arg => arg.Mandatory).Count())
                             // If there is, call that one, the arguments above maxArgCount will be parsed as params
                             commandToRun = maxArgCommand;
+                    }
+                    else
+                    {
+                        IEnumerable<Command> maxMandatoryArgCommand = this.Commands.Values
+                            .Where(c => c.Arguments.Where(arg => arg.Mandatory).Count() == argc);
+
+                        if (maxMandatoryArgCommand.Count() == 1)
+                            commandToRun = maxMandatoryArgCommand.First();
+                    }
+
             }
+
+            return commandToRun;
+        }
+
+        /// <summary>
+        /// Run the command with the given arguments.
+        /// The overload will be resolved and the real command will be ran.
+        /// </summary>
+        /// <param name="argText">The full command-line (without the command's name) containing the possible argument values</param>
+        public new void Invoke(string argText)
+        {
+            if (this.Commands.Count == 0)
+            {
+                ConsoleExtensions.WriteColor("Cannot execute command '" + this.Verb + "', no known targets exist.", ConsoleColor.Red);
+                return;
+            }
+
+            ConsoleExtensions.WriteColor("Overloaded command " + this.Verb + " executed.");
+
+            Command commandToRun = this.SelectCommandToInvoke(argText);
 
             if (commandToRun != null)
                 commandToRun.Invoke(argText);

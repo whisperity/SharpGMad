@@ -16,6 +16,8 @@ namespace SharpGMad.Shell
         /// </summary>
         protected object Value;
 
+        public string Description;
+
         /// <summary>
         /// Whether the argument is mandatory - if yes, it must be assigned a value before executing the command
         /// </summary>

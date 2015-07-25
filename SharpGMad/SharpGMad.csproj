@@ -99,6 +99,7 @@
     <Compile Include="RealtimeAddon.cs" />
     <Compile Include="RealtimeCommandline.cs" />
     <Compile Include="Shell\Argument.cs" />
+    <Compile Include="Shell\Availability.cs" />
     <Compile Include="Shell\Command.cs" />
     <Compile Include="Shell\CommandRegistry.cs" />
     <Compile Include="Tags.cs" />
