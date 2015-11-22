@@ -14,6 +14,7 @@
     <AssemblyName>SharpGMad</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug Windows|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -24,6 +25,7 @@
     <DefineConstants>TRACE;DEBUG;WINDOWS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release Windows|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -33,6 +35,7 @@
     <DefineConstants>TRACE;WINDOWS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug Mono|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -42,6 +45,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release Mono|x86'">
     <OutputPath>bin\Release\</OutputPath>
@@ -50,6 +54,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -66,7 +71,6 @@
     <Compile Include="AddAs.Designer.cs">
       <DependentUpon>AddAs.cs</DependentUpon>
     </Compile>
-    <Compile Include="Addon.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Legacy.cs" />
     <Compile Include="LegacyCreate.cs">
@@ -95,7 +99,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
-    <Compile Include="Reader.cs" />
     <Compile Include="RealtimeAddon.cs" />
     <Compile Include="RealtimeCommandline.cs" />
     <Compile Include="Tags.cs" />
@@ -168,6 +171,7 @@
     <None Include="Resources\whitelistfailure_16x16.png" />
     <None Include="Resources\whitelistfailure_32x32.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

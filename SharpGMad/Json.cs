@@ -194,7 +194,8 @@ namespace SharpGMad
 
                     description = dJSON.Description; // If there's a description in the JSON, make it the returned description
                     type = dJSON.Type;
-                    tags = new List<string>(dJSON.Tags);
+                    tags.Clear();
+                    tags.AddRange(dJSON.Tags);
                 }
                 catch (SerializationException)
                 {
@@ -210,32 +211,34 @@ namespace SharpGMad
         /// <summary>
         /// Creates a JSON string using the properties of the provided Addon.
         /// </summary>
-        /// <param name="addon">The addon which metadata is to be used.</param>
+        /// <param name="description">The description to write.</param>
+        /// <param name="type">The type to write.</param>
+        /// <param name="tags">The tags to write.</param>
         /// <returns>The compiled JSON string.</returns>
         /// <exception cref="AddonJSONException">Errors regarding creating the JSON.</exception>
-        public static string BuildDescription(Addon addon)
+        public static string BuildDescription(string description, string type, List<string> tags)
         {
             DescriptionJSON tree = new DescriptionJSON();
-            tree.Description = addon.Description;
+            tree.Description = description;
 
             // Load the addon type
-            if (addon.Type.ToLowerInvariant() == String.Empty || addon.Type.ToLowerInvariant() == null)
+            if (type.ToLowerInvariant() == String.Empty || type.ToLowerInvariant() == null)
                 throw new AddonJSONException("type is empty!");
             else
             {
-                if (!SharpGMad.Tags.TypeExists(addon.Type.ToLowerInvariant()))
+                if (!SharpGMad.Tags.TypeExists(type.ToLowerInvariant()))
                     throw new AddonJSONException("type isn't a supported type!");
                 else
-                    tree.Type = addon.Type.ToLowerInvariant();
+                    tree.Type = type.ToLowerInvariant();
             }
 
             // Parse the tags
             tree.Tags = new List<string>();
-            if (addon.Tags.Count > 2)
+            if (tags.Count > 2)
                 throw new AddonJSONException("too many tags - specify 2 only!");
             else
             {
-                foreach (string tag in addon.Tags)
+                foreach (string tag in tags)
                 {
                     if (tag == String.Empty || tag == null) continue;
 

@@ -104,7 +104,9 @@ namespace SharpGMad
             txtFile.Text = Path.GetFileNameWithoutExtension(txtFile.Text);
             txtFile.Text += ".gma";
 
-            Addon addon = null;
+            List<string> Ignores = new List<string>();
+
+            RealtimeAddon addon = RealtimeAddon.New(txtFile.Text);
             if (gboConvertMetadata.Visible == false)
             {
                 //
@@ -122,7 +124,13 @@ namespace SharpGMad
                     return;
                 }
 
-                addon = new Addon(addonInfo);
+                addon.Title = addonInfo.Title;
+                addon.Description = addonInfo.Description;
+                addon.Type = addonInfo.Type;
+                for (int i = 0; i < addonInfo.Tags.Count; ++i)
+                    if (i < 2)
+                        addon.SetTag(i, addonInfo.Tags[i]);
+                Ignores.AddRange(addonInfo.Ignores);
             }
             else if (gboConvertMetadata.Visible == true)
             {
@@ -149,8 +157,6 @@ namespace SharpGMad
                         "Failed to create the addon", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                     return;
                 }
-
-                addon = new Addon();
 
                 // Parse the read data
                 Regex regex = new System.Text.RegularExpressions.Regex("\"([A-Za-z_\r\n]*)\"[\\s]*\"([\\s\\S]*?)\"",
@@ -254,11 +260,10 @@ namespace SharpGMad
                     return;
                 }
 
-                addon.Tags = new List<string>(2);
                 if (cmbTag1.SelectedItem.ToString() != "(empty)")
-                    addon.Tags.Add(cmbTag1.SelectedItem.ToString());
+                    addon.SetTag(0, cmbTag1.SelectedItem.ToString());
                 if (cmbTag2.SelectedItem.ToString() != "(empty)")
-                    addon.Tags.Add(cmbTag2.SelectedItem.ToString());
+                    addon.SetTag(1, cmbTag1.SelectedItem.ToString());
             }
 
             //
@@ -275,17 +280,20 @@ namespace SharpGMad
 
                 try
                 {
-                    addon.CheckRestrictions(file);
+                    foreach (string pattern in Ignores)
+                    {
+                        if (Whitelist.Check(pattern, file))
+                        {
+                            errors.Add(new CreateError() { Path = file, Type = CreateErrorType.Ignored });
+                            continue;
+                        }
+                    }
+
                     addon.AddFile(file, File.ReadAllBytes(f));
                 }
                 catch (IOException)
                 {
                     errors.Add(new CreateError() { Path = file, Type = CreateErrorType.FileRead });
-                    continue;
-                }
-                catch (IgnoredException)
-                {
-                    errors.Add(new CreateError() { Path = file, Type = CreateErrorType.Ignored });
                     continue;
                 }
                 catch (WhitelistException)
@@ -304,7 +312,7 @@ namespace SharpGMad
             //
             // Sort the list into alphabetical order, no real reason - we're just ODC
             //
-            addon.Sort();
+            // No longer needed.
 
             //
             // Create an addon file in a buffer

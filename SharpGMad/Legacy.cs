@@ -145,7 +145,10 @@ namespace SharpGMad
             strOutfile += ".gma";
             Console.WriteLine("Looking in folder \"" + strFolder + "\"");
 
-            Addon addon = null;
+            RealtimeAddon addon = RealtimeAddon.New(strOutfile);
+
+            List<string> Ignores = new List<string>();
+
             if (File.Exists(strFolder + Path.DirectorySeparatorChar + "addon.json"))
             {
                 // Use addon.json for metadata if it exists
@@ -175,7 +178,13 @@ namespace SharpGMad
                     return 1;
                 }
 
-                addon = new Addon(addonInfo);
+                addon.Title = addonInfo.Title;
+                addon.Description = addonInfo.Description;
+                addon.Type = addonInfo.Type;
+                for (int i = 0; i < addonInfo.Tags.Count; ++i)
+                    if (i < 2)
+                        addon.SetTag(i, addonInfo.Tags[i]);
+                Ignores.AddRange(addonInfo.Ignores);
             }
             else if (File.Exists(strFolder + Path.DirectorySeparatorChar + "info.txt") ||
                     File.Exists(strFolder + Path.DirectorySeparatorChar + "addon.txt"))
@@ -198,8 +207,6 @@ namespace SharpGMad
                     Console.WriteLine(ex.Message);
                     return 1;
                 }
-
-                addon = new Addon();
 
                 // Parse the read data
                 Regex regex = new System.Text.RegularExpressions.Regex("\"([A-Za-z_\r\n]*)\"[\\s]*\"([\\s\\S]*?)\"",
@@ -315,20 +322,23 @@ namespace SharpGMad
 
                 try
                 {
-                    addon.CheckRestrictions(file);
+                    foreach (string pattern in Ignores)
+                    {
+                        if (Whitelist.Check(pattern, file))
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("\t\t[Ignored]");
+                            Console.ResetColor();
+                            continue;
+                        }
+                    }
+
                     addon.AddFile(file, File.ReadAllBytes(f));
                 }
                 catch (IOException)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Unable to read file " + file);
-                    Console.ResetColor();
-                    continue;
-                }
-                catch (IgnoredException)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\t\t[Ignored]");
                     Console.ResetColor();
                     continue;
                 }
@@ -344,7 +354,7 @@ namespace SharpGMad
             //
             // Sort the list into alphabetical order, no real reason - we're just ODC
             //
-            addon.Sort();
+            // No longer needed.
 
             //
             // Create an addon file in a buffer
@@ -412,12 +422,11 @@ namespace SharpGMad
             //
             strOutPath = strOutPath.TrimEnd('/');
             strOutPath = strOutPath + '/';
-            Addon addon;
+            RealtimeAddon addon;
             try
             {
                 Whitelist.Override = true;
-                FileStream fs = new FileStream(strFile, FileMode.Open, FileAccess.Read, FileShare.None);
-                addon = new Addon(new Reader(fs));
+                addon = RealtimeAddon.Load(strFile, true);
             }
             catch (Exception ex)
             {
@@ -433,7 +442,7 @@ namespace SharpGMad
             }
 
             Console.WriteLine("Extracting Files:");
-            foreach (ContentFile entry in addon.Files)
+            foreach (ContentFile entry in addon.GetFiles())
             {
                 Console.WriteLine("\t" + entry.Path + " [" + ((int)entry.Size).HumanReadableSize() + "]");
                 // Make sure folder exists
@@ -537,7 +546,7 @@ namespace SharpGMad
         /// </summary>
         /// <param name="addon">The addon to modify.</param>
         /// <param name="type">Optional. The new type the addon should have.</param>
-        private static void SetType(Addon addon, string type = null)
+        private static void SetType(RealtimeAddon addon, string type = null)
         {
             if (type == String.Empty || type == null)
             {
@@ -577,7 +586,7 @@ namespace SharpGMad
         /// </summary>
         /// <param name="addon">The addon to modify.</param>
         /// <param name="tagsInput">Optional. The new tags the addon should have.</param>
-        private static void SetTags(Addon addon, string[] tagsInput = null)
+        private static void SetTags(RealtimeAddon addon, string[] tagsInput = null)
         {
             List<string> tags = new List<string>(2);
             if (tagsInput == null || tagsInput.Length == 0 || tagsInput[0] == String.Empty)
@@ -678,7 +687,9 @@ namespace SharpGMad
                 }
             }
 
-            addon.Tags = tags;
+            for (int i = 0; i < tags.Count; ++i)
+                if (i < 2)
+                    addon.SetTag(i, tags[i]);
         }
     }
 }

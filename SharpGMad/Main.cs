@@ -182,11 +182,6 @@ namespace SharpGMad
             {
                 return;
             }
-            catch (IgnoredException e)
-            {
-                MessageBox.Show(e.Message, "Addon is corrupted", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
             catch (WhitelistException e)
             {
                 if (!Whitelist.Override)
@@ -403,7 +398,8 @@ namespace SharpGMad
                 tvFolders.Nodes.Clear();
 
                 string[] folderlist =
-                    AddonHandle.OpenAddon.Files.GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/')).Select(f => f.Key)
+                    AddonHandle.GetFiles().Where(cf => cf.State != ContentFile.FileState.Deleted)
+                    .GroupBy(f => Path.GetDirectoryName(f.Path).Replace('\\', '/')).Select(f => f.Key)
                     .ToArray();
 
                 GetFolders(folderlist);
@@ -547,12 +543,14 @@ namespace SharpGMad
                     IEnumerable<ContentFile> filesInFolder;
                     if (tsmiViewShowAllFiles.Checked)
                         // If all-files mode is on, we query all file.
-                        filesInFolder = AddonHandle.OpenAddon.Files;
+                        filesInFolder = AddonHandle.GetFiles()
+                            .Where(cf => cf.State != ContentFile.FileState.Deleted);
                     else
                         // Query the files in the selected folder.
-                        filesInFolder = AddonHandle.OpenAddon.Files
+                        filesInFolder = AddonHandle.GetFiles()
                             .Where(f => Path.GetDirectoryName(f.Path).Replace('\\', '/') ==
-                                (tvFolders.SelectedNode.Name == "root" ? "" : tvFolders.SelectedNode.Name));
+                                (tvFolders.SelectedNode.Name == "root" ? "" : tvFolders.SelectedNode.Name))
+                            .Where(cf => cf.State != ContentFile.FileState.Deleted);
 
                     foreach (ContentFile cfile in filesInFolder)
                     {
@@ -684,22 +682,22 @@ namespace SharpGMad
         /// </summary>
         private void UpdateMetadataPanel()
         {
-            txtMetadataTitle.Text = AddonHandle.OpenAddon.Title;
-            /*txtMetadataAuthor.Text = AddonHandle.OpenAddon.Author;*/
-            txtMetadataDescription.Text = AddonHandle.OpenAddon.Description;
+            txtMetadataTitle.Text = AddonHandle.Title;
+            /*txtMetadataAuthor.Text = AddonHandle.Author;*/
+            txtMetadataDescription.Text = AddonHandle.Description;
 
             cmbMetadataType.Items.Clear();
             cmbMetadataType.Items.AddRange(Tags.Type);
-            cmbMetadataType.SelectedItem = AddonHandle.OpenAddon.Type;
+            cmbMetadataType.SelectedItem = AddonHandle.Type;
 
             cmbMetadataTag1.Items.Clear();
             cmbMetadataTag1.Items.AddRange(Tags.Misc);
             cmbMetadataTag1.Items.Add("");
             try
             {
-                cmbMetadataTag1.SelectedItem = AddonHandle.OpenAddon.Tags[0];
+                cmbMetadataTag1.SelectedItem = AddonHandle.Tags[0];
             }
-            catch (ArgumentOutOfRangeException)
+            catch (IndexOutOfRangeException)
             {
                 // No first tag, select the empty one
                 cmbMetadataTag1.SelectedItem = "";
@@ -710,9 +708,9 @@ namespace SharpGMad
             cmbMetadataTag2.Items.Add("");
             try
             {
-                cmbMetadataTag2.SelectedItem = AddonHandle.OpenAddon.Tags[1];
+                cmbMetadataTag2.SelectedItem = AddonHandle.Tags[1];
             }
-            catch (ArgumentOutOfRangeException)
+            catch (IndexOutOfRangeException)
             {
                 // No second tag, select the empty one
                 cmbMetadataTag2.SelectedItem = "";
@@ -850,19 +848,12 @@ namespace SharpGMad
 
                 try
                 {
-                    AddonHandle.OpenAddon.CheckRestrictions(internalPath);
                     AddonHandle.AddFile(internalPath, File.ReadAllBytes(ofdAddFile.FileName));
                 }
                 catch (IOException)
                 {
                     MessageBox.Show("Error happened while reading " + ofdAddFile.FileName, "Add file",
                         MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                    return;
-                }
-                catch (IgnoredException)
-                {
-                    MessageBox.Show("File is ignored (" + ofdAddFile.FileName + ")", "Add file",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
                 catch (WhitelistException)
@@ -1134,7 +1125,7 @@ namespace SharpGMad
                     else if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.Subfolder)
                     {
                         // Removal of a subfolder
-                        List<string> entriesInFolder = AddonHandle.OpenAddon.Files
+                        List<string> entriesInFolder = AddonHandle.GetFiles()
                             .Where(f => f.Path.StartsWith(lstFiles.FocusedItem.Name)).Select(f => f.Path).ToList();
 
                         DialogResult remove = MessageBox.Show("Really remove " +
@@ -1235,7 +1226,7 @@ namespace SharpGMad
                     foreach (string folder in subfolders)
                     {
                         // First, build a list of files in the current folder
-                        List<string> entriesInFolder = AddonHandle.OpenAddon.Files
+                        List<string> entriesInFolder = AddonHandle.GetFiles()
                             .Where(f => f.Path.StartsWith(folder)).Select(f => f.Path).ToList();
 
                         foreach (string entry in entriesInFolder)
@@ -1359,16 +1350,15 @@ namespace SharpGMad
                     }
                 }
 
-                AddonHandle.OpenAddon.Title = txtMetadataTitle.Text;
+                AddonHandle.Title = txtMetadataTitle.Text;
                 //AddonHandle.OpenAddon.Author = txtMetadataAuthor.Text;
                 if (cmbMetadataType.SelectedItem != null)
-                    AddonHandle.OpenAddon.Type = cmbMetadataType.SelectedItem.ToString();
-                AddonHandle.OpenAddon.Tags = new List<string>(2);
+                    AddonHandle.Type = cmbMetadataType.SelectedItem.ToString();
                 if (cmbMetadataTag1.SelectedItem != null && cmbMetadataTag1.SelectedItem.ToString() != "")
-                    AddonHandle.OpenAddon.Tags.Add(cmbMetadataTag1.SelectedItem.ToString());
+                    AddonHandle.SetTag(0, cmbMetadataTag1.SelectedItem.ToString());
                 if (cmbMetadataTag2.SelectedItem != null && cmbMetadataTag2.SelectedItem.ToString() != "")
-                    AddonHandle.OpenAddon.Tags.Add(cmbMetadataTag2.SelectedItem.ToString());
-                AddonHandle.OpenAddon.Description = txtMetadataDescription.Text;
+                    AddonHandle.SetTag(1, cmbMetadataTag1.SelectedItem.ToString());
+                AddonHandle.Description = txtMetadataDescription.Text;
 
                 AddonHandle.Modified = true;
                 UpdateModified();
@@ -1515,11 +1505,10 @@ namespace SharpGMad
                         return;
                     }
 
-                    AddonHandle.OpenAddon.Title = Path.GetFileNameWithoutExtension(sfdAddon.FileName);
+                    AddonHandle.Title = Path.GetFileNameWithoutExtension(sfdAddon.FileName);
                     /*AddonHandle.OpenAddon.Author = "Author Name"; // This is currently not changable*/
-                    AddonHandle.OpenAddon.Description = String.Empty;
-                    AddonHandle.OpenAddon.Type = String.Empty;
-                    AddonHandle.OpenAddon.Tags = new List<string>();
+                    AddonHandle.Description = String.Empty;
+                    AddonHandle.Type = String.Empty;
                     tsbUpdateMetadata_Click(sender, e); // This will make the metadata change enabled to set the initial values
 
                     // But the "Discard" button must be disabled so that the user cannot leave the metadata blank
@@ -1858,7 +1847,7 @@ namespace SharpGMad
                     else if ((FileEntryType)lstFiles.FocusedItem.Tag == FileEntryType.Subfolder)
                     {
                         // Extracting a subfolder.
-                        List<string> files = AddonHandle.OpenAddon.Files
+                        List<string> files = AddonHandle.GetFiles()
                             .Where(f => f.Path.StartsWith(lstFiles.FocusedItem.Name)).Select(f => f.Path).ToList();
 
                         if (files.Count > 0)
@@ -2005,7 +1994,7 @@ namespace SharpGMad
                     foreach (string folder in subfolders)
                     {
                         // First, build a list of files in the current folder
-                        List<string> entriesInFolder = AddonHandle.OpenAddon.Files
+                        List<string> entriesInFolder = AddonHandle.GetFiles()
                             .Where(f => f.Path.StartsWith(folder)).Select(f => f.Path).ToList();
 
                         foreach (string entry in entriesInFolder)
@@ -2230,17 +2219,11 @@ namespace SharpGMad
 
                     try
                     {
-                        AddonHandle.OpenAddon.CheckRestrictions(internalPath);
                         AddonHandle.AddFile(internalPath, File.ReadAllBytes(f));
                     }
                     catch (IOException)
                     {
                         addFailures.Add("Error happened while reading " + f);
-                        continue;
-                    }
-                    catch (IgnoredException)
-                    {
-                        addFailures.Add("File is ignored (" + f + ")");
                         continue;
                     }
                     catch (WhitelistException)

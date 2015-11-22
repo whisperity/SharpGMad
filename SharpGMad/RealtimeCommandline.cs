@@ -327,16 +327,16 @@ namespace SharpGMad
                                 Console.WriteLine(AddonHandle.OpenAddon.Author);
                                 break;*/
                             case "description":
-                                Console.WriteLine(AddonHandle.OpenAddon.Description);
+                                Console.WriteLine(AddonHandle.Description);
                                 break;
                             case "tags":
-                                Console.WriteLine(String.Join(" ", AddonHandle.OpenAddon.Tags.ToArray()));
+                                Console.WriteLine(String.Join(" ", AddonHandle.Tags.ToArray()));
                                 break;
                             case "title":
-                                Console.WriteLine(AddonHandle.OpenAddon.Title);
+                                Console.WriteLine(AddonHandle.Title);
                                 break;
                             case "type":
-                                Console.WriteLine(AddonHandle.OpenAddon.Type);
+                                Console.WriteLine(AddonHandle.Type);
                                 break;
                             default:
                                 Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -799,7 +799,7 @@ namespace SharpGMad
                 title = Console.ReadLine();
             }
 
-            AddonHandle.OpenAddon.Title = title;
+            AddonHandle.Title = title;
             AddonHandle.Modified = true;
         }
 
@@ -833,7 +833,7 @@ namespace SharpGMad
                 description = Console.ReadLine();
             }
 
-            AddonHandle.OpenAddon.Description = description;
+            AddonHandle.Description = description;
             AddonHandle.Modified = true;
         }
 
@@ -925,7 +925,7 @@ namespace SharpGMad
                 }
             }
 
-            AddonHandle.OpenAddon.Type = type;
+            AddonHandle.Type = type;
             AddonHandle.Modified = true;
         }
 
@@ -1050,7 +1050,10 @@ namespace SharpGMad
                 }
             }
 
-            AddonHandle.OpenAddon.Tags = tags;
+            for (int i = 0; i < tags.Count; ++i)
+                if (i < 2)
+                    AddonHandle.SetTag(i, tags[i]);
+
             AddonHandle.Modified = true;
         }
 
@@ -1142,7 +1145,7 @@ namespace SharpGMad
                 return;
             }
 
-            foreach (ContentFile f in AddonHandle.OpenAddon.Files)
+            foreach (ContentFile f in AddonHandle.GetFiles())
             {
                 Console.WriteLine("\t" + f.Path + " [" + ((int)f.Size).HumanReadableSize() + "]");
             }
@@ -1237,13 +1240,6 @@ namespace SharpGMad
                 Console.WriteLine(ex.Message);
                 return;
             }
-            catch (IgnoredException)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("\n\t\t[Ignored]");
-                Console.ResetColor();
-                return;
-            }
             catch (WhitelistException)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -1310,8 +1306,10 @@ namespace SharpGMad
                 return;
             }
 
-            Console.WriteLine(AddonHandle.OpenAddon.Files.Count + " files in archive:");
-            foreach (ContentFile file in AddonHandle.OpenAddon.Files)
+            IEnumerable<ContentFile> files = AddonHandle.GetFiles();
+
+            Console.WriteLine(files.Count() + " files in archive:");
+            foreach (ContentFile file in files)
             {
                 Console.WriteLine(file.Path + " (" + ((int)file.Size).HumanReadableSize() + ")");
             }
@@ -1626,9 +1624,11 @@ namespace SharpGMad
                 return;
             }
 
-            foreach (ContentFile f in AddonHandle.OpenAddon.Files)
+            foreach (ContentFile f in AddonHandle.GetFiles())
             {
-                Console.WriteLine("File index: " + f.Path.TrimStart('/') + " [CRC: " + f.CRC + "] [Size:" + ((int)f.Size).HumanReadableSize() + "]");
+                
+                Console.WriteLine("File index: " + f.Path.TrimStart('/') + " [CRC: " + (f.State != ContentFile.FileState.Deleted ? f.CRC.ToString() : "N/A") +
+                    "] [Size:" + (f.State != ContentFile.FileState.Deleted ? ((int)f.Size).HumanReadableSize() : "-1") + "]");
             }
 
             try

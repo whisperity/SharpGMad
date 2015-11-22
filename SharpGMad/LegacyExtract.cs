@@ -60,12 +60,11 @@ namespace SharpGMad
             //
             txtFolder.Text = txtFolder.Text.TrimEnd('/');
             txtFolder.Text = txtFolder.Text + '/';
-            Addon addon;
+            RealtimeAddon addon;
             try
             {
                 Whitelist.Override = true;
-                FileStream fs = new FileStream(txtFile.Text, FileMode.Open, FileAccess.ReadWrite);
-                addon = new Addon(new Reader(fs));
+                addon = RealtimeAddon.Load(txtFile.Text, true);
             }
             catch (Exception ex)
             {
@@ -78,7 +77,7 @@ namespace SharpGMad
                 Whitelist.Override = false;
             }
 
-            foreach (ContentFile entry in addon.Files)
+            foreach (ContentFile entry in addon.GetFiles())
             {
                 // Make sure folder exists
                 try

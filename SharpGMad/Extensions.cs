@@ -51,29 +51,42 @@ namespace System
         /// </summary>
         static public string Pretty()
         {
-            return Pretty(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
+            System.Reflection.AssemblyInformationalVersionAttribute[] informalVersions =
+                (System.Reflection.AssemblyInformationalVersionAttribute[])(System.Reflection.Assembly
+                .GetEntryAssembly()
+                .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false));
+
+            System.Reflection.AssemblyInformationalVersionAttribute info = null;
+            if (informalVersions.Length == 1) // There can be only one informal version for an assembly
+                info = informalVersions[0];
+            else
+                info = new Reflection.AssemblyInformationalVersionAttribute("");
+            
+            Version ver = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            return Pretty(ver, info.InformationalVersion);
         }
 
         /// <summary>
         /// Gets the specified version's string with omitting the trailing zeros.
         /// </summary>
         /// <param name="ver">A version</param>
+        /// <param name="info">The informal version to suffix the string with</param>
         /// <returns>The version's string prettyfied</returns>
-        static public string Pretty(this Version ver)
+        static public string Pretty(this Version ver, string info = null)
         {
-                int fieldCount = 0;
+            int fieldCount = 0;
 
-                // Increment the required fields until there is a value (this emits the trailing zeros)
-                if (ver.Major != 0)
-                    fieldCount = 1;
-                if (ver.Minor != 0)
-                    fieldCount = 2;
-                if (ver.Build != 0)
-                    fieldCount = 3;
-                if (ver.Revision != 0)
-                    fieldCount = 4;
+            // Increment the required fields until there is a value (this emits the trailing zeros)
+            if (ver.Major != 0)
+                fieldCount = 1;
+            if (ver.Minor != 0)
+                fieldCount = 2;
+            if (ver.Build != 0)
+                fieldCount = 3;
+            if (ver.Revision != 0)
+                fieldCount = 4;
 
-                return "v" + ver.ToString(fieldCount);
+            return "v" + ver.ToString(fieldCount) + (!String.IsNullOrWhiteSpace(info) ? "-" + info : String.Empty);
         }
     }
 }
@@ -198,7 +211,7 @@ namespace System.IO
             try
             {
                 // Open a new FileStream and test if it's writable
-                new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.None).Dispose();
+                new FileStream(filename, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite).Dispose();
                 return true; // It is
             }
             catch (Exception)
@@ -206,6 +219,150 @@ namespace System.IO
                 // In case any error happens, the file is not writable.
                 return false;
             }
+        }
+    }
+
+    /// <summary>
+    /// Provides extension methods for System.IO.Stream instances.
+    /// </summary>
+    static class StreamExtensions
+    {
+        /// <summary>
+        /// The maximum buffer size to use by the extension methods. This is currently 8 KiB (8192 bytes).
+        /// </summary>
+        private const int MaxBufferSize = 2 << 12; // 2^13 = 8192, 8 KiB
+
+        /// <summary>
+        /// Moves the end part of a Stream from the given position offsetting it by distance.
+        /// </summary>
+        /// <remarks>CAUTION! Calling this method will byte-by-byte move contents in the file
+        /// which might invalidate the file's state, especially if it is a binary file.</remarks>
+        /// <param name="stream">The Stream instance on which the move should happen.
+        /// This Stream must be readable, writable and seekable.</param>
+        /// <param name="position">The position which is the first byte in the Stream. The [position; EOS)
+        /// interval of the data will be moved.</param>
+        /// <param name="difference">The distance by which the moving part should be moved. It can be negative or positive.</param>
+        /// <exception cref="ArgumentException">Thrown if the Stream cannot be read, seeked or written.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">The position or difference value was invalid.</exception>
+        /// <exception cref="IOException">Thrown if there was an IO Error by working with the Stream.</exception>
+        public static void MoveEndPart(this Stream stream, long position, long difference)
+        {
+            if (!stream.CanRead || !stream.CanSeek || !stream.CanWrite)
+                throw new ArgumentException("The stream cannot be read, seeked or written.", "this stream");
+
+            // Move all the bytes from position to the end of the stream to a new position.
+            // (In either direction.)
+            if (position < 0)
+                throw new ArgumentOutOfRangeException("The initial position from where the content should be moved can't be negative.");
+            else if (position > stream.Length)
+                throw new ArgumentOutOfRangeException("The initial position from where the content should be moved must be inside the stream.");
+
+            if (position == stream.Length && difference < 0)
+            {
+                // Shrink the stream by the given size
+                stream.SetLength(stream.Length + difference); // actually a - :)
+                return;
+            }
+
+            if (difference == 0 || position == stream.Length)
+                return; // Noop, nothing to move.
+
+            if (position + difference < 0)
+                throw new ArgumentOutOfRangeException("Requested to move bytes before the beginning of the stream.");
+
+            // First, we calculate how many bytes are there to be moved.
+            long fullByteCount = stream.Length - position;
+
+            // This blob is to be chunked up based on MaxBufferSize.
+            // For every move operation, a such buffer will be read and written out.
+            stream.Seek(position, SeekOrigin.Begin);
+            long currentPosition = position;
+            long newPosition = position + difference; // Where the moved bytes will begin after the move
+
+            if (fullByteCount == 0)
+                return; // Noop, nothing to move.
+
+            // Calculate a buffer size to use
+            int bufferSize;
+            if (fullByteCount > MaxBufferSize)
+                bufferSize = MaxBufferSize;
+            else
+                bufferSize = (int)Math.Pow(2, Math.Floor(Math.Log(fullByteCount, 2)));
+            byte[] buffer = new byte[bufferSize];
+
+            long byteCount = 0; // The count of "done" bytes we already moved
+            long readPosition = -1, writePosition = -1; // Two pointers where the next read and write operation will work.
+
+            if (difference > 0)
+            {
+                // If we are moving FORWARD, the first chunk to be read is the LAST in the file.
+                // We start from the right.
+                readPosition = stream.Length - bufferSize;
+                writePosition = readPosition + difference;
+
+                // Also, if we are moving forward, the stream has to be increased in size.
+                stream.SetLength(stream.Length + difference);
+            }
+            else if (difference < 0)
+            {
+                // If we are moving BACKWARDS, the first chunk to be read is the FIRST
+                // We start from the left.
+                readPosition = position;
+                writePosition = readPosition + difference; // (well, actually a - here :) )
+            }
+
+            int bytesToRead = 0;
+            while (byteCount < fullByteCount)
+            {
+                // If the number of remaining bytes would be smaller than the buffer size, read a partial buffer.
+                if (fullByteCount - byteCount < bufferSize)
+                    bytesToRead = Convert.ToInt32(fullByteCount - byteCount);
+                else
+                    bytesToRead = bufferSize;
+
+                // Read the chunk.
+                stream.Seek(readPosition, SeekOrigin.Begin);
+                stream.Read(buffer, 0, bytesToRead);
+
+                // And write it.
+                stream.Seek(writePosition, SeekOrigin.Begin);
+                stream.Write(buffer, 0, bytesToRead);
+                stream.Flush();
+
+                // Align the two intermediate pointers to the new locations for the next operation.
+                // (The read and write positions should always be having a distance of 'difference' between each other.)
+                if (difference > 0)
+                {
+                    // If we are moving the bytes FORWARD, the read head moves BACKWARDS, because we started from the right.
+
+                    // Read and write positions could underflow this way.
+                    // If the last remaining chunk is smaller than the buffer and would begin before the initial start position...
+                    // we correct it.
+                    if (readPosition - bytesToRead < position)
+                    {
+                        readPosition = position;
+                        writePosition = position + difference;
+                    }
+                    else
+                    {
+                        readPosition -= bytesToRead;
+                        writePosition -= bytesToRead;
+                    }
+                }
+                else if (difference < 0)
+                {
+                    // If we are moving the bytes BACKWARD, the read and write moves FORWARD, because we started form the left.
+                    readPosition += bytesToRead;
+                    writePosition += bytesToRead;
+                }
+
+                byteCount += bytesToRead; // Mark the currently done bytes... 'done'
+            }
+
+            stream.Flush();
+            if (difference < 0)
+                // If the move operation was to shrink, we eliminate the overhead at the end of the file.
+                stream.SetLength(stream.Length + difference); // (still a - :) )
         }
     }
 }
