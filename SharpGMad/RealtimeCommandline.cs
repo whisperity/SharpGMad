@@ -1223,7 +1223,9 @@ namespace SharpGMad
 
             try
             {
-                AddonHandle.AddFile(Whitelist.GetMatchingString(addPath), File.ReadAllBytes(filename));
+                string path = Whitelist.GetMatchingString(addPath);
+                AddonHandle.GetValidPath(path);
+                AddonHandle.AddFile(path, File.ReadAllBytes(filename));
             }
             catch (FileNotFoundException ex)
             {

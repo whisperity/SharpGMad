@@ -71,7 +71,10 @@
     <Compile Include="AddAs.Designer.cs">
       <DependentUpon>AddAs.cs</DependentUpon>
     </Compile>
+    <Compile Include="ContentFile.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="FileWatch.cs" />
+    <Compile Include="IndexEntry.cs" />
     <Compile Include="Legacy.cs" />
     <Compile Include="LegacyCreate.cs">
       <SubType>Form</SubType>

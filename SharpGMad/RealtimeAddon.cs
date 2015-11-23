@@ -17,457 +17,6 @@ namespace SharpGMad
     }
 
     /// <summary>
-    /// Represents a watcher declaration for an exported file.
-    /// </summary>
-    class FileWatch
-    {
-        /// <summary>
-        /// Gets or sets the path of the file on the filesystem.
-        /// </summary>
-        public string FilePath;
-        /// <summary>
-        /// Gets or sets the path of the file in the loaded addon.
-        /// </summary>
-        public string ContentPath;
-        /// <summary>
-        /// Gets or sets whether the file is modified externally.
-        /// </summary>
-        public bool Modified;
-        /// <summary>
-        /// The integrated System.IO.FileSystemWatcher object.
-        /// </summary>
-        public FileSystemWatcher Watcher;
-
-        /// <summary>
-        /// The event to fire when the assigned Watcher reports a file change.
-        /// </summary>
-        public event FileSystemEventHandler FileChanged;
-
-        /// <summary>
-        /// Fires all associated FileChanged delegates.
-        /// </summary>
-        public void OnChanged(object sender, FileSystemEventArgs e)
-        {
-            foreach (FileSystemEventHandler handler in FileChanged.GetInvocationList())
-                handler.Invoke(sender, e);
-        }
-    }
-
-    /// <summary>
-    /// Represents a logical entry in the addon's storage space.
-    /// </summary>
-    /* By 'logical', we mean that a ContentFile is not NECCESSARILY physically within an Addon,
-       but should be considered as a part of an addon undergoing edits. */
-    class ContentFile
-    {
-        // Store the content file's state within the addon
-        // This is used to determine how and from where should a content be loaded
-        internal enum FileState : byte
-        {
-            // Addon: Yes, Extern: No
-            /// <summary>The file is within the addon's bounds and is there unmodified.</summary>
-            Intact = 0x00,
-
-            // Addon: Yes, Extern: Yes - Extern takes priority
-            /// <summary>The file already exists in the addon, but has been since modified.
-            /// This state implies that an external content store is used.</summary>
-            Modified = 0x01,
-
-            // Addon: (Will be yes), Extern: yes - Extern takes priority
-            /// <summary>The file has been recently added to the addon and has not been saved yet.</summary>
-            Added = 0x02,
-
-            // Addon: (Will be no), Extern: unknown
-            /// <summary>The file has been deleted from the addon.</summary>
-            Deleted = 0x03
-        }
-
-        public FileState State { get; private set; }
-
-        #region Content readers
-        /// <summary>
-        /// Indicates that the implementing class can be used to read a ContentFile's content.
-        /// </summary>
-        private interface ContentReader
-        {
-            /// <summary>
-            /// Read the contents from the reader.
-            /// </summary>.ó
-            int Read(byte[] buffer);
-
-            /// <summary>
-            /// Retrieves the size of the ContentFile's backend.
-            /// </summary>
-            int Size { get; }
-        }
-
-        /// <summary>
-        /// Represents a ContentReader which reads a ContentFile from an already existing Addon.
-        /// </summary>
-        private class AddonEntryReader : ContentReader
-        {
-            /// <summary>
-            /// The addon from where the file's data should be read.
-            /// </summary>
-            private RealtimeAddon Addon;
-
-            /// <summary>
-            /// The index entry which is used to pinpoint in the addon file where the content is.
-            /// </summary>
-            public IndexEntry Index { get; private set; }
-
-            /// <summary>
-            /// Initializes a reader which will read the given file from the given addon.
-            /// </summary>
-            /// <param name="addon">The addon from which the file will be read from.</param>
-            /// <param name="entry">The index metadata of the file to be read</param>
-            public AddonEntryReader(RealtimeAddon addon, IndexEntry entry)
-            {
-                Addon = addon;
-                Index = entry;
-            }
-
-            public int Read(byte[] buffer)
-            {
-                Addon.ReadContents(Index, buffer);
-
-                return (int)Index.Size;
-            }
-
-            public int Size { get { return (int)Index.Size; } }
-        }
-
-        /// <summary>
-        /// A ContentReader which can read a ContentFile from an external storage (this is used for modified files).
-        /// </summary>
-        private class ExternalEntryReader : ContentReader
-        {
-            /// <summary>
-            /// The FileStream backend where the contents should be read from.
-            /// </summary>
-            private FileStream Stream;
-
-            /// <summary>
-            /// Initializes an external reader instance which will read from the given FileStream.
-            /// </summary>
-            /// <param name="stream">The file to read contents from.</param>
-            public ExternalEntryReader(FileStream stream)
-            {
-                Stream = stream;
-            }
-
-            public int Read(byte[] buffer)
-            {
-                Stream.Seek(0, SeekOrigin.Begin);
-                Stream.Read(buffer, 0, (int)Stream.Length);
-
-                return (int)Stream.Length;
-            }
-
-            public int Size { get { return (int)Stream.Length; } }
-        }
-        #endregion
-
-        #region Content writers
-        /// <summary>
-        /// Indicates that the implementing class can be used to write a ContentFile's content.
-        /// </summary>
-        private interface ContentWriter
-        {
-            /// <summary>
-            /// Overwrite the content with the given buffer's value.
-            /// </summary>
-            /// <param name="buffer">The value to write into the storage medium.</param>
-            void Write(byte[] buffer);
-        }
-
-        /// <summary>
-        /// Represents a ContentWriter which writes into a FileStream of an external file.
-        /// </summary>
-        private class ExternalEntryWriter : ContentWriter
-        {
-            /// <summary>
-            /// The FileStream backend where the contents should be written to.
-            /// </summary>
-            private FileStream Stream;
-
-            /// <summary>
-            /// Initializes a new ExternalEntryWriter for the given file.
-            /// </summary>
-            /// <param name="stream">The file in which the writer will write.</param>
-            public ExternalEntryWriter(FileStream stream)
-            {
-                Stream = stream;
-            }
-
-            /// <summary>
-            /// Initializes a new ExternalEntryWriter instance for the given file and writes the initial contents.
-            /// </summary>
-            /// <param name="file">The FileStream in which the writer will write.</param>
-            /// <param name="initial">The initial contents that should be written.</param>
-            public ExternalEntryWriter(FileStream file, Stream initial)
-            {
-                Stream = file;
-                
-                file.Seek(0, SeekOrigin.Begin);
-                initial.CopyTo(file);
-                file.SetLength(file.Position);
-            }
-
-            public void Write(byte[] buffer)
-            {
-                if (buffer == null)
-                    Stream.SetLength(0);
-                else
-                {
-                    Stream.SetLength(buffer.Length);
-                    Stream.Seek(0, SeekOrigin.Begin);
-                    Stream.Write(buffer, 0, buffer.Length);
-                    Stream.Flush();
-                }
-            }
-
-            /// <summary>
-            /// Deletes the external file associated with the writer.
-            /// </summary>
-            /// <exception cref="IOException">An I/O error occured.</exception>
-            public void Destroy()
-            {
-                Stream.Dispose();
-                File.Delete(Stream.Name);
-            }
-        }
-        #endregion
-
-        /// <summary>
-        /// Generates an automatic temporary file name for a storage on the user's hard drive.
-        /// </summary>
-        /// <param name="filename">The filename for which the temporary file should be generated for.</param>
-        /// <returns>The generated temporary path.</returns>
-        /// <exception cref="IOException">A temporary file could not be generated.</exception>
-        public static string GenerateExternalPath(string filename)
-        {
-            string tempfile = System.IO.Path.GetTempFileName();
-            File.Delete(tempfile);
-
-            string tempname = System.IO.Path.GetFileNameWithoutExtension(tempfile);
-            tempname = /*System.IO.Path.GetTempPath()*/ "TEMP_" + tempname + "_sharpgmad_" + System.IO.Path.GetFileName(filename) + ".tmp";
-
-            return tempname;
-        }
-
-        /// <summary>
-        /// Used to retrieve the content associated to the current ContentFile.
-        /// </summary>
-        private ContentReader Reader;
-
-        /// <summary>
-        /// Used to write the content associated to the current ContentFile.
-        /// </summary>
-        private ContentWriter Writer;
-
-        /// <summary>
-        /// The path of the file within the addon instance.
-        /// </summary>
-        public string Path { get; private set; }
-
-        /// <summary>
-        /// Retrieves the size of the ContentFile.
-        /// </summary>
-        public int Size { get { return Reader.Size; } }
-        
-        /// <summary>
-        /// Initializes a new ContentFile for a given logical file already existing in an addon.
-        /// </summary>
-        /// <param name="addon">The addon.</param>
-        /// <param name="index">The index of the file to use.</param>
-        public ContentFile(RealtimeAddon addon, IndexEntry index)
-        {
-            State = FileState.Intact;
-            Path = index.Path;
-
-            Reader = new AddonEntryReader(addon, index);
-            Writer = null;
-        }
-
-        /// <summary>
-        /// Initializes a new ContentFile for a given logical file and byte content.
-        /// </summary>
-        /// <param name="filename">The filename of the logical file.</param>
-        /// <param name="content">The (initial) contents of the logical file.</param>
-        public ContentFile(string filename, byte[] content)
-        {
-            State = FileState.Added;
-            Path = filename;
-
-            FileStream backend = new FileStream(GenerateExternalPath(filename), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read);
-            Reader = new ExternalEntryReader(backend);
-            Writer = new ExternalEntryWriter(backend);
-            Writer.Write(content);
-        }
-
-        /// <summary>
-        /// Initializes a new ContentFile for a given logical file and Stream contents.
-        /// </summary>
-        /// <param name="filename">The filename of the logical file.</param>
-        /// <param name="content">The (initial) contents of the logical file contained within a Stream.</param>
-        /// <exception cref="ArgumentException">Thrown if the stream cannot be read.</exception>
-        public ContentFile(string filename, Stream content)
-        {
-            if (!content.CanRead)
-                throw new ArgumentException("The Stream cannot be read.", "content");
-
-            State = FileState.Added;
-            Path = filename;
-
-            FileStream backend = new FileStream(GenerateExternalPath(filename), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read);
-            Reader = new ExternalEntryReader(backend);
-            Writer = new ExternalEntryWriter(backend, content);
-        }
-
-        /// <summary>
-        /// Retrieve or modify the contents of the file.
-        /// Modyfing a file will make use of switching the file to a different storage medium.
-        /// </summary>
-        public byte[] Content
-        {
-            get
-            {
-                if (Reader == null)
-                    return new byte[0];
-
-                byte[] retValue = new byte[Reader.Size];
-                Reader.Read(retValue);
-                return retValue;
-            }
-            set
-            {
-                if (State == FileState.Deleted)
-                    throw new InvalidOperationException("Cannot modify contents of a deleted file.");
-                else if (State == FileState.Intact)
-                {
-                    // Need to convert the file to the external storage
-                    FileStream externalStorage = new FileStream(GenerateExternalPath(Path), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read);
-                    ExternalEntryReader newReader = new ExternalEntryReader(externalStorage);
-                    ExternalEntryWriter newWriter = new ExternalEntryWriter(externalStorage);
-
-                    Reader = newReader;
-                    Writer = newWriter;
-
-                    State = FileState.Modified;
-                }
-
-                Writer.Write(value);
-            }
-        }
-
-        /// <summary>
-        /// Marks the file deleted.
-        /// </summary>
-        public void MarkDeleted()
-        {
-            State = FileState.Deleted;
-            Reader = null;
-            Writer = null;
-        }
-
-        /// <summary>
-        /// Gets a CRC32 checksum for the content.
-        /// </summary>
-        public uint CRC
-        {
-            get
-            {
-                if (State == FileState.Intact)
-                    return ((AddonEntryReader)Reader).Index.CRC;
-                else
-                    return System.Cryptography.CRC32.ComputeChecksum(Content);
-            }
-        }
-
-        /// <summary>
-        /// Disposes the externally saved content backend for the current file.
-        /// </summary>
-        public void DisposeExternal()
-        {
-            try
-            {
-                if (Writer is ExternalEntryWriter)
-                    ((ExternalEntryWriter)Writer).Destroy();
-            }
-            catch (Exception)
-            {
-                // We couldn't delete the file. Noop, we just leave it there.
-            }
-        }
-
-        /// <summary>
-        /// Cleans up the temporary folder from possible stale externally saved content files.
-        /// </summary>
-        public static void DisposeExternals()
-        {
-            foreach (string file in Directory.GetFiles(System.IO.Path.GetTempPath(),
-                "tmp*_sharpgmad_*.tmp*", SearchOption.TopDirectoryOnly))
-            {
-                try
-                {
-                    File.Delete(file);
-                }
-                catch (Exception)
-                {
-                    // Noop. It is only a temporary file, it shouldn't be that bad if we don't clean it up.
-                }
-            }
-        }
-
-        /// <summary>
-        /// Automatically disposes (if neccessary), the external temporary files when the object is finalised.
-        /// </summary>
-        ~ContentFile()
-        {
-            DisposeExternal();
-        }
-    }
-
-    /// <summary>
-    /// Contains indexing information about a file entry in a GMA.
-    /// </summary>
-    class IndexEntry
-    {
-        /// <summary>
-        /// Gets the internal path of the file.
-        /// </summary>
-        public string Path { get; private set; }
-        /// <summary>
-        /// Gets the size of the contents.
-        /// </summary>
-        public long Size { get; private set; }
-        /// <summary>
-        /// Gets a CRC32 checksum for the content.
-        /// </summary>
-        public uint CRC { get; private set; }
-        /// <summary>
-        /// The offset (relative to the addon's FileBlock) where the contents begin.
-        /// </summary>
-        public long Offset { get; private set; }
-        
-        /// <summary>
-        /// Initializes a new IndexEntry with the given parameters.
-        /// </summary>
-        /// <param name="path">The internal path of the file.</param>
-        /// <param name="size">The size of the contents.</param>
-        /// <param name="crc">A CRC32 hash of the contents.</param>
-        /// <param name="offset">The offset (relative to FileBlock) where the contents actually begin.</param>
-        public IndexEntry(string path, long size, uint crc, long offset)
-        {
-            Path = path;
-            Size = size;
-            CRC = crc;
-            Offset = offset;
-        }
-    }
-
-    /// <summary>
     /// Encapsulates an Addon and provides the extended "realtime" functionality over it.
     /// </summary>
     class RealtimeAddon
@@ -598,7 +147,13 @@ namespace SharpGMad
             if (!SharpGMad.Tags.TagExists(tag))
                 throw new ArgumentException("The specified tag is not valid.", "tag");
 
-            _Tags[id] = tag;
+            if (_Tags.Count == 0 && id == 0)
+                _Tags.Add(tag);
+            else if (_Tags.Count == 1 && id == 1)
+                _Tags.Add(tag);
+            else
+                _Tags[id] = tag;
+
             Modified = true;
         }
         #endregion
@@ -619,13 +174,7 @@ namespace SharpGMad
         /// <summary>
         /// Gets whether the Stream of the encapsulated Addon is writable.
         /// </summary>
-        public bool CanWrite
-        {
-            get
-            {
-                return AddonStream.CanWrite;
-            }
-        }
+        public bool CanWrite { get { return AddonStream.CanWrite; } }
         /// <summary>
         /// Gets the file path of the addon on the local filesystem.
         /// </summary>
@@ -634,15 +183,12 @@ namespace SharpGMad
         /// Stores the files of the addon
         /// </summary>
         private List<ContentFile> Files;
-
+        
         /// <summary>
         /// Get the collection of files stored in the current realtime addon
         /// </summary>
-        /// <returns></returns>
         public IEnumerable<ContentFile> GetFiles()
         {
-            Files.Sort((f1, f2) => String.Compare(f1.Path, f2.Path, StringComparison.InvariantCulture));
-
             foreach (ContentFile file in Files)
             {
                 yield return file;
@@ -838,6 +384,7 @@ namespace SharpGMad
             : this()
         {
             AddonStream = stream;
+
             if (!stream.CanRead || !stream.CanSeek)
                 throw new ArgumentException("The specified stream cannot be read or seeked.");
 
@@ -921,7 +468,11 @@ namespace SharpGMad
         /// <exception cref="IOException">Thrown if an I/O error occurs while reading the file.</exception>
         internal void ReadContents(IndexEntry index, byte[] buffer)
         {
-            AddonStream.Seek((long)FileBlock + (long)index.Offset, SeekOrigin.Begin);
+            if ((long)FileBlock + index.Offset > AddonStream.Length || (long)FileBlock + index.Offset + index.Size > AddonStream.Length)
+                throw new IOException("The file read attempt is reading behind the boundaries of the stream!");
+            
+
+            AddonStream.Seek((long)FileBlock + index.Offset, SeekOrigin.Begin);
             AddonStream.Read(buffer, 0, (int)index.Size);
         }
 
@@ -932,7 +483,7 @@ namespace SharpGMad
         /// <returns>A valid path to store the file inside the addon</returns>
         /// <exception cref="ArgumentException">Happens if a file with the same path is already added.</exception>
         /// <exception cref="WhitelistException">The file is prohibited from storing by the global whitelist.</exception>
-        private string GetValidPath(string filename)
+        public string GetValidPath(string filename)
         {
             // Prevent the need to read the contents of a file if it cannot be added.
             string path = Whitelist.GetMatchingString(filename);
@@ -1025,7 +576,9 @@ namespace SharpGMad
                 throw;
             }
 
-            Files.Add(new ContentFile(path, content));
+            ContentFile file = new ContentFile(path, content);
+            Files.Add(file);
+            Files.Sort((f1, f2) => String.Compare(f1.Path, f2.Path, StringComparison.InvariantCulture));
             _Modified = true;
         }
 
@@ -1051,7 +604,9 @@ namespace SharpGMad
                 throw;
             }
 
-            Files.Add(new ContentFile(path, content));
+            ContentFile file = new ContentFile(path, content);
+            Files.Add(file);
+            Files.Sort((f1, f2) => String.Compare(f1.Path, f2.Path, StringComparison.InvariantCulture));
             _Modified = true;
         }
 
@@ -1069,7 +624,24 @@ namespace SharpGMad
                 throw new FileNotFoundException("The file is not in the archive.");
             else
             {
-                fileToRemove.First().MarkDeleted();
+                switch (fileToRemove.First().State)
+                {
+                    case ContentFile.FileState.Intact:
+                        fileToRemove.First().MarkDeleted();
+                        break;
+                    case ContentFile.FileState.Modified:
+                        fileToRemove.First().MarkDeleted();
+                        fileToRemove.First().DisposeExternal();
+                        break;
+                    case ContentFile.FileState.Added:
+                        // If an added file is deleted before being saved to the addon, it's like if it was never added at all.
+                        Files.Remove(fileToRemove.First());
+                        break;
+                    //case ContentFile.FileState.Deleted:
+                    default:
+                        // Nothing happens if we delete an already deleted file.
+                        break;
+                }
             }
             
             _Modified = true;
@@ -1336,12 +908,13 @@ namespace SharpGMad
         public void Save()
         {
             // Create a backup of the current addon
+            string backupName = Path.GetFileNameWithoutExtension(ContentFile.GenerateExternalPath(AddonStream.Name)) + "_backup.gma";
             try
             {
                 // It is needed to create a new, temporary file where we write the addon first
                 // Without it, we would "undermount" the current file
                 // And end up overwriting the addon from where AddonFile.Content gets the data we would write.
-                using (FileStream backup = new FileStream(Path.GetFileNameWithoutExtension(ContentFile.GenerateExternalPath(AddonStream.Name)) + "_backup.gma",
+                using (FileStream backup = new FileStream(backupName,
                     FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read))
                 {
                     backup.SetLength(0);
@@ -1377,21 +950,38 @@ namespace SharpGMad
 
             // Patch the content files in the Addon's Files list
             int lastIdx = 0;
-            foreach (KeyValuePair<ContentFile, IndexEntry> update in results.FileUpdates)
+            foreach (KeyValuePair<uint, KeyValuePair<ContentFile, IndexEntry>> update in results.IndexUpdates)
             {
-                int idxInList = Files.IndexOf(update.Key, lastIdx);
+                int idxInList = Files.IndexOf(update.Value.Key, lastIdx);
                 lastIdx = idxInList;
 
-                update.Key.DisposeExternal();
-                Files[idxInList] = new ContentFile(this, update.Value); // The new one marks an Intact file
+                update.Value.Key.DisposeExternal();
+                ContentFile newCF = new ContentFile(this, update.Value.Value);
+                Files[idxInList] = newCF; // The new one marks an Intact file
             }
 
             // Remove all Deleted files
             for (int i = 0; i < Files.Count; ++i)
-                if (Files[i].State == ContentFile.FileState.Deleted)
-                    Files.RemoveAt(i);
+            {
+                ContentFile f = Files[i];
 
-            // TODO: Remove the backup
+                if (Files[i].State == ContentFile.FileState.Deleted)
+                {
+                    Files.RemoveAt(i);
+                    --i;
+                }
+            }
+
+            // 
+            
+            try
+            {
+                File.Delete(backupName);
+            }
+            catch (Exception)
+            {
+                // Noop.
+            }
         }
         
         /// <summary>

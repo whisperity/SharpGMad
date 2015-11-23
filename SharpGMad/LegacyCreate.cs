@@ -289,6 +289,7 @@ namespace SharpGMad
                         }
                     }
 
+                    addon.GetValidPath(file);
                     addon.AddFile(file, File.ReadAllBytes(f));
                 }
                 catch (IOException)

@@ -628,9 +628,12 @@ namespace SharpGMad
                         item.SubItems.Add(size);
 
                         // If there can be non-whitelisted files, force check if the file is not whitelisted and change the icon if so.
-                        if (Whitelist.Override)
-                            if (!Whitelist.Check(cfile.Path, false))
-                                item.ImageKey = "whitelistfailure";
+                        if (Whitelist.Override && !Whitelist.Check(cfile.Path, false))
+                        {
+                            item.ImageKey = "whitelistfailure";
+                            item.ToolTipText = "This file is not allowed in the addon by the whitelist.";
+
+                        }
 
                         IEnumerable<FileWatch> watch = AddonHandle.WatchedFiles.Where(f => f.ContentPath == cfile.Path);
                         if (watch.Count() == 1)
@@ -848,6 +851,7 @@ namespace SharpGMad
 
                 try
                 {
+                    AddonHandle.GetValidPath(internalPath);
                     AddonHandle.AddFile(internalPath, File.ReadAllBytes(ofdAddFile.FileName));
                 }
                 catch (IOException)
@@ -2152,7 +2156,7 @@ namespace SharpGMad
                     return;
                 }
 
-                if (!AddonHandle.CanWrite)
+                if (AddonHandle == null || !AddonHandle.CanWrite)
                     return;
 
                 List<string> addFailures = new List<string>(files.Count);
@@ -2219,6 +2223,7 @@ namespace SharpGMad
 
                     try
                     {
+                        AddonHandle.GetValidPath(internalPath);
                         AddonHandle.AddFile(internalPath, File.ReadAllBytes(f));
                     }
                     catch (IOException)

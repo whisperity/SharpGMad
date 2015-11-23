@@ -79,7 +79,7 @@ namespace SharpGMad
             /// <summary>
             /// The list of updated files along with their new index entries.
             /// </summary>
-            public List<KeyValuePair<ContentFile, IndexEntry>> FileUpdates = new List<KeyValuePair<ContentFile, IndexEntry>>();
+            public SortedList<uint, KeyValuePair<ContentFile, IndexEntry>> IndexUpdates = new SortedList<uint, KeyValuePair<ContentFile, IndexEntry>>();
         }
         
         /// <summary>
@@ -152,6 +152,8 @@ namespace SharpGMad
                 }
 
                 // --- Index block ---                
+                SortedList<uint, KeyValuePair<ContentFile, IndexEntry>> fileUpdates =
+                    new SortedList<uint, KeyValuePair<ContentFile,IndexEntry>>();
                 {
                     long Offset = 0; // A rolling variable which contains where a file pointed by the current index begins (relative to fileblock's begin)
                     stream.Seek(indexBlock, SeekOrigin.Begin); // After moving the metadata, the index block begins here
@@ -177,9 +179,8 @@ namespace SharpGMad
                             CRC = br.ReadUInt32(); // (4)
                         }
                         long offset = Offset; // offset of the current file
-
-                        previousFileIndexEntryPosition = currentFileIndexPosition;
-
+                        long nextFileEntryIndexPosition = stream.Position;
+                        
                         if (f.State != ContentFile.FileState.Intact)
                         {
                             // The intact file was already skipped
@@ -211,10 +212,14 @@ namespace SharpGMad
                                     br.ReadInt64(); // skip the file size (8)
                                     bw.Write(f.CRC); // the new crc (4)
 
-                                    // Mark the index entry modified and mark the file for writing
-                                    Wresults.FileUpdates.Add(new KeyValuePair<ContentFile, IndexEntry>(f, 
-                                            new IndexEntry(path, f.Size, f.CRC, offset))
+                                    // Mark the file for writing
+                                    if (!fileUpdates.ContainsKey(index))
+                                        fileUpdates.Add(index, new KeyValuePair<ContentFile, IndexEntry>(f,
+                                                new IndexEntry(path, f.Size, f.CRC, offset))
                                         );
+                                    else
+                                        fileUpdates[index] = new KeyValuePair<ContentFile, IndexEntry>(f,
+                                            new IndexEntry(path, f.Size, f.CRC, offset));
                                     break;
                                 case ContentFile.FileState.Added:
                                     // If a new file is added, we need to make space for it in the index area...
@@ -227,7 +232,9 @@ namespace SharpGMad
                                         elemWriter.Write(f.CRC); // File CRC (4, unsigned)
 
                                         // currentFile is actually the _NEXT_ file here (so the "current" one in the index of the Stream, not the runtime)
+                                        // A move operation here will make place for the added file while essentially copying the remaining index data.
                                         stream.MoveEndPart(currentFileIndexPosition, indexElement.Length);
+                                        nextFileEntryIndexPosition = currentFileIndexPosition + indexElement.Length;
 
                                         fileBlock += indexElement.Length; // The index area has grown so the files start later
 
@@ -245,11 +252,14 @@ namespace SharpGMad
 
                                     size = f.Size; // Make sure the offset after the switch{} is properly modified, the next file should now begin after the current one
 
-                                    // Mark the index entry modified and mark the file for writing
-                                    Wresults.FileUpdates.Add(new KeyValuePair<ContentFile, IndexEntry>(f,
+                                    // Mark the file for writing
+                                    if (!fileUpdates.ContainsKey(index))
+                                        fileUpdates.Add(index, new KeyValuePair<ContentFile, IndexEntry>(f,
                                             new IndexEntry(f.Path, f.Size, f.CRC, offset))
                                         );
-
+                                    else
+                                        fileUpdates[index] = new KeyValuePair<ContentFile, IndexEntry>(f,
+                                            new IndexEntry(f.Path, f.Size, f.CRC, offset));
                                     break;
                                 case ContentFile.FileState.Deleted:
                                     // If a file is deleted, its index entry must be removed...
@@ -265,6 +275,8 @@ namespace SharpGMad
                                     stream.MoveEndPart(nextEntryAt, indexDeleteLength);
                                     fileBlock += indexDeleteLength; // The index area was shrunk, so the file block begins earlier
 
+                                    nextFileEntryIndexPosition = nextEntryAt + indexDeleteLength;
+
                                     // ... and the contents should be deleted from the file area too
                                     stream.MoveEndPart(fileBlock + offset + size, -size);
 
@@ -273,6 +285,20 @@ namespace SharpGMad
 
                                     break;
                             }
+                        }
+
+                        // Advance the pointer in the index area
+                        previousFileIndexEntryPosition = nextFileEntryIndexPosition;
+
+                        if (f.State != ContentFile.FileState.Deleted)
+                        {
+                            if (!Wresults.IndexUpdates.ContainsKey(index))
+                                Wresults.IndexUpdates.Add(index, new KeyValuePair<ContentFile, IndexEntry>(f,
+                                    new IndexEntry(f.Path, f.Size, f.CRC, offset))
+                                );
+                            else
+                                Wresults.IndexUpdates[index] = new KeyValuePair<ContentFile, IndexEntry>(f,
+                                    new IndexEntry(f.Path, f.Size, f.CRC, offset));
                         }
 
                         ++index;
@@ -285,7 +311,7 @@ namespace SharpGMad
                 }
 
                 // --- Files ---
-                foreach (KeyValuePair<ContentFile, IndexEntry> update in Wresults.FileUpdates)
+                foreach (KeyValuePair<ContentFile, IndexEntry> update in fileUpdates.Values)
                 {
                     // Write the file to the given location
                     stream.Seek(fileBlock + update.Value.Offset, SeekOrigin.Begin);
@@ -297,8 +323,9 @@ namespace SharpGMad
                             "was effectively read from that addon.\n\nThis exception indicates an EMERGENCY FAILURE of the business logic." +
                             "Execution CAN NOT continue.");
 
-                    stream.Write(content, 0, update.Key.Size);
+                    stream.Write(content, 0, (int)update.Key.Size);
                 }
+                stream.Flush();
 
                 // --- CRC ---
                 stream.Seek(-4, SeekOrigin.End);
