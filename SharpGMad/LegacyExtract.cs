@@ -165,6 +165,8 @@ namespace SharpGMad
                     "\t" + "\"info\"" + "\t" + "\"" + description + "\"\n" +
                     "\t" + "\"override\"" + "\t" + "\"1\"\n" +
                     "}");
+                File.Copy(txtFolder.Text + Path.DirectorySeparatorChar + "info.txt",
+                    txtFolder.Text + Path.DirectorySeparatorChar + "addon.txt");
             }
 
             if (extractFailures.Count == 0)

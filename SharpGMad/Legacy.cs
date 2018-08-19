@@ -415,7 +415,7 @@ namespace SharpGMad
             //
             if (strOutPath == String.Empty)
             {
-                strOutPath = Path.GetFileNameWithoutExtension(strFile);
+                strOutPath = Path.GetFileNameWithoutExtension(strFile).ToLowerInvariant();
             }
 
             //
@@ -476,7 +476,7 @@ namespace SharpGMad
                 // The description has paramteres if the addon was created by a conversion.
                 // Extract them out.
 
-                Regex regex = new System.Text.RegularExpressions.Regex("^# ([\\s\\S]*?): ([\\s\\S]*?)$",
+                Regex regex = new Regex("^# ([\\s\\S]*?): ([\\s\\S]*?)$",
                     RegexOptions.IgnoreCase | RegexOptions.Multiline);
                 MatchCollection matches = regex.Matches(addon.Description);
 
@@ -536,6 +536,7 @@ namespace SharpGMad
                     "\t" + "\"info\"" + "\t" + "\"" + description + "\"\n" +
                     "\t" + "\"override\"" + "\t" + "\"1\"\n" +
                     "}");
+                File.Copy(strOutPath + "info.txt", strOutPath + "addon.txt");
             }
 
             Console.WriteLine("Done!");
